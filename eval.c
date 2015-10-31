@@ -2,8 +2,8 @@
 
 #include "eval.h"
 
-// An Environment maps variables to values. The environment owns all its
-// variable strings, but it does not own the expressions.
+// An Environment maps variables to values. The environment owns neither the
+// variable strings nor the expressions (it doesn't free them).
 struct Environment {
 	char *var;
 	struct Expression *val;
@@ -32,47 +32,34 @@ struct Environment *bind(
 	return head;
 }
 
-// Unbinds the most recently bound variable in the environment. Returns the
+// Unbinds the n most recently bound variables in the environment. Returns the
 // reduced environment.
-struct Environment *unbind(struct Environment *env) {
-	struct Environment *rest = env->rest;
-	free(env->var);
-	free(env);
-	return rest;
+struct Environment *unbind(struct Environment *env, int n) {
+	for (int i = 0; i < n; i++) {
+		struct Environment *temp = env;
+		env = env->rest;
+		free(temp);
+	}
+	return env;
 }
 
 struct Expression *eval(struct Expression *expr, struct Environment *env) {
 	switch (expr->type) {
-	case E_NULL:
-
-	case T_NODE:
-		// Check node's first child (IF IT IS A LEAF):
-		// (SPECIAL FORMS)
+	case E_CONS:
+		// CHECK SPECIAL FORMS
 		// - "quote" -> ...
 		// - "lambda" -> ...
 		// - "cond"   -> ...
 		// - "define" -> ...
 		// otherwise, eval everyting + call apply
 		break;
-	case T_LEAF:
+	case E_SYMBOL:
 		// "1" -> E_NUMBER 1
 		// "a" -> lookup in env, or error
 		// prepopulate env with "car", "cdr", "+", etc.
 		// (or check here)
-		break;
-	}
-}
-
-struct Expression *quote(struct Expression *expr) {
-	switch (tree.type) {
-	case T_NODE:
-		// build a list
-		// cons 1st (const 2nd (const .. E_NULL))
-		break;
-	case T_LEAF:
-		// "1" -> E_NUMBER 1
-		// "a" -> E_SYMBOL
-		break;
+	default:
+		return clone_expression(expr):
 	}
 }
 
@@ -83,24 +70,33 @@ struct Expression *apply(
 		struct Environment *env) {
 	if (proc.type == E_LAMBDA) {
 		assert(proc.lambda.arity == n);
+		// error: wrong number of arguments
 		for (int i = 0; i < n; i++) {
-			// add proc.lambda.params[i] -> args[i] to env
+			env = bind(env, expr->lambda.params[i], args[i]);
 		}
 		Expression *result = eval(body, env);
-		// remove bindings from env
+		env = unbind(env, n);
 		return result;
 	}
 
 	assert(proc.type == E_SPECIAL);
 	switch (proc.special.id) {
-	case S_ADD:
+	case S_ATOM:
+	case S_EQ:
+	case S_CAR:
+	case S_CDR:
+	case S_CONS:
+	case S_ADD:;
 		int total = 0;
 		for (int i = 0; i < n; i++) {
 			assert(args[i].type == E_NUMBER);
+			// error: wrong type
 			total += args[i].number.n;
 		}
-		// return new expression E_NUMBER with n=total
-		break;
+		return new_number(total);
+	case S_SUB:
+	case S_MUL:
+	case S_DIV:
 	case S_SUB:
 		break;
 	}
