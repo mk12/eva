@@ -3,11 +3,6 @@
 #ifndef EXPR_H
 #define EXPR_H
 
-// A Variable is a symbol that represents a value.
-struct Variable {
-	char *name;
-};
-
 enum ExpressionType {
 	E_NULL,
 	E_CONS,
@@ -46,7 +41,7 @@ struct Expression {
 		} cons;
 		struct {
 			int arity;
-			struct Variable *params;
+			char **params;
 			struct Expression *body;
 		} lambda;
 		struct {
@@ -61,7 +56,7 @@ struct Expression *new_null(void);
 struct Expression *new_symbol(char *name);
 struct Expression *new_number(int n);
 struct Expression *new_lambda(
-		int arity, struct Variable *params, struct Expression *body);
+		int arity, char **params, struct Expression *body);
 struct Expression *new_special(enum SpecialType type);
 
 // Prints the expression to standard output (not followed by a newline).

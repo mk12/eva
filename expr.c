@@ -39,7 +39,7 @@ struct Expression *new_number(int n) {
 }
 
 struct Expression *new_lambda(
-		int arity, struct Variable *params, struct Expression *body) {
+		int arity, char **params, struct Expression *body) {
 	struct Expression *expr = malloc(sizeof *expr);
 	expr->type = E_LAMBDA;
 	expr->lambda.arity = arity;
@@ -109,6 +109,9 @@ void free_expression(struct Expression *expr) {
 		free(expr->symbol.name);
 		break;
 	case E_LAMBDA:
+		for (int i = 0; i < expr->lambda.arity; i++) {
+			free(expr->lambda.params[i]);
+		}
 		free(expr->lambda.params);
 		free_expression(expr->lambda.body);
 	default:
