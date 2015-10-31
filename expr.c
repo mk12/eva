@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static const char *special_names[] = {
+static const char *special_names[9] = {
 	"atom?", "eq?", "car", "cdr", "cons", "add", "sub", "mul", "div"
 };
 

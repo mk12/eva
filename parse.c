@@ -9,11 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Parse error messages.
 static const char *err_unexpected_eoi = "unexpected end of input";
 static const char *err_expected_rparen = "expected character ')'";
 static const char *err_unexpected_rparen = "unexpected character ')'";
 static const char *err_improper_dot = "improperly placed dot";
 
+// Returns the number of leading whitespace characters in text.
 static int skip_whitespace(const char *text) {
 	const char *s = text;
 	while (isspace(*s)) {
@@ -22,6 +24,7 @@ static int skip_whitespace(const char *text) {
 	return text - s;
 }
 
+// Returns the number of characters at the beginning of text that form a symbol.
 static int skip_symbol(const char *text) {
 	const char *s = text;
 	while (!isspace(*s) && *s != '(' && *s != ')') {
@@ -30,6 +33,7 @@ static int skip_symbol(const char *text) {
 	return text - s;
 }
 
+// Parses a cons expression, assuming the opening '(' has already been read.
 struct ParseResult parse_cons(const char *text) {
 	struct ParseResult result;
 	result.expr = NULL;
@@ -73,6 +77,7 @@ struct ParseResult parse_cons(const char *text) {
 	return result;
 }
 
+// Parses any expression.
 struct ParseResult parse(const char *text) {
 	struct ParseResult result;
 	result.expr = NULL;
