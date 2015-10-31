@@ -1,15 +1,50 @@
 // Copyright 2015 Mitchell Kember. Subject to the MIT License.
 
-#include "expr.h"
+#include "eval.h"
 
+// An Environment maps variables to values. The environment owns all its
+// variable strings, but it does not own the expressions.
 struct Environment {
-	Variable var;
-	Expression *value;
-	Environment *rest;
+	char *var;
+	struct Expression *val;
+	struct Environment *rest;
 };
 
+// Looks up a variable in the environment. Returns NULL if it doesn't appear.
+struct Expression *lookup(struct Environment *env, const char *var) {
+	while (env) {
+		if (strcmp(var.name, env->var.name) == 0) {
+			return env->val;
+		}
+		env = env->rest;
+	}
+	return NULL;
+}
+
+// Binds a variable to an expression in the environment. Returns the augmented
+// environment.
+struct Environment *bind(
+		struct Environment *env, char *var, struct Expression *val) {
+	struct Environment *head = malloc(sizeof *head);
+	head->var = var;
+	head->val = val;
+	head->rest = env;
+	return head;
+}
+
+// Unbinds the most recently bound variable in the environment. Returns the
+// reduced environment.
+struct Environment *unbind(struct Environment *env) {
+	struct Environment *rest = env->rest;
+	free(env->var);
+	free(env);
+	return rest;
+}
+
 struct Expression *eval(struct Expression *expr, struct Environment *env) {
-	switch (tree.type) {
+	switch (expr->type) {
+	case E_NULL:
+
 	case T_NODE:
 		// Check node's first child (IF IT IS A LEAF):
 		// (SPECIAL FORMS)
