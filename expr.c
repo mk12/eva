@@ -2,6 +2,7 @@
 
 #include "expr.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -54,6 +55,26 @@ struct Expression *new_special(enum SpecialType type) {
 	return expr;
 }
 
+static void print_cons(struct Expression *expr, bool first) {
+	if (!first) {
+		putchar(' ');
+	}
+	print_expression(expr->cons.car);
+	switch (expr->cons.cdr->type) {
+	case E_NULL:
+		putchar(')');
+		break;
+	case E_CONS:
+		print_cons(expr->cons.cdr, false);
+		break;
+	default:
+		fputs(" . ", stdout);
+		print_expression(expr->cons.cdr);
+		putchar(')');
+		break;
+	}
+}
+
 void print_expression(struct Expression *expr) {
 	switch (expr->type) {
 	case E_NULL:
@@ -61,10 +82,7 @@ void print_expression(struct Expression *expr) {
 		break;
 	case E_CONS:
 		putchar('(');
-		print_expression(expr->cons.car);
-		fputs(" . ", stdout);
-		print_expression(expr->cons.cdr);
-		putchar(')');
+		print_cons(expr, true);
 		break;
 	case E_SYMBOL:
 		fputs(expr->symbol.name, stdout);
