@@ -56,7 +56,8 @@ struct Expression *new_cons(struct Expression *car, struct Expression *cdr);
 struct Expression *new_null(void);
 struct Expression *new_symbol(const char *name);
 struct Expression *new_number(int n);
-struct Expression *new_lambda(int arity, struct Variable *params, struct Expression *body);
+struct Expression *new_lambda(
+		int arity, struct Variable *params, struct Expression *body);
 struct Expression *new_special(enum ExpressionType type);
 
 void print_expression(struct Expression *expr);
