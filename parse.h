@@ -8,7 +8,7 @@ struct Expression;
 struct ParseResult {
 	int chars_read;
 	struct Expression *expr;
-	const char *error_msg;
+	const char *err_msg;
 };
 
 // Parses a string as an s-expression (an expression that contains only cons

@@ -1,11 +1,18 @@
 // Copyright 2015 Mitchell Kember. Subject to the MIT License.
 
+#include "parse.h"
+
 #include "expr.h"
 
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
-static const char *err_unexpected_eoi = "unexpected end of input"
+static const char *err_unexpected_eoi = "unexpected end of input";
+static const char *err_expected_rparen = "expected character ')'";
+static const char *err_unexpected_rparen = "unexpected character ')'";
+static const char *err_improper_dot = "improperly placed dot";
 
 static int skip_whitespace(const char *text) {
 	const char *s = text;
@@ -15,62 +22,96 @@ static int skip_whitespace(const char *text) {
 	return text - s;
 }
 
-struct ParseResult parse(const char *text) {
-	ParseResult result;
-	char *s = text;
-	s += skip_whitespace(s);
-	char c = *s;
-
-	if (!c) {
-		result.expr = NULL;
-		result.err_msg = err_unexpected_eoi;
-	} else if (c == '(') {
+static int skip_symbol(const char *text) {
+	const char *s = text;
+	while (!isspace(*s) && *s != '(' && *s != ')') {
 		s++;
-		struct ParseResult first = parse(text + i);
-		i += first.chars_read;
-		if (!first.expr) {
-			first.chars_read = i;
-			return first;
-		}
+	}
+	return text - s;
+}
 
-		c = text[i];
-		if (c == ')') {
-			i++;
-			result.expr = new_cons(first, new_null());
+struct ParseResult parse_cons(const char *text) {
+	struct ParseResult result;
+	result.expr = NULL;
+	result.err_msg = NULL;
+	const char *s = text;
+
+	struct ParseResult first = parse(s);
+	s += first.chars_read;
+	if (!first.expr) {
+		result.err_msg = first.err_msg;
+	} else {
+		if (*s == '.') {
+			s++;
+			struct ParseResult second = parse(s);
+			s += second.chars_read;
+			if (!second.expr) {
+				result.err_msg = first.err_msg;
+			} else {
+				if (*s == ')') {
+					s++;
+					result.expr = new_cons(first.expr, second.expr);
+				} else {
+					result.err_msg = err_expected_rparen;
+				}
+			}
+		} else {
+			struct ParseResult rest = parse_cons(s);
+			s += rest.chars_read;
+			if (!rest.expr) {
+				result.err_msg = rest.err_msg;
+			} else {
+				result.expr = new_cons(first.expr, rest.expr);
+			}
 		}
 	}
 
-	i += skip_whitespace(text + i);
-	result.chars_read = i;
+	if (result.expr) {
+		s += skip_whitespace(s);
+	}
+	result.chars_read = s - text;
 	return result;
 }
 
 struct ParseResult parse(const char *text) {
-	int paren = 0;
-	char prev = 32;
-	int tok_start = -1;
-	int i = 0;
-	while ((char c = text[i])) {
-		bool space = isspace(c);
-		bool lparen = c == '(';
-		bool rparen = c == ')';
-		bool quote = c == '\'';
-		if (tok_start == -1) {
-			if (lparen) {
-			}
+	struct ParseResult result;
+	result.expr = NULL;
+	result.err_msg = NULL;
+	const char *s = text;
+	s += skip_whitespace(s);
+
+	switch (*s) {
+	case '\0':
+		result.err_msg = err_unexpected_eoi;
+		break;
+	case '(':
+		s++;
+		struct ParseResult cons = parse_cons(s);
+		s += cons.chars_read;
+		if (!cons.expr) {
+			result.err_msg = cons.err_msg;
 		} else {
-			if (space || lparen || rparen || quote) {
-				int len = i - tok_start;
-				char *name = (char *)malloc(len + 1);
-				memcpy(name, text + tok_start, len);
-				name[len] = '\0';
-				i--;
-			}
+			result.expr = cons.expr;
 		}
-		prev = c;
-		i++;
+	case ')':
+		result.err_msg = err_unexpected_rparen;
+		break;
+	case '.':
+		result.err_msg = err_improper_dot;
+		break;
+	default:;
+		int len = skip_symbol(s);
+		char *name = malloc(len + 1);
+		memcpy(name, s, len);
+		name[len] = '\0';
+		result.expr = new_symbol(name);
+		s += len;
+		break;
 	}
-	// create node
-	// add children
-	// see )
+
+	if (result.expr) {
+		s += skip_whitespace(s);
+	}
+	result.chars_read = s - text;
+	return result;
 }
