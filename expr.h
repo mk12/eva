@@ -30,15 +30,15 @@ struct Expression {
 	enum ExpressionType type;
 	union {
 		struct {
-			int n;
-		} number;
+			struct Expression *car;
+			struct Expression *cdr;
+		} cons;
 		struct {
 			char *name;
 		} symbol;
 		struct {
-			struct Expression *car;
-			struct Expression *cdr;
-		} cons;
+			int n;
+		} number;
 		struct {
 			int arity;
 			char **params;
@@ -59,10 +59,13 @@ struct Expression *new_lambda(
 		int arity, char **params, struct Expression *body);
 struct Expression *new_special(enum SpecialType type);
 
-// Prints the expression to standard output (not followed by a newline).
-void print_expression(struct Expression *expr);
+// Returns a deep copy of the expression.
+struct Expression *clone_expression(struct Expression *expr);
 
 // Frees the expression and all its subexpressions.
 void free_expression(struct Expression *expr);
+
+// Prints the expression to standard output (not followed by a newline).
+void print_expression(struct Expression *expr);
 
 #endif

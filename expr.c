@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static const char *special_names[9] = {
 	"atom?", "eq?", "car", "cdr", "cons", "add", "sub", "mul", "div"
@@ -55,6 +56,51 @@ struct Expression *new_special(enum SpecialType type) {
 	return expr;
 }
 
+struct Expression *clone_expression(struct Expression *expr) {
+	switch (expr->type) {
+	case E_NULL:
+		return new_null();
+	case E_CONS:
+		return new_cons(
+				clone_expression(expr->cons.car),
+				clone_expression(expr->cons.cdr));
+	case E_SYMBOL:
+		return new_symbol(expr->symbol.name);
+	case E_NUMBER:
+		return new_symbol(expr->number.n);
+	case E_LAMBDA:;
+		int n = expr->lambda.arity;
+		char **params = malloc(n * sizeof *params);
+		for (int i = 0; i < n; i++) {
+			params[i] = strdup(expr->lambda.params[i]);
+		}
+		return new_lambda(n, params, clone_expression(expr->lambda.body));
+	case E_SPECIAL:
+		return new_special(expr->special.type);
+	}
+}
+
+void free_expression(struct Expression *expr) {
+	switch (expr->type) {
+	case E_CONS:
+		free_expression(expr->cons.car);
+		free_expression(expr->cons.cdr);
+		break;
+	case E_SYMBOL:
+		free(expr->symbol.name);
+		break;
+	case E_LAMBDA:
+		for (int i = 0; i < expr->lambda.arity; i++) {
+			free(expr->lambda.params[i]);
+		}
+		free(expr->lambda.params);
+		free_expression(expr->lambda.body);
+	default:
+		break;
+	}
+	free(expr);
+}
+
 static void print_cons(struct Expression *expr, bool first) {
 	if (!first) {
 		putchar(' ');
@@ -97,25 +143,4 @@ void print_expression(struct Expression *expr) {
 		printf("#<%s>", special_names[expr->special.type]);
 		break;
 	}
-}
-
-void free_expression(struct Expression *expr) {
-	switch (expr->type) {
-	case E_CONS:
-		free_expression(expr->cons.car);
-		free_expression(expr->cons.cdr);
-		break;
-	case E_SYMBOL:
-		free(expr->symbol.name);
-		break;
-	case E_LAMBDA:
-		for (int i = 0; i < expr->lambda.arity; i++) {
-			free(expr->lambda.params[i]);
-		}
-		free(expr->lambda.params);
-		free_expression(expr->lambda.body);
-	default:
-		break;
-	}
-	free(expr);
 }
