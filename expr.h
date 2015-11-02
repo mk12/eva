@@ -24,6 +24,9 @@ enum SpecialType {
 	S_DIV
 };
 
+extern const int n_special_names;
+extern const char *special_names[];
+
 // Expression is an algebraic data type used for all terms in Scheme. Code and
 // data are both represented as expressions.
 struct Expression {

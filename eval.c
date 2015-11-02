@@ -43,6 +43,14 @@ struct Environment *unbind(struct Environment *env, int n) {
 	return env;
 }
 
+struct Environment *default_environment(void) {
+	struct Environment *env = NULL;
+	for (int i = 0; i < n_special_names; i++) {
+		env = bind(env, special_names[i], (enum SpecialType)i);
+	}
+	return env;
+}
+
 struct Expression *eval(struct Expression *expr, struct Environment *env) {
 	switch (expr->type) {
 	case E_CONS:

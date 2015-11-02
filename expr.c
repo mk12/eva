@@ -7,7 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char *special_names[9] = {
+const int n_special_names = 9;
+const char *special_names[9] = {
 	"atom?", "eq?", "car", "cdr", "cons", "add", "sub", "mul", "div"
 };
 
