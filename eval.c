@@ -2,10 +2,13 @@
 
 #include "eval.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 // An Environment maps variables to values. The environment owns neither the
 // variable strings nor the expressions (it doesn't free them).
 struct Environment {
-	char *var;
+	const char *var;
 	struct Expression *val;
 	struct Environment *rest;
 };
@@ -13,7 +16,7 @@ struct Environment {
 // Looks up a variable in the environment. Returns NULL if it doesn't appear.
 struct Expression *lookup(struct Environment *env, const char *var) {
 	while (env) {
-		if (strcmp(var.name, env->var.name) == 0) {
+		if (strcmp(var, env->var) == 0) {
 			return env->val;
 		}
 		env = env->rest;
@@ -24,7 +27,7 @@ struct Expression *lookup(struct Environment *env, const char *var) {
 // Binds a variable to an expression in the environment. Returns the augmented
 // environment.
 struct Environment *bind(
-		struct Environment *env, char *var, struct Expression *val) {
+		struct Environment *env, const char *var, struct Expression *val) {
 	struct Environment *head = malloc(sizeof *head);
 	head->var = var;
 	head->val = val;
@@ -46,7 +49,7 @@ struct Environment *unbind(struct Environment *env, int n) {
 struct Environment *default_environment(void) {
 	struct Environment *env = NULL;
 	for (int i = 0; i < n_special_names; i++) {
-		env = bind(env, special_names[i], (enum SpecialType)i);
+		env = bind(env, special_names[i], new_special((enum SpecialType)i));
 	}
 	return env;
 }
@@ -67,28 +70,28 @@ struct Expression *eval(struct Expression *expr, struct Environment *env) {
 		// prepopulate env with "car", "cdr", "+", etc.
 		// (or check here)
 	default:
-		return clone_expression(expr):
+		return clone_expression(expr);
 	}
 }
 
 struct Expression *apply(
 		struct Expression *proc,
-		struct Expression *args,
+		struct Expression **args,
 		int n,
 		struct Environment *env) {
-	if (proc.type == E_LAMBDA) {
-		assert(proc.lambda.arity == n);
+	if (proc->type == E_LAMBDA) {
+		/* assert(proc.lambda.arity == n); */
 		// error: wrong number of arguments
 		for (int i = 0; i < n; i++) {
-			env = bind(env, expr->lambda.params[i], args[i]);
+			env = bind(env, proc->lambda.params[i], args[i]);
 		}
-		Expression *result = eval(body, env);
+		struct Expression *result = eval(proc->lambda.body, env);
 		env = unbind(env, n);
 		return result;
 	}
 
-	assert(proc.type == E_SPECIAL);
-	switch (proc.special.id) {
+	/* assert(proc->type == E_SPECIAL); */
+	switch (proc->special.type) {
 	case S_ATOM:
 	case S_EQ:
 	case S_CAR:
@@ -97,15 +100,14 @@ struct Expression *apply(
 	case S_ADD:;
 		int total = 0;
 		for (int i = 0; i < n; i++) {
-			assert(args[i].type == E_NUMBER);
+			/* assert(args[i].type == E_NUMBER); */
 			// error: wrong type
-			total += args[i].number.n;
+			total += args[i]->number.n;
 		}
 		return new_number(total);
 	case S_SUB:
 	case S_MUL:
 	case S_DIV:
-	case S_SUB:
 		break;
 	}
 }

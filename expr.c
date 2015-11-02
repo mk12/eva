@@ -68,7 +68,7 @@ struct Expression *clone_expression(struct Expression *expr) {
 	case E_SYMBOL:
 		return new_symbol(expr->symbol.name);
 	case E_NUMBER:
-		return new_symbol(expr->number.n);
+		return new_number(expr->number.n);
 	case E_LAMBDA:;
 		int n = expr->lambda.arity;
 		char **params = malloc(n * sizeof *params);
