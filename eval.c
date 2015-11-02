@@ -2,57 +2,7 @@
 
 #include "eval.h"
 
-#include <stdlib.h>
-#include <string.h>
-
-// An Environment maps variables to values. The environment owns neither the
-// variable strings nor the expressions (it doesn't free them).
-struct Environment {
-	const char *var;
-	struct Expression *val;
-	struct Environment *rest;
-};
-
-// Looks up a variable in the environment. Returns NULL if it doesn't appear.
-struct Expression *lookup(struct Environment *env, const char *var) {
-	while (env) {
-		if (strcmp(var, env->var) == 0) {
-			return env->val;
-		}
-		env = env->rest;
-	}
-	return NULL;
-}
-
-// Binds a variable to an expression in the environment. Returns the augmented
-// environment.
-struct Environment *bind(
-		struct Environment *env, const char *var, struct Expression *val) {
-	struct Environment *head = malloc(sizeof *head);
-	head->var = var;
-	head->val = val;
-	head->rest = env;
-	return head;
-}
-
-// Unbinds the n most recently bound variables in the environment. Returns the
-// reduced environment.
-struct Environment *unbind(struct Environment *env, int n) {
-	for (int i = 0; i < n; i++) {
-		struct Environment *temp = env;
-		env = env->rest;
-		free(temp);
-	}
-	return env;
-}
-
-struct Environment *default_environment(void) {
-	struct Environment *env = NULL;
-	for (int i = 0; i < n_special_names; i++) {
-		env = bind(env, special_names[i], new_special((enum SpecialType)i));
-	}
-	return env;
-}
+#include "env.h"
 
 struct Expression *eval(struct Expression *expr, struct Environment *env) {
 	switch (expr->type) {
