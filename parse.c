@@ -40,37 +40,46 @@ static struct ParseResult parse_cons(const char *text) {
 	result.expr = NULL;
 	result.err_msg = NULL;
 	const char *s = text;
+	s += skip_whitespace(s);
+
+	if (*s == ')') {
+		s++;
+		result.expr = new_null();
+		goto END;
+	}
 
 	struct ParseResult first = parse(s);
 	s += first.chars_read;
 	if (!first.expr) {
 		result.err_msg = first.err_msg;
-	} else {
-		if (*s == '.') {
+		goto END;
+	}
+
+	if (*s == '.') {
+		s++;
+		struct ParseResult second = parse(s);
+		s += second.chars_read;
+		if (!second.expr) {
+			result.err_msg = first.err_msg;
+			goto END;
+		}
+		if (*s == ')') {
 			s++;
-			struct ParseResult second = parse(s);
-			s += second.chars_read;
-			if (!second.expr) {
-				result.err_msg = first.err_msg;
-			} else {
-				if (*s == ')') {
-					s++;
-					result.expr = new_cons(first.expr, second.expr);
-				} else {
-					result.err_msg = err_expected_rparen;
-				}
-			}
+			result.expr = new_cons(first.expr, second.expr);
 		} else {
-			struct ParseResult rest = parse_cons(s);
-			s += rest.chars_read;
-			if (!rest.expr) {
-				result.err_msg = rest.err_msg;
-			} else {
-				result.expr = new_cons(first.expr, rest.expr);
-			}
+			result.err_msg = err_expected_rparen;
+		}
+	} else {
+		struct ParseResult rest = parse_cons(s);
+		s += rest.chars_read;
+		if (!rest.expr) {
+			result.err_msg = rest.err_msg;
+		} else {
+			result.expr = new_cons(first.expr, rest.expr);
 		}
 	}
 
+END:
 	if (result.expr) {
 		s += skip_whitespace(s);
 	}
@@ -92,13 +101,9 @@ struct ParseResult parse(const char *text) {
 		break;
 	case '(':
 		s++;
-		struct ParseResult cons = parse_cons(s);
-		s += cons.chars_read;
-		if (!cons.expr) {
-			result.err_msg = cons.err_msg;
-		} else {
-			result.expr = cons.expr;
-		}
+		result = parse_cons(s);
+		s += result.chars_read;
+		break;
 	case ')':
 		result.err_msg = err_unexpected_rparen;
 		break;
@@ -106,12 +111,11 @@ struct ParseResult parse(const char *text) {
 		result.err_msg = err_improper_dot;
 		break;
 	case '#':
-		s++;
-		if (*s == 't') {
-			s++;
+		if (*(s + 1) == 't') {
+			s += 2;
 			result.expr = new_boolean(true);
-		} else if (*s == 'f') {
-			s++;
+		} else if (*(s + 1) == 'f') {
+			s += 2;
 			result.expr = new_boolean(false);
 		} else {
 			result.err_msg = err_invalid_literal;
