@@ -9,8 +9,12 @@
 #include <string.h>
 
 const SpecialProc special_procs[N_SPECIAL_PROCS] = {
-	{"atom?", 1}, {"eq?", 2}, {"car", 1}, {"cdr", 1}, {"cons", 2},
-	{"+", VAR_ARITY}, {"-", VAR_ARITY}, {"*", VAR_ARITY}, {"/", VAR_ARITY}
+	{"atom?", 1}, {"null?", 1}, {"pair?", 1}, {"number?", 1}, {"boolean?", 1},
+	{"procedure?", 1},
+	{"eq?", 2}, {"=", 2}, {"<", 2}, {">", 2}, {"<=", 2}, {">=", 2},
+	{"cons", 2}, {"car", 1}, {"cdr", 1},
+	{"+", -1}, {"-", -2}, {"*", -1}, {"/", -2}, {"remainder", 2},
+	{"not", 1}
 };
 
 struct Expression *new_cons(struct Expression *car, struct Expression *cdr) {

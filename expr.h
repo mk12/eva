@@ -16,15 +16,11 @@ enum ExpressionType {
 };
 
 enum SpecialType {
-	S_ATOM,
-	S_EQ,
-	S_CAR,
-	S_CDR,
-	S_CONS,
-	S_ADD,
-	S_SUB,
-	S_MUL,
-	S_DIV
+	S_ATOM, S_NULL, S_PAIR, S_NUMBER, S_BOOLEAN, S_PROCEDURE,
+	S_EQ, S_NUM_EQ, S_LT, S_GT, S_LE, S_GE,
+	S_CONS, S_CAR, S_CDR,
+	S_ADD, S_SUB, S_MUL, S_DIV, S_REM,
+	S_NOT
 };
 
 // A SpecialProc is a procedure implemented by the interpreter. Each expression
@@ -36,7 +32,7 @@ struct SpecialProc {
 	int arity;
 };
 
-#define N_SPECIAL_PROCS 9
+#define N_SPECIAL_PROCS 21
 
 // The special_procs array is indexed by SpecialType values.
 extern const SpecialProc special_procs[];
