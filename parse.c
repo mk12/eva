@@ -34,7 +34,7 @@ static int skip_symbol(const char *text) {
 }
 
 // Parses a cons expression, assuming the opening '(' has already been read.
-struct ParseResult parse_cons(const char *text) {
+static struct ParseResult parse_cons(const char *text) {
 	struct ParseResult result;
 	result.expr = NULL;
 	result.err_msg = NULL;

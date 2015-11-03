@@ -3,6 +3,8 @@
 #ifndef EXPR_H
 #define EXPR_H
 
+#include <stdbool.h>
+
 enum ExpressionType {
 	E_NULL,
 	E_CONS,
@@ -24,15 +26,19 @@ enum SpecialType {
 	S_DIV
 };
 
+// A SpecialProc is a procedure implemented by the interpreter. Each expression
+// of type E_SPECIAL represents on the the special procedures. Note that special
+// procedures are distinct from special forms: the latter do not follow the
+// usual evaluation rules.
 struct SpecialProc {
 	const char *name;
 	int arity;
 };
 
 #define N_SPECIAL_PROCS 9
-#define VAR_ARITY (-1)
 
-extern const SpecialProc special_procs;
+// The special_procs array is indexed by SpecialType values.
+extern const SpecialProc special_procs[];
 
 // Expression is an algebraic data type used for all terms in Scheme. Code and
 // data are both represented as expressions.
@@ -77,5 +83,9 @@ void free_expression(struct Expression *expr);
 
 // Prints the expression to standard output (not followed by a newline).
 void print_expression(struct Expression *expr);
+
+// Returns true if the expression (assumed to be a lambda expression or a
+// special expression) can be applied to n arguments. Otherwise, returns false.
+bool accepts_args(struct Expression *expr, int n);
 
 #endif
