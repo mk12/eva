@@ -10,6 +10,7 @@ enum ExpressionType {
 	E_CONS,
 	E_SYMBOL,
 	E_NUMBER,
+	E_BOOLEAN,
 	E_LAMBDA,
 	E_SPECIAL
 };
@@ -56,6 +57,9 @@ struct Expression {
 			int n;
 		} number;
 		struct {
+			bool b;
+		} boolean;
+		struct {
 			int arity;
 			char **params;
 			struct Expression *body;
@@ -71,6 +75,7 @@ struct Expression *new_cons(struct Expression *car, struct Expression *cdr);
 struct Expression *new_null(void);
 struct Expression *new_symbol(char *name);
 struct Expression *new_number(int n);
+struct Expression *new_boolean(bool b);
 struct Expression *new_lambda(
 		int arity, char **params, struct Expression *body);
 struct Expression *new_special(enum SpecialType type);

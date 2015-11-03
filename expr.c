@@ -41,6 +41,13 @@ struct Expression *new_number(int n) {
 	return expr;
 }
 
+struct Expression *new_boolean(bool b) {
+	struct Expression *expr = malloc(sizeof *expr);
+	expr->type = E_BOOLEAN;
+	expr->boolean.b = b;
+	return expr;
+}
+
 struct Expression *new_lambda(
 		int arity, char **params, struct Expression *body) {
 	struct Expression *expr = malloc(sizeof *expr);
@@ -70,6 +77,8 @@ struct Expression *clone_expression(struct Expression *expr) {
 		return new_symbol(expr->symbol.name);
 	case E_NUMBER:
 		return new_number(expr->number.n);
+	case E_BOOLEAN:
+		return new_boolean(expr->boolean.b);
 	case E_LAMBDA:;
 		int n = expr->lambda.arity;
 		char **params = malloc(n * sizeof *params);
@@ -137,6 +146,9 @@ void print_expression(struct Expression *expr) {
 		break;
 	case E_NUMBER:
 		printf("%d", expr->number.n);
+		break;
+	case E_BOOLEAN:
+		printf("#%c", expr->boolean.b ? 't' : 'f');
 		break;
 	case E_LAMBDA:
 		printf("#<%p>", expr->lambda.body);
