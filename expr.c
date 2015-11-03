@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int n_special_names = 9;
-const char *special_names[9] = {
-	"atom?", "eq?", "car", "cdr", "cons", "add", "sub", "mul", "div"
+const SpecialProc special_procs[N_SPECIAL_PROCS] = {
+	{"atom?", 1}, {"eq?", 2}, {"car", 1}, {"cdr", 1}, {"cons", 2},
+	{"+", VAR_ARITY}, {"-", VAR_ARITY}, {"*", VAR_ARITY}, {"/", VAR_ARITY}
 };
 
 struct Expression *new_cons(struct Expression *car, struct Expression *cdr) {
@@ -141,7 +141,7 @@ void print_expression(struct Expression *expr) {
 		printf("#<%p>", expr->lambda.body);
 		break;
 	case E_SPECIAL:
-		printf("#<%s>", special_names[expr->special.type]);
+		printf("#<%s>", special_procs[expr->special.type].name);
 		break;
 	}
 }
