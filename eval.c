@@ -6,10 +6,15 @@
 
 #include <stdlib.h>
 
+// Evaluation error messages.
+static const char *err_not_proc = "operator is not a procedure";
+static const char *err_arity = "wrong number of arguments passed to procedure";
+
 struct EvalResult eval(struct Expression *expr, struct Environment *env) {
 	struct EvalResult result;
 	result.expr = NULL;
 	result.err_msg = NULL;
+
 	switch (expr->type) {
 	case E_CONS:
 		// CHECK SPECIAL FORMS
@@ -29,6 +34,8 @@ struct EvalResult eval(struct Expression *expr, struct Environment *env) {
 		result.expr = clone_expression(expr);
 		break;
 	}
+
+	return result;
 }
 
 struct EvalResult apply(
@@ -40,40 +47,46 @@ struct EvalResult apply(
 	result.expr = NULL;
 	result.err_msg = NULL;
 
-	if (proc->type == E_LAMBDA) {
-		/* assert(proc.lambda.arity == n); */
-		// error: wrong number of arguments
+	switch (proc->type) {
+	case E_LAMBDA:
+		if (n != proc->lambda.arity) {
+			result.err_msg = err_arity;
+			break;
+		}
 		for (int i = 0; i < n; i++) {
 			env = bind(env, proc->lambda.params[i], args[i]);
 		}
-		struct EvalResult res = eval(proc->lambda.body, env);
-		env = unbind(env, n);
-		if (!res.expr) {
-			result.err_msg = res.err_msg;
-		} else {
-			result.expr = res.expr;
+		result = eval(proc->lambda.body, env);
+		unbind(env, n);
+		break;
+	case E_SPECIAL:
+		if (n != special_procs[proc->special.type].arity) {
+			result.err_msg = err_arity;
+			break;
 		}
-		return result;
-	}
-
-	/* assert(proc->type == E_SPECIAL); */
-	switch (proc->special.type) {
-	case S_ATOM:
-	case S_EQ:
-	case S_CAR:
-	case S_CDR:
-	case S_CONS:
-	case S_ADD:;
-		int total = 0;
-		for (int i = 0; i < n; i++) {
-			/* assert(args[i].type == E_NUMBER); */
-			// error: wrong type
-			total += args[i]->number.n;
+		switch (proc->special.type) {
+		case S_ATOM:
+		case S_EQ:
+		case S_CAR:
+		case S_CDR:
+		case S_CONS:
+		case S_ADD:;
+			int total = 0;
+			for (int i = 0; i < n; i++) {
+				if (args[i]->type != E_NUMBER) {
+					// err_msg
+				}
+				total += args[i]->number.n;
+			}
+			result.expr = new_number(total);
+		case S_SUB:
+		case S_MUL:
+		case S_DIV:
+			break;
 		}
-		result.expr = new_number(total);
-	case S_SUB:
-	case S_MUL:
-	case S_DIV:
+		break;
+	default:
+		result.err_msg = err_not_proc;
 		break;
 	}
 
