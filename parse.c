@@ -14,6 +14,7 @@ static const char *err_unexpected_eoi = "unexpected end of input";
 static const char *err_expected_rparen = "expected character ')'";
 static const char *err_unexpected_rparen = "unexpected character ')'";
 static const char *err_improper_dot = "improperly placed dot";
+static const char *err_invalid_literal = "invalid literal beginning with '#'";
 
 // Returns the number of leading whitespace characters in text.
 static int skip_whitespace(const char *text) {
@@ -103,6 +104,18 @@ struct ParseResult parse(const char *text) {
 		break;
 	case '.':
 		result.err_msg = err_improper_dot;
+		break;
+	case '#':
+		s++;
+		if (*s == 't') {
+			s++;
+			result.expr = new_boolean(true);
+		} else if (*s == 'f') {
+			s++;
+			result.expr = new_boolean(false);
+		} else {
+			result.err_msg = err_invalid_literal;
+		}
 		break;
 	default:;
 		int len = skip_symbol(s);
