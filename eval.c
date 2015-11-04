@@ -16,7 +16,7 @@ struct EvalResult eval(struct Expression *expr, struct Environment *env) {
 	result.err_msg = NULL;
 
 	switch (expr->type) {
-	case E_CONS:
+	case E_PAIR:
 		// CHECK SPECIAL FORMS
 		// - "quote" -> ...
 		// - "lambda" -> ...

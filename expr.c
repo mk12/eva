@@ -17,11 +17,11 @@ const struct SpecialProc special_procs[N_SPECIAL_PROCS] = {
 	{"not", 1}
 };
 
-struct Expression *new_cons(struct Expression *car, struct Expression *cdr) {
+struct Expression *new_pair(struct Expression *car, struct Expression *cdr) {
 	struct Expression *expr = malloc(sizeof *expr);
-	expr->type = E_CONS;
-	expr->cons.car = car;
-	expr->cons.cdr = cdr;
+	expr->type = E_PAIR;
+	expr->pair.car = car;
+	expr->pair.cdr = cdr;
 	return expr;
 }
 
@@ -73,10 +73,10 @@ struct Expression *clone_expression(struct Expression *expr) {
 	switch (expr->type) {
 	case E_NULL:
 		return new_null();
-	case E_CONS:
-		return new_cons(
-				clone_expression(expr->cons.car),
-				clone_expression(expr->cons.cdr));
+	case E_PAIR:
+		return new_pair(
+				clone_expression(expr->pair.car),
+				clone_expression(expr->pair.cdr));
 	case E_SYMBOL:
 		return new_symbol(expr->symbol.name);
 	case E_NUMBER:
@@ -97,9 +97,9 @@ struct Expression *clone_expression(struct Expression *expr) {
 
 void free_expression(struct Expression *expr) {
 	switch (expr->type) {
-	case E_CONS:
-		free_expression(expr->cons.car);
-		free_expression(expr->cons.cdr);
+	case E_PAIR:
+		free_expression(expr->pair.car);
+		free_expression(expr->pair.cdr);
 		break;
 	case E_SYMBOL:
 		free(expr->symbol.name);
@@ -116,21 +116,21 @@ void free_expression(struct Expression *expr) {
 	free(expr);
 }
 
-static void print_cons(struct Expression *expr, bool first) {
+static void print_pair(struct Expression *expr, bool first) {
 	if (!first) {
 		putchar(' ');
 	}
-	print_expression(expr->cons.car);
-	switch (expr->cons.cdr->type) {
+	print_expression(expr->pair.car);
+	switch (expr->pair.cdr->type) {
 	case E_NULL:
 		putchar(')');
 		break;
-	case E_CONS:
-		print_cons(expr->cons.cdr, false);
+	case E_PAIR:
+		print_pair(expr->pair.cdr, false);
 		break;
 	default:
 		fputs(" . ", stdout);
-		print_expression(expr->cons.cdr);
+		print_expression(expr->pair.cdr);
 		putchar(')');
 		break;
 	}
@@ -141,9 +141,9 @@ void print_expression(struct Expression *expr) {
 	case E_NULL:
 		fputs("()", stdout);
 		break;
-	case E_CONS:
+	case E_PAIR:
 		putchar('(');
-		print_cons(expr, true);
+		print_pair(expr, true);
 		break;
 	case E_SYMBOL:
 		fputs(expr->symbol.name, stdout);

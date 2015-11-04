@@ -34,8 +34,8 @@ static int skip_symbol(const char *text) {
 	return text - s;
 }
 
-// Parses a cons expression, assuming the opening '(' has already been read.
-static struct ParseResult parse_cons(const char *text) {
+// Parses a pair, assuming the opening '(' has already been read.
+static struct ParseResult parse_pair(const char *text) {
 	struct ParseResult result;
 	result.expr = NULL;
 	result.err_msg = NULL;
@@ -68,15 +68,15 @@ static struct ParseResult parse_cons(const char *text) {
 			goto END;
 		}
 		s++;
-		result.expr = new_cons(first.expr, second.expr);
+		result.expr = new_pair(first.expr, second.expr);
 	} else {
-		struct ParseResult rest = parse_cons(s);
+		struct ParseResult rest = parse_pair(s);
 		s += rest.chars_read;
 		if (!rest.expr) {
 			result.err_msg = rest.err_msg;
 			goto END;
 		}
-		result.expr = new_cons(first.expr, rest.expr);
+		result.expr = new_pair(first.expr, rest.expr);
 	}
 
 END:
@@ -98,7 +98,7 @@ struct ParseResult parse(const char *text) {
 		break;
 	case '(':
 		s++;
-		result = parse_cons(s);
+		result = parse_pair(s);
 		s += result.chars_read;
 		break;
 	case ')':

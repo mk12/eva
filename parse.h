@@ -11,9 +11,9 @@ struct ParseResult {
 	const char *err_msg;
 };
 
-// Parses a string as an s-expression (an expression that contains only cons
-// cells and symbols). If the string cannot be parsed, stores NULL in the expr
-// field and provides an error message.
+// Parses a string as an s-expression (an expression that contains only pairs
+// and symbols). If the string cannot be parsed, stores NULL in the expr field
+// and provides an error message.
 struct ParseResult parse(const char *text);
 
 #endif

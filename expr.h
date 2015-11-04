@@ -7,7 +7,7 @@
 
 enum ExpressionType {
 	E_NULL,
-	E_CONS,
+	E_PAIR,
 	E_SYMBOL,
 	E_NUMBER,
 	E_BOOLEAN,
@@ -45,7 +45,7 @@ struct Expression {
 		struct {
 			struct Expression *car;
 			struct Expression *cdr;
-		} cons;
+		} pair;
 		struct {
 			char *name;
 		} symbol;
@@ -67,7 +67,7 @@ struct Expression {
 };
 
 // Constructor functions for expressions.
-struct Expression *new_cons(struct Expression *car, struct Expression *cdr);
+struct Expression *new_pair(struct Expression *car, struct Expression *cdr);
 struct Expression *new_null(void);
 struct Expression *new_symbol(char *name);
 struct Expression *new_number(int n);
