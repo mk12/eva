@@ -35,7 +35,7 @@ struct SpecialProc {
 #define N_SPECIAL_PROCS 21
 
 // The special_procs array is indexed by SpecialType values.
-extern const SpecialProc special_procs[];
+extern const struct SpecialProc special_procs[N_SPECIAL_PROCS];
 
 // Expression is an algebraic data type used for all terms in Scheme. Code and
 // data are both represented as expressions.

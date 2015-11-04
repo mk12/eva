@@ -45,8 +45,8 @@ struct Environment *unbind(struct Environment *env, int n) {
 
 struct Environment *default_environment(void) {
 	struct Environment *env = NULL;
-	for (int i = 0; i < n_special_names; i++) {
-		env = bind(env, special_names[i], new_special((enum SpecialType)i));
+	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
+		env = bind(env, special_procs[i].name, new_special(i));
 	}
 	return env;
 }

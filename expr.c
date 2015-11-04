@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const SpecialProc special_procs[N_SPECIAL_PROCS] = {
+const struct SpecialProc special_procs[N_SPECIAL_PROCS] = {
 	{"atom?", 1}, {"null?", 1}, {"pair?", 1}, {"number?", 1}, {"boolean?", 1},
 	{"procedure?", 1},
 	{"eq?", 2}, {"=", 2}, {"<", 2}, {">", 2}, {"<=", 2}, {">=", 2},
