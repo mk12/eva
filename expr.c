@@ -162,19 +162,3 @@ void print_expression(struct Expression *expr) {
 		break;
 	}
 }
-
-bool accepts_args(struct Expression *expr, int n) {
-	int arity;
-	if (expr->type == E_LAMBDA) {
-		arity = expr->lambda.arity;
-	} else {
-		assert(expr->type == E_SPECIAL);
-		arity = special_procs[expr->special.type].arity;
-	}
-
-	if (arity >= 0) {
-		return n == arity;
-	} else {
-		return n >= -(arity + 1);
-	}
-}
