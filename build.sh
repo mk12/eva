@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cc -Os main.c eval.c parse.c -o eva
+cc -Os main.c env.c eval.c expr.c parse.c -o eva
