@@ -16,7 +16,7 @@ enum ExpressionType {
 };
 
 enum SpecialType {
-	S_ATOM, S_NULL, S_PAIR, S_NUMBER, S_BOOLEAN, S_PROCEDURE,
+	S_NULL, S_PAIR, S_NUMBER, S_BOOLEAN, S_PROCEDURE,
 	S_EQ, S_NUM_EQ, S_LT, S_GT, S_LE, S_GE,
 	S_CONS, S_CAR, S_CDR,
 	S_ADD, S_SUB, S_MUL, S_DIV, S_REM,
@@ -32,7 +32,7 @@ struct SpecialProc {
 	int arity;
 };
 
-#define N_SPECIAL_PROCS 21
+#define N_SPECIAL_PROCS 20
 
 // The special_procs array is indexed by SpecialType values.
 extern const struct SpecialProc special_procs[N_SPECIAL_PROCS];
