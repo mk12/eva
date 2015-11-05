@@ -26,12 +26,18 @@ struct Expression *lookup(struct Environment *env, const char *var) {
 }
 
 struct Environment *bind(
-		struct Environment *env, const char *var, struct Expression *val) {
-	struct Environment *head = malloc(sizeof *head);
-	head->var = var;
-	head->val = val;
-	head->rest = env;
-	return head;
+		struct Environment *env,
+		const char **vars,
+		struct Expression **vals,
+		int n) {
+	for (int i = 0; i < n; i++) {
+		struct Environment *head = malloc(sizeof *head);
+		head->var = vars[i];
+		head->val = vals[i];
+		head->rest = env;
+		env = head;
+	}
+	return env;
 }
 
 struct Environment *unbind(struct Environment *env, int n) {

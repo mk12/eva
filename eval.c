@@ -175,9 +175,7 @@ static struct EvalResult apply(
 	}
 
 	if (proc->type == E_LAMBDA) {
-		for (int i = 0; i < n; i++) {
-			env = bind(env, proc->lambda.params[i], args[i]);
-		}
+		env = bind(env, proc->lambda.params, args, n);
 		result = eval(proc->lambda.body, env);
 		unbind(env, n);
 		return result;
