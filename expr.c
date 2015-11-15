@@ -17,6 +17,38 @@ const struct SpecialProc special_procs[N_SPECIAL_PROCS] = {
 	{"not", 1}
 };
 
+static const struct Expression expr_null = { .type = E_NULL };
+
+static const struct Expression expr_boolean[2] = {
+	{ .type = E_BOOLEAN, .boolean = { false } },
+	{ .type = E_BOOLEAN, .boolean = { true } }
+};
+
+static const struct Expression expr_special[N_SPECIAL_PROCS] = {
+	{ .type = E_SPECIAL, .special = { S_NULL } },
+	{ .type = E_SPECIAL, .special = { S_PAIR } },
+	{ .type = E_SPECIAL, .special = { S_NUMBER } },
+	{ .type = E_SPECIAL, .special = { S_BOOLEAN } },
+	{ .type = E_SPECIAL, .special = { S_PROCEDURE } },
+	{ .type = E_SPECIAL, .special = { S_EQ } },
+	{ .type = E_SPECIAL, .special = { S_NUM_EQ } },
+	{ .type = E_SPECIAL, .special = { S_LT } },
+	{ .type = E_SPECIAL, .special = { S_GT } },
+	{ .type = E_SPECIAL, .special = { S_LE } },
+	{ .type = E_SPECIAL, .special = { S_GE } },
+	{ .type = E_SPECIAL, .special = { S_CONS } },
+	{ .type = E_SPECIAL, .special = { S_CAR } },
+	{ .type = E_SPECIAL, .special = { S_CDR } },
+	{ .type = E_SPECIAL, .special = { S_ADD } },
+	{ .type = E_SPECIAL, .special = { S_SUB } },
+	{ .type = E_SPECIAL, .special = { S_MUL } },
+	{ .type = E_SPECIAL, .special = { S_DIV } },
+	{ .type = E_SPECIAL, .special = { S_REM } },
+	{ .type = E_SPECIAL, .special = { S_NOT } },
+};
+
+// global symbol table
+
 struct Expression *new_pair(struct Expression *car, struct Expression *cdr) {
 	struct Expression *expr = malloc(sizeof *expr);
 	expr->type = E_PAIR;
@@ -26,9 +58,7 @@ struct Expression *new_pair(struct Expression *car, struct Expression *cdr) {
 }
 
 struct Expression *new_null(void) {
-	struct Expression *expr = malloc(sizeof *expr);
-	expr->type = E_NULL;
-	return expr;
+	return &expr_null;
 }
 
 struct Expression *new_symbol(char *name) {
@@ -46,10 +76,7 @@ struct Expression *new_number(int n) {
 }
 
 struct Expression *new_boolean(bool b) {
-	struct Expression *expr = malloc(sizeof *expr);
-	expr->type = E_BOOLEAN;
-	expr->boolean.b = b;
-	return expr;
+	return expr_boolean + b;
 }
 
 struct Expression *new_lambda(
@@ -63,10 +90,7 @@ struct Expression *new_lambda(
 }
 
 struct Expression *new_special(enum SpecialType type) {
-	struct Expression *expr = malloc(sizeof *expr);
-	expr->type = E_SPECIAL;
-	expr->special.type = type;
-	return expr;
+	return expr_special + type;
 }
 
 struct Expression *clone_expression(struct Expression *expr) {

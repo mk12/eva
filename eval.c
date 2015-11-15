@@ -13,6 +13,8 @@ static const char *err_not_num = "expected operand to be a number";
 static const char *err_not_bool = "expected operand to be a boolean";
 static const char *err_not_pair = "expected operand to be a pair";
 
+// TODO: array of macro names (so you can't (define lambda 5)).
+
 // Returns NULL if the procedure accepts n arguments. Returns an error message
 // otherwise. Assumes proc is a lambda expression or special expression.
 static const char *check_arg_count(struct Expression *proc, int n) {
@@ -106,6 +108,7 @@ static struct Expression *apply_special(
 		enum ExpressionType t = args[0]->type;
 		return new_boolean(t == E_LAMBDA || t == E_SPECIAL);
 	case S_EQ:
+		return args[0] == args[1];
 	case S_NUM_EQ:
 		return new_boolean(args[0]->number.n == args[1]->number.n);
 	case S_LT:
@@ -117,11 +120,11 @@ static struct Expression *apply_special(
 	case S_GE:
 		return new_boolean(args[0]->number.n >= args[1]->number.n);
 	case S_CONS:
-		return new_pair(clone_expression(args[0]), clone_expression(args[1]));
+		return new_pair(args[0], args[1]);
 	case S_CAR:
-		return clone_expression(args[0]->pair.car);
+		return args[0]->pair.car;
 	case S_CDR:
-		return clone_expression(args[0]->pair.cdr);
+		return args[0]->pair.cdr;
 	case S_ADD:;
 		int sum = 0;
 		for (int i = 0; i < n; i++) {

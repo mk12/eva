@@ -41,6 +41,7 @@ extern const struct SpecialProc special_procs[N_SPECIAL_PROCS];
 // data are both represented as expressions.
 struct Expression {
 	enum ExpressionType type;
+	int ref_count; // TODO: use this
 	union {
 		struct {
 			struct Expression *car;
@@ -84,9 +85,5 @@ void free_expression(struct Expression *expr);
 
 // Prints the expression to standard output (not followed by a newline).
 void print_expression(struct Expression *expr);
-
-// Returns true if the expression (assumed to be a lambda expression or a
-// special expression) can be applied to n arguments. Otherwise, returns false.
-bool accepts_args(struct Expression *expr, int n);
 
 #endif
