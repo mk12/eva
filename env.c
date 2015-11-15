@@ -8,10 +8,9 @@
 #include <string.h>
 
 // An Environment maps variables to values. It is implemented as a linked list.
-// It has no memory ownership of its variable strings or its expressions.
 struct Environment {
-	const char *var;
-	struct Expression *val;
+	int hash;
+	struct Expression expr;
 	struct Environment *rest;
 };
 

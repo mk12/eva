@@ -6,14 +6,15 @@
 struct Environment;
 struct Expression;
 
-// Looks up a variable in the environment. Returns NULL if it doesn't appear.
-struct Expression *lookup(struct Environment *env, const char *var);
+// Looks up a variable in the environment by its identifier. Returns NULL if it
+// doesn't appear.
+struct Expression *lookup(struct Environment *env, int id);
 
 // Binds n variables to their respective expressions in the environment. Returns
 // the augmented environment.
 struct Environment *bind(
 		struct Environment *env,
-		const char **vars,
+		int *vars,
 		struct Expression **vals,
 		int n);
 
