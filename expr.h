@@ -67,7 +67,7 @@ const char *special_name(enum SpecialType type);
 
 // Constructor functions for expressions.
 struct Expression new_null(void);
-struct Expression new_symbol(const char *name);
+struct Expression new_symbol(int id);
 struct Expression new_number(int n);
 struct Expression new_boolean(bool b);
 struct Expression new_special(enum SpecialType type);

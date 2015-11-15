@@ -7,17 +7,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-// An Environment maps variables to values. It is implemented as a linked list.
+// An Environment maps variables (integer identifiers) to expressions. It is
+// implemented as a linked list.
 struct Environment {
-	int hash;
+	int id;
 	struct Expression expr;
 	struct Environment *rest;
 };
 
-struct Expression *lookup(struct Environment *env, const char *var) {
+struct Expression lookup(struct Environment *env, int id) {
 	while (env) {
-		if (strcmp(var, env->var) == 0) {
-			return env->val;
+		if (env->id == id) {
+			return env->expr;
 		}
 		env = env->rest;
 	}
@@ -26,15 +27,16 @@ struct Expression *lookup(struct Environment *env, const char *var) {
 
 struct Environment *bind(
 		struct Environment *env,
-		const char **vars,
-		struct Expression **vals,
+		int *ids,
+		struct Expression *exprs,
 		int n) {
 	for (int i = 0; i < n; i++) {
 		struct Environment *head = malloc(sizeof *head);
-		head->var = vars[i];
-		head->val = vals[i];
+		head->id = ids[i];
+		head->expr = exprs[i];
 		head->rest = env;
 		env = head;
+		// reference count
 	}
 	return env;
 }
@@ -44,6 +46,7 @@ struct Environment *unbind(struct Environment *env, int n) {
 		struct Environment *temp = env;
 		env = env->rest;
 		free(temp);
+		// reference count
 	}
 	return env;
 }

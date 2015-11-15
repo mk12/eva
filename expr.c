@@ -29,8 +29,8 @@ struct Expression new_null(void) {
 	return { .type = E_NULL };
 }
 
-struct Expression new_symbol(char *name) {
-	return { .type = E_SYMBOL, .symbol = name };
+struct Expression new_symbol(int id) {
+	return { .type = E_SYMBOL, .symbol_id = id };
 }
 
 struct Expression new_number(int n) {
@@ -52,7 +52,7 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	return { .type = E_PAIR, .box = box };
 }
 
-struct Expression new_lambda(int arity, char **params, struct Expression body) {
+struct Expression new_lambda(int arity, int *params, struct Expression body) {
 	struct Expression *box = malloc(sizeof *box);
 	box->lambda.arity = arity;
 	box->lambda.params = params;
@@ -64,15 +64,15 @@ struct Expression clone_expression(struct Expression expr) {
 	switch (expr.type) {
 	case E_PAIR:
 		return new_pair(
-				clone_expression(expr->box.pair.car),
-				clone_expression(expr->box.pair.cdr));
+				clone_expression(expr.box->pair.car),
+				clone_expression(expr.box->pair.cdr));
 	case E_LAMBDA:;
-		int n = expr->box.lambda.arity;
-		char **params = malloc(n * sizeof *params);
+		int n = expr.box->lambda.arity;
+		int *params = malloc(n * sizeof *params);
 		for (int i = 0; i < n; i++) {
-			params[i] = strdup(expr->lambda.params[i]);
+			params[i] = expr->box.lambda.params[i];
 		}
-		return new_lambda(n, params, clone_expression(expr->lambda.body));
+		return new_lambda(n, params, clone_expression(expr.box->lambda.body));
 	default:
 		return expr;
 	}
@@ -81,39 +81,35 @@ struct Expression clone_expression(struct Expression expr) {
 void free_expression(struct Expression expr) {
 	switch (expr.type) {
 	case E_PAIR:
-		free_expression(expr->pair.car);
-		free_expression(expr->pair.cdr);
-		break;
-	case E_SYMBOL:
-		free(expr->symbol.name);
+		free_expression(expr.box->pair.car);
+		free_expression(expr.box->pair.cdr);
+		free(expr.box);
 		break;
 	case E_LAMBDA:
-		for (int i = 0; i < expr->lambda.arity; i++) {
-			free(expr->lambda.params[i]);
-		}
-		free(expr->lambda.params);
-		free_expression(expr->lambda.body);
+		free(expr.box->lambda.params);
+		free_expression(expr.box->lambda.body);
+		free(expr.box);
+		break;
 	default:
 		break;
 	}
-	free(expr);
 }
 
 static void print_pair(struct Box *box, bool first) {
 	if (!first) {
 		putchar(' ');
 	}
-	print_expression(expr->pair.car);
-	switch (expr->pair.cdr->type) {
+	print_expression(box->pair.car);
+	switch (box->pair.cdr.type) {
 	case E_NULL:
 		putchar(')');
 		break;
 	case E_PAIR:
-		print_pair(expr->pair.cdr, false);
+		print_pair(box->pair.cdr.box, false);
 		break;
 	default:
 		fputs(" . ", stdout);
-		print_expression(expr->pair.cdr);
+		print_expression(box->pair.cdr);
 		putchar(')');
 		break;
 	}
@@ -129,7 +125,7 @@ void print_expression(struct Expression expr) {
 		print_pair(expr.box, true);
 		break;
 	case E_SYMBOL:
-		fputs(expr->symbol.name, stdout);
+		fputs(find_string(expr.symbol_id), stdout);
 		break;
 	case E_NUMBER:
 		printf("%d", expr.number);
