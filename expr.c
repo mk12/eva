@@ -79,7 +79,7 @@ static void dealloc_expression(struct Expression expr) {
 	}
 }
 
-void retain_expression(struct Expression expr) {
+struct Expression retain_expression(struct Expression expr) {
 	switch (expr.type) {
 	case E_PAIR:
 	case E_LAMBDA:
@@ -88,6 +88,7 @@ void retain_expression(struct Expression expr) {
 	default:
 		break;
 	}
+	return expr;
 }
 
 void release_expression(struct Expression expr) {

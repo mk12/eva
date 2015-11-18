@@ -76,10 +76,12 @@ struct Expression new_special(enum SpecialType type);
 struct Expression new_pair(struct Expression car, struct Expression cdr);
 struct Expression new_lambda(int arity, int *params, struct Expression body);
 
-// Increments (retain) or decrements (release) the reference count of the box.
-// This is a no-op for immediate expressions. If the reference count reaches
-// zero, the box will be deallocated.
-void retain_expression(struct Expression expr);
+// Increments the reference count of the box. This is a no-op for immediates.
+// Returns the expression for convenience.
+struct Expression retain_expression(struct Expression expr);
+
+// Decrements the reference count of the box. This is a no-op for immediates.
+// Also deallocates the expression if the reference count reaches zero.
 void release_expression(struct Expression expr);
 
 // Returns a deep copy of the expression by recursively created new boxes. Does
