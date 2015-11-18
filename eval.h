@@ -8,12 +8,12 @@
 struct Environment;
 
 struct EvalResult {
-	struct Expression *expr;
+	struct Expression expr;
 	const char *err_msg;
 };
 
 // Evaluates the expression in the given environment. If it can't be evaluated,
 // stores NULL in the expr field and provides an error message.
-struct EvalResult eval(struct Expression *expr, struct Environment *env);
+struct EvalResult eval(struct Expression expr, struct Environment *env);
 
 #endif
