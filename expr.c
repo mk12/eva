@@ -2,16 +2,18 @@
 
 #include "expr.h"
 
+#include "intern.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-const struct { const char *name, int arity } special_procs[N_SPECIAL_PROCS] = {
+const struct { const char *name; int arity; } special_procs[N_SPECIAL_PROCS] = {
 	{"eval", 1}, {"apply", 2},
 	{"null?", 1}, {"symbol?", 1}, {"number?", 1}, {"boolean?", 1},
-	{"procedure?", 1}, {"pair?", 1},
+	{"pair?", 1}, {"procedure?", 1},
 	{"eq?", 2},
 	{"=", 2}, {"<", 2}, {">", 2}, {"<=", 2}, {">=", 2},
 	{"cons", 2}, {"car", 1}, {"cdr", 1},
@@ -28,23 +30,23 @@ const char *special_name(enum SpecialType type) {
 }
 
 struct Expression new_null(void) {
-	return { .type = E_NULL };
+	return (struct Expression){ .type = E_NULL };
 }
 
 struct Expression new_symbol(int id) {
-	return { .type = E_SYMBOL, .symbol_id = id };
+	return (struct Expression){ .type = E_SYMBOL, .symbol_id = id };
 }
 
 struct Expression new_number(int n) {
-	return { .type = E_NUMBER, .number = n };
+	return (struct Expression){ .type = E_NUMBER, .number = n };
 }
 
 struct Expression new_boolean(bool b) {
-	return { .type = E_BOOL, .boolean = b };
+	return (struct Expression){ .type = E_BOOLEAN, .boolean = b };
 }
 
 struct Expression new_special(enum SpecialType type) {
-	return { .type = E_SPECIAL, .special_type = type };
+	return (struct Expression){ .type = E_SPECIAL, .special_type = type };
 }
 
 struct Expression new_pair(struct Expression car, struct Expression cdr) {
@@ -52,16 +54,16 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	box->ref_count = 1;
 	box->pair.car = car;
 	box->pair.cdr = cdr;
-	return { .type = E_PAIR, .box = box };
+	return (struct Expression){ .type = E_PAIR, .box = box };
 }
 
 struct Expression new_lambda(int arity, int *params, struct Expression body) {
-	struct Expression *box = malloc(sizeof *box);
+	struct Box *box = malloc(sizeof *box);
 	box->ref_count = 1;
 	box->lambda.arity = arity;
 	box->lambda.params = params;
 	box->lambda.body = retain_expression(body);
-	return { .type = E_LAMBDA, .box = box };
+	return (struct Expression){ .type = E_LAMBDA, .box = box };
 }
 
 static void dealloc_expression(struct Expression expr) {
@@ -117,7 +119,7 @@ struct Expression clone_expression(struct Expression expr) {
 		int n = expr.box->lambda.arity;
 		int *params = malloc(n * sizeof *params);
 		for (int i = 0; i < n; i++) {
-			params[i] = expr->box.lambda.params[i];
+			params[i] = expr.box->lambda.params[i];
 		}
 		return new_lambda(n, params, clone_expression(expr.box->lambda.body));
 	default:

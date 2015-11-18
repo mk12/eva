@@ -27,7 +27,7 @@ enum SpecialType {
 	// Eval and apply:
 	S_EVAL, S_APPLY,
 	// Type predicates:
-	S_NULL, S_SYMBOL, S_NUMBER, S_BOOLEAN, S_PROCEDURE, S_PAIR,
+	S_NULL, S_SYMBOL, S_NUMBER, S_BOOLEAN, S_PAIR, S_PROCEDURE,
 	// Equality (identity):
 	S_EQ,
 	// Numeric comparisons:

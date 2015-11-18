@@ -4,35 +4,37 @@
 
 #include "env.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 // Evaluation error messages.
-static const char *err_not_proc = "operator is not a procedure";
+static const char *err_op_not_proc = "operator is not a procedure";
 static const char *err_arity = "wrong number of arguments passed to procedure";
 static const char *err_not_num = "expected operand to be a number";
 static const char *err_not_bool = "expected operand to be a boolean";
+static const char *err_not_proc = "expected operand to be a procedure";
 static const char *err_not_pair = "expected operand to be a pair";
 
 // Names of special forms.
-static const char *special_form_names = {
+static const char *special_form_names[] = {
 	"define", "lambda", "quote", "cond", "if", "and", "or"
 };
 
 // Returns NULL if the procedure accepts n arguments. Returns an error message
-// otherwise. Assumes proc is a lambda expression or special expression.
+// otherwise. Assumes proc is a procedure.
 static const char *check_arg_count(struct Expression proc, int n) {
 	int arity;
-	if (proc.type == E_LAMBDA) {
-		arity = proc.box->lambda.arity;
-	} else {
-		assert(proc.type == E_SPECIAL);
+	if (proc.type == E_SPECIAL) {
 		arity = special_arity(proc.special_type);
+	} else {
+		assert(proc.type == E_LAMBDA);
+		arity = proc.box->lambda.arity;
 	}
 
 	if (arity >= 0) {
-		return n == arity;
+		return n == arity ? NULL : err_arity;
 	} else {
-		return n >= -(arity + 1);
+		return n >= -(arity + 1) ? NULL : err_arity;
 	}
 }
 
@@ -41,9 +43,11 @@ static const char *check_arg_count(struct Expression proc, int n) {
 static const char *check_arg_types(
 		enum SpecialType type, struct Expression *args, int n) {
 	switch (type) {
-	case S_CAR:
-	case S_CDR:
-		if (args[0].type != E_PAIR) {
+	case S_APPLY:
+		if (args[0].type != E_SPECIAL && args[0].type != E_LAMBDA) {
+			return err_not_proc;
+		}
+		if (args[1].type != E_PAIR) {
 			return err_not_pair;
 		}
 		break;
@@ -63,6 +67,13 @@ static const char *check_arg_types(
 			}
 		}
 		break;
+	case S_EVAL:
+	case S_CAR:
+	case S_CDR:
+		if (args[0].type != E_PAIR) {
+			return err_not_pair;
+		}
+		break;
 	case S_NOT:
 		if (args[0].type != E_BOOLEAN) {
 			return err_not_bool;
@@ -78,10 +89,10 @@ static const char *check_arg_types(
 // message otherwise (including the case where proc is not a procedure).
 static const char *check_application(
 		struct Expression proc, struct Expression *args, int n) {
-	bool lambda = proc.type == E_LAMBDA;
 	bool special = proc.type == E_SPECIAL;
-	if (!lambda && !special) {
-		return err_not_proc;
+	bool lambda = proc.type == E_LAMBDA;
+	if (!special && !lambda) {
+		return err_op_not_proc;
 	}
 
 	const char *err_msg = check_arg_count(proc, n);
@@ -99,19 +110,43 @@ static const char *check_application(
 static struct Expression apply_special(
 		enum SpecialType type, struct Expression *args, int n) {
 	switch (type) {
+	case S_EVAL:
+		// TODO:
+	case S_APPLY:
+		// TODO:
 	case S_NULL:
 		return new_boolean(args[0].type == E_NULL);
-	case S_PAIR:
-		return new_boolean(args[0].type == E_PAIR);
+	case S_SYMBOL:
+		return new_boolean(args[0].type == E_SYMBOL);
 	case S_NUMBER:
 		return new_boolean(args[0].type == E_NUMBER);
 	case S_BOOLEAN:
 		return new_boolean(args[0].type == E_BOOLEAN);
+	case S_PAIR:
+		return new_boolean(args[0].type == E_PAIR);
 	case S_PROCEDURE:;
 		enum ExpressionType t = args[0].type;
 		return new_boolean(t == E_LAMBDA || t == E_SPECIAL);
-	case S_EQ:
-		return args[0] == args[1];
+	case S_EQ:;
+		if (args[0].type != args[1].type) {
+			return new_boolean(false);
+		}
+		switch (args[0].type) {
+			case E_NULL:
+				return new_boolean(true);
+			case E_SYMBOL:
+				return new_boolean(args[0].symbol_id == args[1].symbol_id);
+			case E_NUMBER:
+				return new_boolean(args[0].number == args[1].number);
+			case E_BOOLEAN:
+				return new_boolean(args[0].boolean == args[1].boolean);
+			case E_SPECIAL:
+				return new_boolean(
+						args[0].special_type == args[1].special_type);
+			case E_PAIR:
+			case E_LAMBDA:
+				return new_boolean(args[0].box == args[1].box);
+		}
 	case S_NUM_EQ:
 		return new_boolean(args[0].number == args[1].number);
 	case S_LT:
@@ -151,8 +186,7 @@ static struct Expression apply_special(
 		return new_number(prod);
 	case S_DIV:
 		if (n == 1) {
-			result.expr = new_number(1 / args[0].number);
-			break;
+			return new_number(1 / args[0].number);
 		}
 		int quot = args[0].number;
 		for (int i = 1; i < n; i++) {
@@ -167,37 +201,34 @@ static struct Expression apply_special(
 	}
 }
 
-// Applies a procedure to arguments.
+// Applies a procedure to arguments. Assumes proc is a procedure.
 static struct EvalResult apply(
 		struct Expression proc,
 		struct Expression *args,
 		int n,
 		struct Environment *env) {
 	struct EvalResult result;
-	result.expr = NULL;
 	result.err_msg = check_application(proc, args, n);
 	if (result.err_msg) {
 		return result;
 	}
 
-	if (proc.type == E_LAMBDA) {
+	if (proc.type == E_SPECIAL) {
+		result.expr = apply_special(proc.special_type, args, n);
+	} else {
+		assert(proc.type == E_LAMBDA);
 		env = bind(env, proc.box->lambda.params, args, n);
 		result = eval(proc.box->lambda.body, env);
 		unbind(env, n);
-		return result;
 	}
-
-	assert(proc.type == E_SPECIAL);
-	result.expr = apply_special(proc.special_type, args, n);
 	return result;
 }
 
 struct EvalResult eval(struct Expression expr, struct Environment *env) {
 	struct EvalResult result;
-	result.expr = NULL;
 	result.err_msg = NULL;
 
-	switch (expr->type) {
+	switch (expr.type) {
 	case E_PAIR:
 		// CHECK SPECIAL FORMS
 		// - "quote" -> ...

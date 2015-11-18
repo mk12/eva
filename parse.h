@@ -3,7 +3,7 @@
 #ifndef PARSE_H
 #define PARSE_H
 
-struct Expression;
+#include "expr.h"
 
 struct ParseResult {
 	int chars_read;

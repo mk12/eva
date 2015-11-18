@@ -3,6 +3,7 @@
 #include "parse.h"
 
 #include "expr.h"
+#include "intern.h"
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -118,7 +119,7 @@ struct ParseResult parse(const char *text) {
 		break;
 	default:;
 		int len = skip_symbol(s);
-		int symbol_id = intern_string(s, len);
+		int symbol_id = intern_string_n(s, len);
 		result.expr = new_symbol(symbol_id);
 		s += len;
 		break;
