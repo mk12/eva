@@ -25,18 +25,19 @@ struct Expression lookup(struct Environment *env, int id) {
 	return NULL;
 }
 
+static struct Environment *bind_one(
+		struct Environment *env, int id, struct Expression expr) {
+	struct Environment *head = malloc(sizeof *head);
+	head->id = id;
+	head->expr = retain_expression(expr);
+	head->rest = env;
+	return head;
+}
+
 struct Environment *bind(
-		struct Environment *env,
-		int *ids,
-		struct Expression *exprs,
-		int n) {
+		struct Environment *env, int *ids, struct Expression *exprs, int n) {
 	for (int i = 0; i < n; i++) {
-		struct Environment *head = malloc(sizeof *head);
-		head->id = ids[i];
-		head->expr = exprs[i];
-		head->rest = env;
-		env = head;
-		// reference count
+		env = bind_one(env, ids[i], exprs[i]);
 	}
 	return env;
 }
@@ -44,9 +45,9 @@ struct Environment *bind(
 struct Environment *unbind(struct Environment *env, int n) {
 	for (int i = 0; i < n; i++) {
 		struct Environment *temp = env;
+		release_expression(env->expr);
 		env = env->rest;
 		free(temp);
-		// reference count
 	}
 	return env;
 }
@@ -54,7 +55,7 @@ struct Environment *unbind(struct Environment *env, int n) {
 struct Environment *default_environment(void) {
 	struct Environment *env = NULL;
 	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
-		env = bind(env, special_procs[i].name, new_special(i));
+		env = bind_one(env, intern_string(special_name(i)), new_special(i));
 	}
 	return env;
 }
