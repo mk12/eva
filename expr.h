@@ -65,20 +65,26 @@ struct Box {
 int special_arity(enum SpecialType type);
 const char *special_name(enum SpecialType type);
 
-// Constructor functions for expressions.
+// Constructor functions for immediate expressions.
 struct Expression new_null(void);
 struct Expression new_symbol(int id);
 struct Expression new_number(int n);
 struct Expression new_boolean(bool b);
 struct Expression new_special(enum SpecialType type);
+
+// Constructor functions for boxed expressions. Sets the reference count to 1.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
 struct Expression new_lambda(int arity, int *params, struct Expression body);
 
-// Returns a deep copy of the expression.
-struct Expression clone_expression(struct Expression expr);
+// Increments (retain) or decrements (release) the reference count of the box.
+// This is a no-op for immediate expressions. If the reference count reaches
+// zero, the box will be deallocated.
+void retain_expression(struct Expression expr);
+void release_expression(struct Expression expr);
 
-// Decrements the reference count of all boxes in the expression.
-void free_expression(struct Expression expr);
+// Returns a deep copy of the expression by recursively created new boxes. Does
+// not alter the reference counts of the source expression.
+struct Expression clone_expression(struct Expression expr);
 
 // Prints the expression to standard output (not followed by a newline).
 void print_expression(struct Expression expr);

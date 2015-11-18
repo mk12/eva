@@ -47,6 +47,7 @@ struct Expression new_special(enum SpecialType type) {
 
 struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	struct Box *box = malloc(sizeof *box);
+	box->ref_count = 1;
 	box->pair.car = car;
 	box->pair.cdr = cdr;
 	return { .type = E_PAIR, .box = box };
@@ -54,10 +55,53 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 
 struct Expression new_lambda(int arity, int *params, struct Expression body) {
 	struct Expression *box = malloc(sizeof *box);
+	box->ref_count = 1;
 	box->lambda.arity = arity;
 	box->lambda.params = params;
 	box->lambda.body = body;
 	return { .type = E_LAMBDA, .box = box };
+}
+
+static void dealloc_expression(struct Expression expr) {
+	switch (expr.type) {
+	case E_PAIR:
+		release_expression(expr.box->pair.car);
+		release_expression(expr.box->pair.cdr);
+		free(expr.box);
+		break;
+	case E_LAMBDA:
+		free(expr.box->lambda.params);
+		release_expression(expr.box->lambda.body);
+		free(expr.box);
+		break;
+	default:
+		break;
+	}
+}
+
+void retain_expression(struct Expression expr) {
+	switch (expr.type) {
+	case E_PAIR:
+	case E_LAMBDA:
+		expr.box->ref_count++;
+		break;
+	default:
+		break;
+	}
+}
+
+void release_expression(struct Expression expr) {
+	switch (expr.type) {
+	case E_PAIR:
+	case E_LAMBDA:
+		expr.box->ref_count++;
+		if (expr.box->ref_count <= 0) {
+			dealloc_expression(expr);
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 struct Expression clone_expression(struct Expression expr) {
@@ -75,23 +119,6 @@ struct Expression clone_expression(struct Expression expr) {
 		return new_lambda(n, params, clone_expression(expr.box->lambda.body));
 	default:
 		return expr;
-	}
-}
-
-void free_expression(struct Expression expr) {
-	switch (expr.type) {
-	case E_PAIR:
-		free_expression(expr.box->pair.car);
-		free_expression(expr.box->pair.cdr);
-		free(expr.box);
-		break;
-	case E_LAMBDA:
-		free(expr.box->lambda.params);
-		free_expression(expr.box->lambda.body);
-		free(expr.box);
-		break;
-	default:
-		break;
 	}
 }
 
