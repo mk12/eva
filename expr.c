@@ -9,9 +9,11 @@
 #include <string.h>
 
 const struct { const char *name, int arity } special_procs[N_SPECIAL_PROCS] = {
-	{"null?", 1}, {"pair?", 1}, {"number?", 1}, {"boolean?", 1},
-	{"procedure?", 1},
-	{"eq?", 2}, {"=", 2}, {"<", 2}, {">", 2}, {"<=", 2}, {">=", 2},
+	{"eval", 1}, {"apply", 2},
+	{"null?", 1}, {"symbol?", 1}, {"number?", 1}, {"boolean?", 1},
+	{"procedure?", 1}, {"pair?", 1},
+	{"eq?", 2},
+	{"=", 2}, {"<", 2}, {">", 2}, {"<=", 2}, {">=", 2},
 	{"cons", 2}, {"car", 1}, {"cdr", 1},
 	{"+", -1}, {"-", -2}, {"*", -1}, {"/", -2}, {"remainder", 2},
 	{"not", 1}
@@ -42,7 +44,7 @@ struct Expression new_boolean(bool b) {
 }
 
 struct Expression new_special(enum SpecialType type) {
-	return { .type = E_SPECIAL, .special = type };
+	return { .type = E_SPECIAL, .special_type = type };
 }
 
 struct Expression new_pair(struct Expression car, struct Expression cdr) {
@@ -58,7 +60,7 @@ struct Expression new_lambda(int arity, int *params, struct Expression body) {
 	box->ref_count = 1;
 	box->lambda.arity = arity;
 	box->lambda.params = params;
-	box->lambda.body = body;
+	box->lambda.body = retain_expression(body);
 	return { .type = E_LAMBDA, .box = box };
 }
 
@@ -165,7 +167,7 @@ void print_expression(struct Expression expr) {
 		printf("#<%p>", expr.box);
 		break;
 	case E_SPECIAL:
-		printf("#<%s>", special_name(expr.special));
+		printf("#<%s>", special_name(expr.special_type));
 		break;
 	}
 }

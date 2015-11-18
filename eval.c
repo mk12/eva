@@ -26,7 +26,7 @@ static const char *check_arg_count(struct Expression proc, int n) {
 		arity = proc.box->lambda.arity;
 	} else {
 		assert(proc.type == E_SPECIAL);
-		arity = special_arity(proc.special);
+		arity = special_arity(proc.special_type);
 	}
 
 	if (arity >= 0) {
@@ -89,7 +89,7 @@ static const char *check_application(
 		return err_msg;
 	}
 	if (special) {
-		err_msg = check_arg_types(proc.special, args, n);
+		err_msg = check_arg_types(proc.special_type, args, n);
 	}
 	return err_msg;
 }
@@ -188,7 +188,7 @@ static struct EvalResult apply(
 	}
 
 	assert(proc.type == E_SPECIAL);
-	result.expr = apply_special(proc.special, args, n);
+	result.expr = apply_special(proc.special_type, args, n);
 	return result;
 }
 

@@ -7,25 +7,36 @@
 
 // There are 7 types of expressions.
 enum ExpressionType {
+	// Immediate expressions:
 	E_NULL,
 	E_SYMBOL,
 	E_NUMBER,
 	E_BOOLEAN,
-	E_SPECIAL
+	E_SPECIAL,
+	// Boxed expressions:
 	E_PAIR,
-	E_LAMBDA,
+	E_LAMBDA
 };
 
-#define N_SPECIAL_PROCS 20
+#define N_SPECIAL_PROCS 23
 
-// There are 20 types of special procedures. Special procedures are procedures
-// implemented by the interpreter; they are distinct from special forms, which
-// are not procedures becuase they require special evaluation rules.
+// There are 20 types of special procedures. Special procedures (distinct from
+// special forms, which require special evaluation rules) are implemented by the
+// interpreter.
 enum SpecialType {
-	S_NULL, S_PAIR, S_NUMBER, S_BOOLEAN, S_PROCEDURE,
-	S_EQ, S_NUM_EQ, S_LT, S_GT, S_LE, S_GE,
+	// Eval and apply:
+	S_EVAL, S_APPLY,
+	// Type predicates:
+	S_NULL, S_SYMBOL, S_NUMBER, S_BOOLEAN, S_PROCEDURE, S_PAIR,
+	// Equality (identity):
+	S_EQ,
+	// Numeric comparisons:
+	S_NUM_EQ, S_LT, S_GT, S_LE, S_GE,
+	// Pair constructor and accessors:
 	S_CONS, S_CAR, S_CDR,
+	// Numeric operations:
 	S_ADD, S_SUB, S_MUL, S_DIV, S_REM,
+	// Boolean negation (and/or are special forms):
 	S_NOT
 };
 
@@ -38,7 +49,7 @@ struct Expression {
 		int symbol_id;
 		int number;
 		bool boolean;
-		enum SpecialType special;
+		enum SpecialType special_type;
 		struct Box *box;
 	};
 };
