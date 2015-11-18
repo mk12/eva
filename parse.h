@@ -7,7 +7,7 @@ struct Expression;
 
 struct ParseResult {
 	int chars_read;
-	struct Expression *expr;
+	struct Expression expr;
 	const char *err_msg;
 };
 

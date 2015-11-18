@@ -37,7 +37,6 @@ static int skip_symbol(const char *text) {
 // Parses a pair, assuming the opening '(' has already been read.
 static struct ParseResult parse_pair(const char *text) {
 	struct ParseResult result;
-	result.expr = NULL;
 	result.err_msg = NULL;
 	const char *s = text;
 	s += skip_whitespace(s);
@@ -50,7 +49,7 @@ static struct ParseResult parse_pair(const char *text) {
 
 	struct ParseResult first = parse(s);
 	s += first.chars_read;
-	if (!first.expr) {
+	if (first.err_msg) {
 		result.err_msg = first.err_msg;
 		goto END;
 	}
@@ -59,8 +58,8 @@ static struct ParseResult parse_pair(const char *text) {
 		s++;
 		struct ParseResult second = parse(s);
 		s += second.chars_read;
-		if (!second.expr) {
-			result.err_msg = first.err_msg;
+		if (second.err_msg) {
+			result.err_msg = second.err_msg;
 			goto END;
 		}
 		if (*s != ')') {
@@ -72,7 +71,7 @@ static struct ParseResult parse_pair(const char *text) {
 	} else {
 		struct ParseResult rest = parse_pair(s);
 		s += rest.chars_read;
-		if (!rest.expr) {
+		if (rest.err_msg) {
 			result.err_msg = rest.err_msg;
 			goto END;
 		}
@@ -87,7 +86,6 @@ END:
 // Parses any expression.
 struct ParseResult parse(const char *text) {
 	struct ParseResult result;
-	result.expr = NULL;
 	result.err_msg = NULL;
 	const char *s = text;
 	s += skip_whitespace(s);
@@ -126,7 +124,7 @@ struct ParseResult parse(const char *text) {
 		break;
 	}
 
-	if (result.expr) {
+	if (!result.err_msg) {
 		s += skip_whitespace(s);
 	}
 	result.chars_read = s - text;
