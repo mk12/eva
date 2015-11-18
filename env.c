@@ -3,6 +3,7 @@
 #include "env.h"
 
 #include "expr.h"
+#include "intern.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -15,14 +16,14 @@ struct Environment {
 	struct Environment *rest;
 };
 
-struct Expression lookup(struct Environment *env, int id) {
+struct LookupResult lookup(struct Environment *env, int id) {
 	while (env) {
 		if (env->id == id) {
-			return env->expr;
+			return (struct LookupResult){ .found = true, .expr = env->expr };
 		}
 		env = env->rest;
 	}
-	return NULL;
+	return (struct LookupResult){ .found = false };
 }
 
 static struct Environment *bind_one(

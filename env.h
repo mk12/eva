@@ -3,15 +3,23 @@
 #ifndef ENV_H
 #define ENV_H
 
+#include "expr.h"
+
+#include <stdbool.h>
+
 struct Environment;
 struct Expression;
 
-// Looks up a variable in the environment by its identifier. Returns NULL if it
-// cannot be found.
-struct Expression lookup(struct Environment *env, int id);
+// LookupResult is used to return two values from the lookup function.
+struct LookupResult {
+	bool found;
+	struct Expression expr;
+};
 
-// Binds n variables to n expressions in the environment. Returns the augmented
-// environment.
+// Looks up a variable in the environment by its identifier.
+struct LookupResult lookup(struct Environment *env, int id);
+
+// Binds n variables to n expressions. Returns the augmented environment.
 struct Environment *bind(
 		struct Environment *env, int *ids, struct Expression *exprs, int n);
 
