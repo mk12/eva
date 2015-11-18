@@ -120,10 +120,8 @@ struct ParseResult parse(const char *text) {
 		break;
 	default:;
 		int len = skip_symbol(s);
-		char *name = malloc(len + 1);
-		memcpy(name, s, len);
-		name[len] = '\0';
-		result.expr = new_symbol(name);
+		int symbol_id = intern_string(s, len);
+		result.expr = new_symbol(symbol_id);
 		s += len;
 		break;
 	}
