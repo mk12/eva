@@ -17,7 +17,7 @@ static const char *err_not_pair = "expected operand to be a pair";
 
 // Names of special forms.
 static const char *special_form_names[] = {
-	"define", "lambda", "quote", "cond", "if", "and", "or"
+	"define", "lambda", "quote", "cond", "if", "let", "let*", "and", "or"
 };
 
 // Returns NULL if the procedure accepts n arguments. Returns an error message

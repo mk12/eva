@@ -12,8 +12,7 @@ struct ParseResult {
 };
 
 // Parses a string as an s-expression (an expression that contains only pairs
-// and symbols). If the string cannot be parsed, stores NULL in the expr field
-// and provides an error message.
+// and symbols). If the string cannot be parsed, provides an error message.
 struct ParseResult parse(const char *text);
 
 #endif

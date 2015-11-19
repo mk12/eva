@@ -9,6 +9,7 @@ struct Environment;
 
 struct EvalResult {
 	struct Expression expr;
+	struct Environment *env;
 	const char *err_msg;
 };
 
