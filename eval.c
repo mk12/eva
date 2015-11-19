@@ -219,7 +219,7 @@ static struct EvalResult apply(
 		assert(proc.type == E_LAMBDA);
 		env = bind(env, proc.box->lambda.params, args, n);
 		result = eval(proc.box->lambda.body, env);
-		unbind(env, n);
+		unbind(env);
 	}
 	return result;
 }

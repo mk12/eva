@@ -8,7 +8,6 @@
 #include <stdbool.h>
 
 struct Environment;
-struct Expression;
 
 // LookupResult is used to return two values from the lookup function.
 struct LookupResult {
@@ -16,17 +15,21 @@ struct LookupResult {
 	struct Expression expr;
 };
 
-// Looks up a variable in the environment by its identifier.
-struct LookupResult lookup(struct Environment *env, int id);
+// Looks up an expression in the environment by its key.
+struct LookupResult lookup(struct Environment *env, int key);
 
-// Binds n variables to n expressions. Returns the augmented environment.
+// Binds a frame of n keys to n expressions. Returns the augmented environment.
 struct Environment *bind(
-		struct Environment *env, int *ids, struct Expression *exprs, int n);
+		struct Environment *env,
+		const int *keys,
+		const struct Expression *exprs,
+		int n);
 
-// Unbinds the n most recently bound variables. Returns the reduced environment.
-struct Environment *unbind(struct Environment *env, int n);
+// Unbinds the most recently bound frame. Returns the reduced environment. Does
+// not free the arrays of keys or the array of expressions in the frame.
+struct Environment *unbind(struct Environment *env);
 
-// Returns an environment containing mappings for built-in special functions.
+// Returns an environment containing mappings for built-in special procedures.
 struct Environment *default_environment(void);
 
 #endif

@@ -8,55 +8,58 @@
 #include <stdlib.h>
 #include <string.h>
 
-// An Environment maps variables (integer identifiers) to expressions. It is
-// implemented as a linked list.
+// An Environment is a linked list of frames. Each frame maps a set of integer
+// keys to expressions.
 struct Environment {
-	int id;
-	struct Expression expr;
+	int n_keys;
+	const int *keys;
+	const struct Expression *exprs;
 	struct Environment *rest;
 };
 
-struct LookupResult lookup(struct Environment *env, int id) {
+struct LookupResult lookup(struct Environment *env, int key) {
 	while (env) {
-		if (env->id == id) {
-			return (struct LookupResult){ .found = true, .expr = env->expr };
+		for (int i = 0; i < env->n_keys; i++) {
+			if (env->keys[i] == key) {
+				struct Expression expr = env->exprs[i];
+				return (struct LookupResult){ .found = true, .expr = expr };
+			}
 		}
 		env = env->rest;
 	}
 	return (struct LookupResult){ .found = false };
 }
 
-static struct Environment *bind_one(
-		struct Environment *env, int id, struct Expression expr) {
-	struct Environment *head = malloc(sizeof *head);
-	head->id = id;
-	head->expr = retain_expression(expr);
-	head->rest = env;
-	return head;
-}
-
 struct Environment *bind(
-		struct Environment *env, int *ids, struct Expression *exprs, int n) {
-	for (int i = 0; i < n; i++) {
-		env = bind_one(env, ids[i], exprs[i]);
-	}
+		struct Environment *env,
+		const int *keys,
+		const struct Expression *exprs,
+		int n) {
+	struct Environment *head = malloc(sizeof *head);
+	head->n_keys = n;
+	head->keys = keys;
+	head->exprs = exprs;
 	return env;
 }
 
-struct Environment *unbind(struct Environment *env, int n) {
-	for (int i = 0; i < n; i++) {
-		struct Environment *temp = env;
-		release_expression(env->expr);
-		env = env->rest;
-		free(temp);
-	}
-	return env;
+struct Environment *unbind(struct Environment *env) {
+	struct Environment *tail = env->rest;
+	free(env);
+	return tail;
 }
 
 struct Environment *default_environment(void) {
-	struct Environment *env = NULL;
-	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
-		env = bind_one(env, intern_string(special_name(i)), new_special(i));
+	static int keys[N_SPECIAL_PROCS];
+	static struct Expression exprs[N_SPECIAL_PROCS];
+	static bool first = true;
+
+	if (first) {
+		for (int i = 0; i < N_SPECIAL_PROCS; i++) {
+			keys[i] = intern_string(special_name(i));
+			exprs[i] = new_special(i);
+		}
+		first = false;
 	}
-	return env;
+
+	return bind(NULL, keys, exprs, N_SPECIAL_PROCS);
 }
