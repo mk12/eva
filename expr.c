@@ -2,8 +2,6 @@
 
 #include "expr.h"
 
-#include "intern.h"
-
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -33,7 +31,7 @@ struct Expression new_null(void) {
 	return (struct Expression){ .type = E_NULL };
 }
 
-struct Expression new_symbol(int id) {
+struct Expression new_symbol(InternID id) {
 	return (struct Expression){ .type = E_SYMBOL, .symbol_id = id };
 }
 

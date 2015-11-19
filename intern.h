@@ -3,13 +3,15 @@
 #ifndef INTERN_H
 #define INTERN_H
 
+typedef unsigned int InternID;
+
 // Interns the string and returns its unique identifier.
-unsigned int intern_string(const char *str);
+InternID intern_string(const char *str);
 
 // Interns a string of n characters. Does not require a null terminator.
-unsigned int intern_string_n(const char *str, int n);
+InternID intern_string_n(const char *str, int n);
 
 // Looks up a string by identifier.
-const char *find_string(int id);
+const char *find_string(InternId id);
 
 #endif

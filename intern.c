@@ -14,12 +14,12 @@ struct InternList {
 
 static struct *InternList intern_table[TABLE_SIZE];
 
-unsigned int intern_string(const char *str) {
+InternID intern_string(const char *str) {
 	return intern_string_n(str, strlen(str));
 }
 
-unsigned int intern_string_n(const char *str, int n) {
-	unsigned int h = 5381;
+InternID intern_string_n(const char *str, int n) {
+	InternID h = 5381;
 	for (int i = 0; i < n; i++) {
 		h = ((h << 5) + h) + str[i];
 	}
@@ -44,7 +44,7 @@ unsigned int intern_string_n(const char *str, int n) {
 	return (pos << TABLE_SIZE_BITS) | h;
 }
 
-const char *find_string(unsigned int id) {
+const char *find_string(InternID id) {
 	int h = id & (TABLE_SIZE - 1);
 	int pos = id >> TABLE_SIZE_BITS;
 	struct InternList *cell = intern_table[h];

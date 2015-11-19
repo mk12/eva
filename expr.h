@@ -3,6 +3,8 @@
 #ifndef EXPR_H
 #define EXPR_H
 
+#include "intern.h"
+
 #include <stdbool.h>
 
 // There are 7 types of expressions.
@@ -46,7 +48,7 @@ enum SpecialType {
 struct Expression {
 	enum ExpressionType type;
 	union {
-		unsigned int symbol_id;
+		InternID symbol_id;
 		int number;
 		bool boolean;
 		enum SpecialType special_type;
@@ -78,7 +80,7 @@ const char *special_name(enum SpecialType type);
 
 // Constructor functions for immediate expressions.
 struct Expression new_null(void);
-struct Expression new_symbol(int id);
+struct Expression new_symbol(InternID id);
 struct Expression new_number(int n);
 struct Expression new_boolean(bool b);
 struct Expression new_special(enum SpecialType type);
