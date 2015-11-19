@@ -16,12 +16,12 @@ struct LookupResult {
 };
 
 // Looks up an expression in the environment by its key.
-struct LookupResult lookup(struct Environment *env, int key);
+struct LookupResult lookup(struct Environment *env, unsigned int key);
 
 // Binds a frame of n keys to n expressions. Returns the augmented environment.
 struct Environment *bind(
 		struct Environment *env,
-		const int *keys,
+		const unsigned int *keys,
 		const struct Expression *exprs,
 		int n);
 

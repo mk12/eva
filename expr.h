@@ -46,7 +46,7 @@ enum SpecialType {
 struct Expression {
 	enum ExpressionType type;
 	union {
-		int symbol_id;
+		unsigned int symbol_id;
 		int number;
 		bool boolean;
 		enum SpecialType special_type;

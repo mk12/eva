@@ -12,12 +12,12 @@
 // keys to expressions.
 struct Environment {
 	int n_keys;
-	const int *keys;
+	const unsigned int *keys;
 	const struct Expression *exprs;
 	struct Environment *rest;
 };
 
-struct LookupResult lookup(struct Environment *env, int key) {
+struct LookupResult lookup(struct Environment *env, unsigned int key) {
 	while (env) {
 		for (int i = 0; i < env->n_keys; i++) {
 			if (env->keys[i] == key) {
@@ -32,7 +32,7 @@ struct LookupResult lookup(struct Environment *env, int key) {
 
 struct Environment *bind(
 		struct Environment *env,
-		const int *keys,
+		const unsigned int *keys,
 		const struct Expression *exprs,
 		int n) {
 	struct Environment *head = malloc(sizeof *head);
@@ -49,7 +49,7 @@ struct Environment *unbind(struct Environment *env) {
 }
 
 struct Environment *default_environment(void) {
-	static int keys[N_SPECIAL_PROCS];
+	static unsigned int keys[N_SPECIAL_PROCS];
 	static struct Expression exprs[N_SPECIAL_PROCS];
 	static bool first = true;
 
