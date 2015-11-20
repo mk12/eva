@@ -2,6 +2,7 @@
 
 #include "intern.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 struct InternList {
@@ -12,7 +13,7 @@ struct InternList {
 #define TABLE_SIZE_BITS 10
 #define TABLE_SIZE (2 << (TABLE_SIZE_BITS - 1))
 
-static struct *InternList intern_table[TABLE_SIZE];
+static struct InternList *intern_table[TABLE_SIZE];
 
 InternID intern_string(const char *str) {
 	return intern_string_n(str, strlen(str));
@@ -25,7 +26,7 @@ InternID intern_string_n(const char *str, int n) {
 	}
 	h %= TABLE_SIZE;
 
-	struct InternList *new_cell = malloc(sizeof *cell);
+	struct InternList *new_cell = malloc(sizeof *new_cell);
 	new_cell->string = str;
 	new_cell->rest = NULL;
 
