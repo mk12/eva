@@ -11,7 +11,7 @@ struct InternList {
 };
 
 #define TABLE_SIZE_BITS 10
-#define TABLE_SIZE (2 << (TABLE_SIZE_BITS - 1))
+#define TABLE_SIZE (1 << TABLE_SIZE_BITS)
 
 static struct InternList *intern_table[TABLE_SIZE];
 
