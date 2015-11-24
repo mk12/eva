@@ -22,9 +22,14 @@ static const char *err_invalid_literal = "invalid hash literal";
 // returns true. Otherwise, returns false.
 static bool parse_int(const char *s, int n, int *result) {
 	int val = 0;
+	int sign = 1;
 	bool leading_zero = true;
 	for (int i = 0; i < n; i++) {
 		char c = s[i];
+		if (i == 0 && c == '-') {
+			sign = -1;
+			continue;
+		}
 		if (c  < '0' || c > '9') {
 			return false;
 		}
@@ -37,7 +42,7 @@ static bool parse_int(const char *s, int n, int *result) {
 		}
 	}
 
-	*result = val;
+	*result = sign * val;
 	return true;
 }
 
