@@ -17,6 +17,30 @@ static const char *err_unexpected_rparen = "unexpected character ')'";
 static const char *err_improper_dot = "improperly placed dot";
 static const char *err_invalid_literal = "invalid hash literal";
 
+// Attempts to parse a string of n characters (does not require a null
+// terminator) as an integer. On success, stores the integer in result and
+// returns true. Otherwise, returns false.
+static bool parse_int(const char *s, int n, int *result) {
+	int val = 0;
+	bool leading_zero = true;
+	for (int i = 0; i < n; i++) {
+		char c = s[i];
+		if (c  < '0' || c > '9') {
+			return false;
+		}
+		if (c != '0') {
+			leading_zero = false;
+		}
+		if (!leading_zero) {
+			val *= 10;
+			val += c - '0';
+		}
+	}
+
+	*result = val;
+	return true;
+}
+
 // Returns the number of leading whitespace characters in text.
 static int skip_whitespace(const char *text) {
 	const char *s = text;
@@ -119,8 +143,13 @@ struct ParseResult parse(const char *text) {
 		break;
 	default:;
 		int len = skip_symbol(s);
-		InternID symbol_id = intern_string_n(s, len);
-		result.expr = new_symbol(symbol_id);
+		int number;
+		if (parse_int(s, len, &number)) {
+			result.expr = new_number(number);
+		} else {
+			InternID symbol_id = intern_string_n(s, len);
+			result.expr = new_symbol(symbol_id);
+		}
 		s += len;
 		break;
 	}
