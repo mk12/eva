@@ -14,11 +14,18 @@ static const char *err_not_num = "expected operand to be a number";
 static const char *err_not_bool = "expected operand to be a boolean";
 static const char *err_not_proc = "expected operand to be a procedure";
 static const char *err_not_pair = "expected operand to be a pair";
+static const char *err_unbound_var = "use of unbound variable";
 
 // Names of special forms.
 static const char *special_form_names[] = {
 	"define", "lambda", "quote", "cond", "if", "let", "let*", "and", "or"
 };
+
+static InternID sf_define_id;
+
+void setup_eval(void) {
+	sf_define_id = intern_string("define");
+}
 
 // Returns NULL if the procedure accepts n arguments. Returns an error message
 // otherwise. Assumes proc is a procedure.
@@ -111,9 +118,9 @@ static struct Expression apply_special(
 		enum SpecialType type, struct Expression *args, int n) {
 	switch (type) {
 	case S_EVAL:
-		// TODO:
+		// TODO
 	case S_APPLY:
-		// TODO:
+		// TODO
 	case S_NULL:
 		return new_boolean(args[0].type == E_NULL);
 	case S_SYMBOL:
@@ -217,15 +224,21 @@ static struct EvalResult apply(
 		result.expr = apply_special(proc.special_type, args, n);
 	} else {
 		assert(proc.type == E_LAMBDA);
-		env = bind(env, proc.box->lambda.params, args, n);
+		for (int i = 0; i < n; i++) {
+			bind(env, proc.box->lambda.params[i], args[i]);
+		}
 		result = eval(proc.box->lambda.body, env);
-		unbind(env);
+		for (int i = 0; i < n; i++) {
+			unbind(env, proc.box->lambda.params[i]);
+		}
 	}
 	return result;
 }
 
+// Evaluates a single expression.
 struct EvalResult eval(struct Expression expr, struct Environment *env) {
 	struct EvalResult result;
+	result.env = env;
 	result.err_msg = NULL;
 
 	switch (expr.type) {
@@ -234,20 +247,23 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 		// - "quote" -> ...
 		// - "lambda" -> ...
 		// - "cond"   -> ...
-		// - "define" -> ...
+		// - "define" -> ... (changes result.env)
+			// (don't allow special names or ids begginig with integer, etc.)
 		// otherwise, eval everything + call apply
+		// (create args array and then free it after)
 		// think about memory management
 		break;
-	case E_SYMBOL:
-		// "1" -> E_NUMBER 1
-		// "a" -> lookup in env, or error
-		// prepopulate env with "car", "cdr", "+", etc.
-		// (or check here)
+	case E_SYMBOL:;
+		struct LookupResult look = lookup(env, expr.symbol_id);
+		if (look.found) {
+			result.expr = look.expr;
+		} else {
+			result.err_msg = err_unbound_var;
+		}
 		break;
 	default:
 		// Everything else is self-evaluating.
-		// TODO: retain?
-		result.expr = clone_expression(expr);
+		result.expr = expr;
 		break;
 	}
 

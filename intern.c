@@ -27,7 +27,9 @@ InternID intern_string_n(const char *str, int n) {
 	h %= TABLE_SIZE;
 
 	struct InternList *new_cell = malloc(sizeof *new_cell);
-	new_cell->string = str;
+	new_cell->string = malloc(n + 1);
+	strncpy(new_cell->string, str, n);
+	new_cell->string[n] = '\0';
 	new_cell->rest = NULL;
 
 	int pos = 0;

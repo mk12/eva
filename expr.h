@@ -68,7 +68,7 @@ struct Box {
 		} pair;
 		struct {
 			int arity;
-			int *params;
+			InternID *params;
 			struct Expression body;
 		} lambda;
 	};
@@ -87,7 +87,8 @@ struct Expression new_special(enum SpecialType type);
 
 // Constructor functions for boxed expressions. Sets the reference count to 1.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
-struct Expression new_lambda(int arity, int *params, struct Expression body);
+struct Expression new_lambda(
+		int arity, InternID *params, struct Expression body);
 
 // Increments the reference count of the box. This is a no-op for immediates.
 // Returns the expression for convenience.

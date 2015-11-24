@@ -13,8 +13,12 @@ struct EvalResult {
 	const char *err_msg;
 };
 
-// Evaluates the expression in the given environment. If it can't be evaluated,
-// stores NULL in the expr field and provides an error message.
+// This should be called once at the beginning of the program.
+void setup_eval(void);
+
+// Evaluates the expression in the given environment, returning the resulting
+// expression and the new environment. If it can't be evaluated, provides an
+// error message.
 struct EvalResult eval(struct Expression expr, struct Environment *env);
 
 #endif
