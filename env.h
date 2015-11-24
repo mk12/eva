@@ -15,21 +15,19 @@ struct LookupResult {
 	struct Expression expr;
 };
 
-// Looks up an expression in the environment by its key.
-struct LookupResult lookup(struct Environment *env, unsigned int key);
+// Returns a new, empty environment.
+struct Environment *empty_environment(void);
 
-// Binds a frame of n keys to n expressions. Returns the augmented environment.
-struct Environment *bind(
-		struct Environment *env,
-		const unsigned int *keys,
-		const struct Expression *exprs,
-		int n);
-
-// Unbinds the most recently bound frame. Returns the reduced environment. Does
-// not free the arrays of keys or the array of expressions in the frame.
-struct Environment *unbind(struct Environment *env);
-
-// Returns an environment containing mappings for built-in special procedures.
+// Returns an environment containing mappings for special procedures.
 struct Environment *default_environment(void);
+
+// Looks up an expression in the environment by its key.
+struct LookupResult lookup(struct Environment *env, InternID key);
+
+// Binds a new variable in the environment.
+void bind(struct Environment *env, InternID key, struct Expression expr);
+
+// Unbinds a variable in the envrionment. The variable must be present.
+void unbind(struct Environment *env, InternID key);
 
 #endif

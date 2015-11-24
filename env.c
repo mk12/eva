@@ -8,58 +8,124 @@
 #include <stdlib.h>
 #include <string.h>
 
-// An Environment is a linked list of frames. Each frame maps a set of integer
-// keys to expressions.
+#define DEFAULT_SIZE_BITS 10
+#define DEFAULT_SIZE (1 << DEFAULT_SIZE_BITS)
+
+struct Markers;
+struct VarChain;
+struct ShadowChain;
+
 struct Environment {
-	int n_keys;
-	const unsigned int *keys;
-	const struct Expression *exprs;
-	struct Environment *rest;
+	int size;
+	struct Markers *table;
 };
 
-struct LookupResult lookup(struct Environment *env, unsigned int key) {
-	while (env) {
-		for (int i = 0; i < env->n_keys; i++) {
-			if (env->keys[i] == key) {
-				struct Expression expr = env->exprs[i];
-				return (struct LookupResult){ .found = true, .expr = expr };
-			}
-		}
-		env = env->rest;
+struct Markers {
+	struct VarChain *start;
+	struct VarChain *end;
+};
+
+struct VarChain {
+	InternID key;
+	struct Expression expr;
+	struct ShadowChain *shadow_start;
+	struct ShadowChain *shadow_end;
+	struct VarChain *rest;
+};
+
+struct ShadowChain {
+	struct Expression expr;
+	struct ShadowChain *rest;
+};
+
+struct Environment *empty_environment(void) {
+	struct Environment *env = malloc(sizeof *env);
+	env->size = DEFAULT_SIZE;
+	env->table = calloc(env->size, sizeof *env->table);
+	return env;
+}
+
+struct Environment *default_environment(void) {
+	struct Environment *env = empty_environment();
+	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
+		bind(env, intern_string(special_name(i)), new_special(i));
+	}
+	return env;
+}
+
+struct LookupResult lookup(struct Environment *env, InternID key) {
+	int i = key % env->size;
+	struct VarChain *var = env->table[i].start;
+	while (var && var->key != key) {
+		var = var->rest;
+	}
+	if (var) {
+		return (struct LookupResult){ .found = true, .expr = var->expr };
 	}
 	return (struct LookupResult){ .found = false };
 }
 
-struct Environment *bind(
-		struct Environment *env,
-		const unsigned int *keys,
-		const struct Expression *exprs,
-		int n) {
-	struct Environment *head = malloc(sizeof *head);
-	head->n_keys = n;
-	head->keys = keys;
-	head->exprs = exprs;
-	return env;
-}
+void bind(struct Environment *env, InternID key, struct Expression expr) {
+	int i = key % env->size;
 
-struct Environment *unbind(struct Environment *env) {
-	struct Environment *tail = env->rest;
-	free(env);
-	return tail;
-}
-
-struct Environment *default_environment(void) {
-	static unsigned int keys[N_SPECIAL_PROCS];
-	static struct Expression exprs[N_SPECIAL_PROCS];
-	static bool first = true;
-
-	if (first) {
-		for (int i = 0; i < N_SPECIAL_PROCS; i++) {
-			keys[i] = intern_string(special_name(i));
-			exprs[i] = new_special(i);
-		}
-		first = false;
+	if (!env->table[i].start) {
+		struct VarChain *var = malloc(sizeof *var);
+		var->key = key;
+		var->expr = retain_expression(expr);
+		var->shadow_start = NULL;
+		var->shadow_end = NULL;
+		var->rest = NULL;
+		env->table[i].start = var;
+		env->table[i].end = var;
+		return;
 	}
 
-	return bind(NULL, keys, exprs, N_SPECIAL_PROCS);
+	struct VarChain *var = env->table[i].start;
+	while (var && var->key != key) {
+		var = var->rest;
+	}
+	if (var) {
+		struct ShadowChain *shadow = malloc(sizeof *shadow);
+		shadow->expr = var->expr;
+		shadow->rest = var->shadow_start;
+		var->shadow_start = shadow;
+		var->expr = retain_expression(expr);
+	} else {
+		struct VarChain *var = malloc(sizeof *var);
+		var->key = key;
+		var->expr = retain_expression(expr);
+		var->shadow_start = NULL;
+		var->shadow_end = NULL;
+		var->rest = NULL;
+		env->table[i].end->rest = var;
+		env->table[i].end = var;
+	}
+}
+
+void unbind(struct Environment *env, InternID key) {
+	int i = key % env->size;
+	struct VarChain *prev = NULL;
+	struct VarChain *var = env->table[i].start;
+	while (var && var->key != key) {
+		prev = var;
+		var = var->rest;
+	}
+	assert(var);
+	if (var->shadow_start) {
+		struct ShadowChain *temp = var->shadow_start;
+		release_expression(var->expr);
+		var->expr = temp->expr;
+		var->shadow_start = temp->rest;
+		free(temp);
+	} else {
+		release_expression(var->expr);
+		free(var);
+		if (prev) {
+			prev->rest = NULL;
+			env->table[i].end = prev;
+		} else {
+			env->table[i].start = NULL;
+			env->table[i].end = NULL;
+		}
+	}
 }
