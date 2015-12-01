@@ -74,7 +74,7 @@ static void bind_unchecked(
 }
 
 void bind(struct Environment *env, InternID key, struct Expression expr) {
-	if (3 * env->size >= 4 * env->total_entries) {
+	if (4 * env->total_entries >= 3 * env->size) {
 		int old_size = env->size;
 		struct Bucket *old_table = env->table;
 		env->size *= 2;
