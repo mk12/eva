@@ -15,6 +15,7 @@ static const char *err_not_bool = "expected operand to be a boolean";
 static const char *err_not_proc = "expected operand to be a procedure";
 static const char *err_not_pair = "expected operand to be a pair";
 static const char *err_unbound_var = "use of unbound variable";
+static const char *err_ill_list = "ill-formed list";
 
 #define N_SPECIAL_FORMS 9
 
@@ -36,7 +37,7 @@ static const char *special_form_names[N_SPECIAL_FORMS] = {
 };
 
 // Intern identifiers of special forms.
-static int special_form_ids[N_SPECIAL_FORMS];
+static InternID special_form_ids[N_SPECIAL_FORMS];
 
 void setup_eval(void) {
 	for (int i = 0; i < N_SPECIAL_FORMS; i++) {
@@ -129,100 +130,176 @@ static const char *check_application(
 	return err_msg;
 }
 
+struct ArrayResult {
+	int size;
+	struct Expression *exprs;
+	const char *err_msg;
+};
+
+// Converts a list of a flat array of expressions. Returns an error messge if
+// the expression is not a well-formed list. Copies elements of the list
+// directly to the new array, but does not alter reference counts.
+static struct ArrayResult sexpr_array(struct Expression list) {
+	struct ArrayResult result;
+	result.size = 0;
+	result.exprs = NULL;
+	result.err_msg = NULL;
+
+	struct Expression expr = list;
+	while (expr.type != E_NULL) {
+		if (expr.type != E_PAIR) {
+			result.err_msg = err_ill_list;
+			return;
+		}
+		expr = expr.box->cdr;
+		result.size++;
+	}
+
+	result.exprs = malloc(result.size * sizeof *result.exprs);
+	expr = list;
+	for (int i = 0; i < result.size; i++) {
+		result.exprs[i] = expr.box->car;
+		expr = expr.box->cdr;
+	}
+	return result;
+}
+
 // Returns the expression resulting from applying a special procedure to
-// arguments. Assumes the arguments are correct in number and in types.
-static struct Expression apply_special(
-		enum SpecialType type, struct Expression *args, int n) {
+// arguments. Assumes the arguments are correct in number and in types. Provides
+// an error message if the application fails (only possible for eval and apply).
+static struct EvalResult apply_special(
+		enum SpecialType type,
+		struct Expression *args,
+		int n,
+		struct Environment *env) {
+	struct EvalResult result;
+	result.err_msg = NULL;
 	switch (type) {
 	case S_EVAL:
-		// TODO
-	case S_APPLY:
-		// TODO
+		result = eval(args[0], env);
+		break;
+	case S_APPLY:;
+		struct Expression quote = new_symbol(special_form_ids[F_QUOTE]);
+		struct Expression proc = new_pair(quote, new_pair(args[0], new_null()));
+		struct Expression app = new_pair(proc, args[1]);
+		result = eval(app, env);
+		release_expression(app);
+		break;
 	case S_NULL:
-		return new_boolean(args[0].type == E_NULL);
+		result.expr = new_boolean(args[0].type == E_NULL);
+		break;
 	case S_SYMBOL:
-		return new_boolean(args[0].type == E_SYMBOL);
+		result.expr = new_boolean(args[0].type == E_SYMBOL);
+		break;
 	case S_NUMBER:
-		return new_boolean(args[0].type == E_NUMBER);
+		result.expr = new_boolean(args[0].type == E_NUMBER);
+		break;
 	case S_BOOLEAN:
-		return new_boolean(args[0].type == E_BOOLEAN);
+		result.expr = new_boolean(args[0].type == E_BOOLEAN);
+		break;
 	case S_PAIR:
-		return new_boolean(args[0].type == E_PAIR);
+		result.expr = new_boolean(args[0].type == E_PAIR);
+		break;
 	case S_PROCEDURE:;
 		enum ExpressionType t = args[0].type;
-		return new_boolean(t == E_LAMBDA || t == E_SPECIAL);
+		result.expr = new_boolean(t == E_LAMBDA || t == E_SPECIAL);
+		break;
 	case S_EQ:;
 		if (args[0].type != args[1].type) {
-			return new_boolean(false);
+			result.expr = new_boolean(false);
+			break;
 		}
 		switch (args[0].type) {
 			case E_NULL:
-				return new_boolean(true);
+				result.expr = new_boolean(true);
+				break;
 			case E_SYMBOL:
-				return new_boolean(args[0].symbol_id == args[1].symbol_id);
+				result.expr = new_boolean(args[0].symbol_id == args[1].symbol_id);
+				break;
 			case E_NUMBER:
-				return new_boolean(args[0].number == args[1].number);
+				result.expr = new_boolean(args[0].number == args[1].number);
+				break;
 			case E_BOOLEAN:
-				return new_boolean(args[0].boolean == args[1].boolean);
+				result.expr = new_boolean(args[0].boolean == args[1].boolean);
+				break;
 			case E_SPECIAL:
-				return new_boolean(
+				result.expr = new_boolean(
 						args[0].special_type == args[1].special_type);
+				break;
 			case E_PAIR:
 			case E_LAMBDA:
-				return new_boolean(args[0].box == args[1].box);
+				result.expr = new_boolean(args[0].box == args[1].box);
+				break;
 		}
 	case S_NUM_EQ:
-		return new_boolean(args[0].number == args[1].number);
+		result.expr = new_boolean(args[0].number == args[1].number);
+		break;
 	case S_LT:
-		return new_boolean(args[0].number < args[1].number);
+		result.expr = new_boolean(args[0].number < args[1].number);
+		break;
 	case S_GT:
-		return new_boolean(args[0].number > args[1].number);
+		result.expr = new_boolean(args[0].number > args[1].number);
+		break;
 	case S_LE:
-		return new_boolean(args[0].number <= args[1].number);
+		result.expr = new_boolean(args[0].number <= args[1].number);
+		break;
 	case S_GE:
-		return new_boolean(args[0].number >= args[1].number);
+		result.expr = new_boolean(args[0].number >= args[1].number);
+		break;
 	case S_CONS:
-		return new_pair(args[0], args[1]);
+		result.expr = new_pair(args[0], args[1]);
+		break;
 	case S_CAR:
-		return args[0].box->pair.car;
+		result.expr = args[0].box->pair.car;
+		break;
 	case S_CDR:
-		return args[0].box->pair.cdr;
+		result.expr = args[0].box->pair.cdr;
+		break;
 	case S_ADD:;
 		int sum = 0;
 		for (int i = 0; i < n; i++) {
 			sum += args[i].number;
 		}
-		return new_number(sum);
+		result.expr = new_number(sum);
+		break;
 	case S_SUB:
 		if (n == 1) {
-			return new_number(-args[0].number);
+			result.expr = new_number(-args[0].number);
+			break;
 		}
 		int diff = args[0].number;
 		for (int i = 1; i < n; i++) {
 			diff -= args[i].number;
 		}
-		return new_number(diff);
+		result.expr = new_number(diff);
+		break;
 	case S_MUL:;
 		int prod = 0;
 		for (int i = 0; i < n; i++) {
 			prod *= args[i].number;
 		}
-		return new_number(prod);
+		result.expr = new_number(prod);
+		break;
 	case S_DIV:
 		if (n == 1) {
-			return new_number(1 / args[0].number);
+			result.expr = new_number(1 / args[0].number);
+			break;
 		}
 		int quot = args[0].number;
 		for (int i = 1; i < n; i++) {
 			quot /= args[i].number;
 		}
-		return new_number(quot);
+		result.expr = new_number(quot);
+		break;
 	case S_REM:;
 		int rem = args[0].number % args[1].number;
-		return new_number(rem);
+		result.expr = new_number(rem);
+		break;
 	case S_NOT:
-		return new_boolean(!args[0].boolean);
+		result.expr = new_boolean(!args[0].boolean);
+		break;
 	}
+	return result;
 }
 
 // Applies a procedure to arguments. Assumes proc is a procedure.
@@ -238,7 +315,7 @@ static struct EvalResult apply(
 	}
 
 	if (proc.type == E_SPECIAL) {
-		result.expr = apply_special(proc.special_type, args, n);
+		result = apply_special(proc.special_type, args, n, env);
 	} else {
 		assert(proc.type == E_LAMBDA);
 		for (int i = 0; i < n; i++) {
@@ -255,20 +332,45 @@ static struct EvalResult apply(
 // Evaluates a single expression.
 struct EvalResult eval(struct Expression expr, struct Environment *env) {
 	struct EvalResult result;
-	result.env = env;
 	result.err_msg = NULL;
 
 	switch (expr.type) {
 	case E_PAIR:
-		// CHECK SPECIAL FORMS
-		// - "quote" -> ...
-		// - "lambda" -> ...
-		// - "cond"   -> ...
-		// - "define" -> ... (changes result.env)
-			// (don't allow special names or ids begginig with integer, etc.)
-		// otherwise, eval everything + call apply
-		// (create args array and then free it after)
-		// think about memory management
+		if (expr.box->car.type == E_SYMBOL) {
+			InternID id = expr.box->car.symbol_id;
+			if (id == special_form_ids[F_DEFINE]) {
+			} else if (id == special_form_ids[F_LAMBDA]) {
+			} else if (id == special_form_ids[F_QUOTE]) {
+			} else if (id == special_form_ids[F_COND]) {
+			} else if (id == special_form_ids[F_IF]) {
+			} else if (id == special_form_ids[F_LET]) {
+			} else if (id == special_form_ids[F_LET_STAR]) {
+			} else if (id == special_form_ids[F_AND]) {
+			} else if (id == special_form_ids[F_OR]) {
+			}
+		}
+		struct EvalResult proc = eval(expr.box->car, env);
+		if (proc.err_msg) {
+			result.err_msg = proc.err_msg;
+			break;
+		}
+		struct ArrayResult args = sexpr_array(expr.box->cdr);
+		if (args.err_msg) {
+			result.err_msg = args.err_msg;
+			break;
+		}
+		for (int i = 0; i < args.size; i++) {
+			struct EvalResult arg = eval(args.exprs[i], env);
+			if (arg.err_msg) {
+				result.err_msg = arg.err_msg;
+				break;
+			}
+			args.exprs[i] = arg.expr;
+		}
+		if (!result.err_msg) {
+			result = apply(proc, args.exprs, args.size, env);
+		}
+		free(args.exprs);
 		break;
 	case E_SYMBOL:;
 		struct LookupResult look = lookup(env, expr.symbol_id);
@@ -280,7 +382,7 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 		break;
 	default:
 		// Everything else is self-evaluating.
-		result.expr = expr;
+		result.expr = retain_expression(expr);
 		break;
 	}
 
