@@ -15,7 +15,7 @@ struct Bucket {
 	char **strings;
 };
 
-static struct Bucket *table[TABLE_SIZE];
+static struct Bucket table[TABLE_SIZE];
 
 InternID intern_string(const char *str) {
 	return intern_string_n(str, strlen(str));
@@ -59,5 +59,5 @@ InternID intern_string_n(const char *str, int n) {
 const char *find_string(InternID id) {
 	int h = id & (TABLE_SIZE - 1);
 	int pos = id >> TABLE_SIZE_BITS;
-	return intern_table[h].strings[pos];
+	return table[h].strings[pos];
 }

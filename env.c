@@ -117,8 +117,7 @@ void unbind(struct Environment *env, InternID key) {
 void unbind_last(struct Environment *env, InternID key) {
 	int index = key % env->size;
 	int len = env->table[index].len;
-	struct Entry *ents = env->table[index];
-	release_expression(ents[len-1].expr);
+	release_expression(env->table[index].entries[len-1].expr);
 	env->table[index].len--;
 	env->total_entries--;
 }
