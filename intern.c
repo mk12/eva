@@ -5,15 +5,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct InternList {
-	char *string;
-	struct InternList *rest;
-};
-
 #define TABLE_SIZE_BITS 10
 #define TABLE_SIZE (1 << TABLE_SIZE_BITS)
+#define DEFAULT_BUCKET_SIZE 16
 
-static struct InternList *intern_table[TABLE_SIZE];
+struct Bucket {
+	int cap;
+	int len;
+	char **strings;
+};
+
+static struct Bucket *table[TABLE_SIZE];
 
 InternID intern_string(const char *str) {
 	return intern_string_n(str, strlen(str));
@@ -25,34 +27,37 @@ InternID intern_string_n(const char *str, int n) {
 		h = ((h << 5) + h) + str[i];
 	}
 	h %= TABLE_SIZE;
+	struct Bucket *bucket = table + h;
 
-	struct InternList *new_cell = malloc(sizeof *new_cell);
-	new_cell->string = malloc(n + 1);
-	strncpy(new_cell->string, str, n);
-	new_cell->string[n] = '\0';
-	new_cell->rest = NULL;
-
-	int pos = 0;
-	struct InternList *cell = intern_table[h];
-	if (!cell) {
-		intern_table[h] = new_cell;
-	} else {
-		while (cell->rest) {
-			cell = cell->rest;
-			pos++;
-		}
-		cell->rest = new_cell;
+	if (!bucket->strings) {
+		bucket->cap = DEFAULT_BUCKET_SIZE;
+		bucket->len = 0;
+		bucket->strings = malloc(DEFAULT_BUCKET_SIZE * sizeof *bucket->strings);
 	}
 
+	for (int i = 0; i < bucket->len; i++) {
+		if (strncmp(str, bucket->strings[i], n) == 0) {
+			return (i << TABLE_SIZE_BITS) | h;
+		}
+	}
+	
+	if (bucket->len >= bucket->cap) {
+		bucket->cap *= 2;
+		bucket->strings = realloc(
+				bucket->strings, bucket->cap * sizeof *bucket->strings);
+	}
+
+	char *new_str = malloc(n + 1);
+	strncpy(new_str, str, n);
+	new_str[n] = '\0';
+	int pos = bucket->len;
+	bucket->strings[pos] = new_str;
+	bucket->len++;
 	return (pos << TABLE_SIZE_BITS) | h;
 }
 
 const char *find_string(InternID id) {
 	int h = id & (TABLE_SIZE - 1);
 	int pos = id >> TABLE_SIZE_BITS;
-	struct InternList *cell = intern_table[h];
-	for (int i = 0; i < pos; i++) {
-		cell = cell->rest;
-	}
-	return cell->string;
+	return intern_table[h].strings[pos];
 }
