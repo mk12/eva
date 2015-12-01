@@ -8,39 +8,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEFAULT_SIZE_BITS 10
-#define DEFAULT_SIZE (1 << DEFAULT_SIZE_BITS)
+#define DEFAULT_TABLE_SIZE 1024
+#define DEFAULT_BUCKET_SIZE 16
 
-struct Markers;
-struct VarChain;
-struct ShadowChain;
+struct Entry {
+	InternID key;
+	Expression expr;
+};
+
+struct Bucket {
+	int size;
+	int len;
+	struct Entry *entries;
+};
 
 struct Environment {
 	int size;
-	struct Markers *table;
-};
-
-struct Markers {
-	struct VarChain *start;
-	struct VarChain *end;
-};
-
-struct VarChain {
-	InternID key;
-	struct Expression expr;
-	struct ShadowChain *shadow_start;
-	struct ShadowChain *shadow_end;
-	struct VarChain *rest;
-};
-
-struct ShadowChain {
-	struct Expression expr;
-	struct ShadowChain *rest;
+	int count;
+	struct Bucket *table;
 };
 
 struct Environment *empty_environment(void) {
 	struct Environment *env = malloc(sizeof *env);
-	env->size = DEFAULT_SIZE;
+	env->size = DEFAULT_TABLE_SIZE;
+	env->count = 0;
 	env->table = calloc(env->size, sizeof *env->table);
 	return env;
 }
@@ -48,84 +39,77 @@ struct Environment *empty_environment(void) {
 struct Environment *default_environment(void) {
 	struct Environment *env = empty_environment();
 	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
-		bind(env, intern_string(special_name(i)), new_special(i));
+		env = bind(env, intern_string(special_name(i)), new_special(i));
 	}
 	return env;
 }
 
 struct LookupResult lookup(struct Environment *env, InternID key) {
-	int i = key % env->size;
-	struct VarChain *var = env->table[i].start;
-	while (var && var->key != key) {
-		var = var->rest;
+	struct Bucket bucket = env->table[key % env->size];
+	for (int i = 0; i < bucket.len; i++) {
+		if (bucket[i].key == key) {
+			return { .found = true, .expr = bucket[i].expr };
+		}
 	}
-	if (var) {
-		return (struct LookupResult){ .found = true, .expr = var->expr };
+	return { .found = false };
+}
+
+static void bind_unchecked(
+		struct Environment *env, InternID key, struct Expression expr) {
+	struct Bucket *bucket = env->table + (key % env->size);
+	if (!bucket->entries) {
+		bucket->size = DEFAULT_BUCKET_SIZE;
+		bucket->entries = malloc(bucket->size * sizeof *bucket->entries);
+	} else if (bucket->len >= bucket->size) {
+		bucket->size *= 2;
+		bucket->entries = realloc(
+				bucket->entries, bucket->size * sizeof *bucket->entries);
 	}
-	return (struct LookupResult){ .found = false };
+	bucket->entries[bucket->len].key = key;
+	bucket->entries[bucket->len].expr = expr;
+	bucket->len++;
 }
 
 void bind(struct Environment *env, InternID key, struct Expression expr) {
-	int i = key % env->size;
+	if (3 * env->size >= 4 * env->count) {
+		int old_size = env->size;
+		struct Bucket *old_table = env->table;
+		env->size *= 2;
+		env->table = calloc(env->size, sizeof *env->table);
+		for (int i = 0; i < old_size; i++) {
+			for (int j = 0; j < old_table[i].len; j++) {
+				struct Entry ent = old_table[i].entries[j];
+				bind_unchecked(env, ent.key, ent.expr);
+			}
+			if (old_table[i].entries) {
+				free(old_table[i].entries);
+			}
+		}
+		free(old_table);
 
-	if (!env->table[i].start) {
-		struct VarChain *var = malloc(sizeof *var);
-		var->key = key;
-		var->expr = retain_expression(expr);
-		var->shadow_start = NULL;
-		var->shadow_end = NULL;
-		var->rest = NULL;
-		env->table[i].start = var;
-		env->table[i].end = var;
-		return;
 	}
-
-	struct VarChain *var = env->table[i].start;
-	while (var && var->key != key) {
-		var = var->rest;
-	}
-	if (var) {
-		struct ShadowChain *shadow = malloc(sizeof *shadow);
-		shadow->expr = var->expr;
-		shadow->rest = var->shadow_start;
-		var->shadow_start = shadow;
-		var->expr = retain_expression(expr);
-	} else {
-		struct VarChain *var = malloc(sizeof *var);
-		var->key = key;
-		var->expr = retain_expression(expr);
-		var->shadow_start = NULL;
-		var->shadow_end = NULL;
-		var->rest = NULL;
-		env->table[i].end->rest = var;
-		env->table[i].end = var;
-	}
+	bind_unchecked(env, key, expr);
 }
 
 void unbind(struct Environment *env, InternID key) {
-	int i = key % env->size;
-	struct VarChain *prev = NULL;
-	struct VarChain *var = env->table[i].start;
-	while (var && var->key != key) {
-		prev = var;
-		var = var->rest;
-	}
-	assert(var);
-	if (var->shadow_start) {
-		struct ShadowChain *temp = var->shadow_start;
-		release_expression(var->expr);
-		var->expr = temp->expr;
-		var->shadow_start = temp->rest;
-		free(temp);
-	} else {
-		release_expression(var->expr);
-		free(var);
-		if (prev) {
-			prev->rest = NULL;
-			env->table[i].end = prev;
+	struct Bucket bucket = env->table[key % env->size];
+	bool shift = false;
+	for (int i = 0; i < bucket.len; i++) {
+		if (shift) {
+			bucket[i-1].key = bucket[i].key;
+			bucket[i-1].expr = bucket[i].expr;
 		} else {
-			env->table[i].start = NULL;
-			env->table[i].end = NULL;
+			if (bucket[i].key == key) {
+				shift = true;
+			}
 		}
 	}
+	bucket.len--;
+	env->count--;
+}
+
+void unbind_last(struct Environment *env, InternID key) {
+	struct Bucket bucket = env->table[key % env->size];
+	bucket.len--;
+	env->count--;
 }

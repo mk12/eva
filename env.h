@@ -30,4 +30,8 @@ void bind(struct Environment *env, InternID key, struct Expression expr);
 // Unbinds a variable in the envrionment. The variable must be present.
 void unbind(struct Environment *env, InternID key);
 
+// Like unbind, but more efficient. Requires the key to correspond to the most
+// recently added variable.
+void unbind_last(struct Environment *env, InternID key);
+
 #endif
