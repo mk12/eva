@@ -22,9 +22,9 @@ enum ExpressionType {
 
 #define N_SPECIAL_PROCS 23
 
-// There are 20 types of special procedures. Special procedures (distinct from
-// special forms, which require special evaluation rules) are implemented by the
-// interpreter.
+// There are 20 types of special procedures. Special procedures (as distinct
+// from special *forms*, which require special evaluation rules) are implemented
+// by the interpreter.
 enum SpecialType {
 	// Eval and apply:
 	S_EVAL, S_APPLY,
@@ -57,7 +57,7 @@ struct Expression {
 };
 
 // A box is a recursive structure that cannot be stored as an immediate value.
-// It contains either a cons pair or a lambda expression. The type (pair or
+// It contains either a cons pair or a lambda expression. The type tag (pair or
 // lambda) is stored in the expression that points to the box.
 struct Box {
 	int ref_count;

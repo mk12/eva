@@ -98,7 +98,7 @@ void release_expression(struct Expression expr) {
 	switch (expr.type) {
 	case E_PAIR:
 	case E_LAMBDA:
-		expr.box->ref_count++;
+		expr.box->ref_count--;
 		if (expr.box->ref_count <= 0) {
 			dealloc_expression(expr);
 		}
