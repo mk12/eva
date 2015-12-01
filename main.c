@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#include "eval.h"
+
 int main(void) {
 	setup_eval();
 	return 0;

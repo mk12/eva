@@ -13,7 +13,7 @@
 
 struct Entry {
 	InternID key;
-	Expression expr;
+	struct Expression expr;
 };
 
 struct Bucket {
@@ -39,19 +39,21 @@ struct Environment *empty_environment(void) {
 struct Environment *default_environment(void) {
 	struct Environment *env = empty_environment();
 	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
-		env = bind(env, intern_string(special_name(i)), new_special(i));
+		bind(env, intern_string(special_name(i)), new_special(i));
 	}
 	return env;
 }
 
 struct LookupResult lookup(struct Environment *env, InternID key) {
-	struct Bucket bucket = env->table[key % env->size];
-	for (int i = 0; i < bucket.len; i++) {
-		if (bucket[i].key == key) {
-			return { .found = true, .expr = bucket[i].expr };
+	int index = key % env->size;
+	int len = env->table[index].len;
+	struct Entry *ents = env->table[index].entries;
+	for (int i = 0; i < len; i++) {
+		if (ents[i].key == key) {
+			return (struct LookupResult){ .found = true, .expr = ents[i].expr };
 		}
 	}
-	return { .found = false };
+	return (struct LookupResult){ .found = false };
 }
 
 static void bind_unchecked(
@@ -92,19 +94,21 @@ void bind(struct Environment *env, InternID key, struct Expression expr) {
 }
 
 void unbind(struct Environment *env, InternID key) {
-	struct Bucket bucket = env->table[key % env->size];
+	int index = key % env->size;
+	int len = env->table[index].len;
+	struct Entry *ents = env->table[index].entries;
 	bool shift = false;
-	for (int i = 0; i < bucket.len; i++) {
+	for (int i = 0; i < len; i++) {
 		if (shift) {
-			bucket[i-1].key = bucket[i].key;
-			bucket[i-1].expr = bucket[i].expr;
+			ents[i-1].key = ents[i].key;
+			ents[i-1].expr = ents[i].expr;
 		} else {
-			if (bucket[i].key == key) {
+			if (ents[i].key == key) {
 				shift = true;
 			}
 		}
 	}
-	bucket.len--;
+	env->table[index].len--;
 	env->count--;
 }
 

@@ -6,7 +6,7 @@
 #include <string.h>
 
 struct InternList {
-	const char *string;
+	char *string;
 	struct InternList *rest;
 };
 

@@ -16,15 +16,32 @@ static const char *err_not_proc = "expected operand to be a procedure";
 static const char *err_not_pair = "expected operand to be a pair";
 static const char *err_unbound_var = "use of unbound variable";
 
+#define N_SPECIAL_FORMS 9
+
+enum SpecialForms {
+	F_DEFINE,
+	F_LAMBDA,
+	F_QUOTE,
+	F_COND,
+	F_IF,
+	F_LET,
+	F_LET_STAR,
+	F_AND,
+	F_OR
+};
+
 // Names of special forms.
-static const char *special_form_names[] = {
+static const char *special_form_names[N_SPECIAL_FORMS] = {
 	"define", "lambda", "quote", "cond", "if", "let", "let*", "and", "or"
 };
 
-static InternID sf_define_id;
+// Intern identifiers of special forms.
+static int special_form_ids[N_SPECIAL_FORMS];
 
 void setup_eval(void) {
-	sf_define_id = intern_string("define");
+	for (int i = 0; i < N_SPECIAL_FORMS; i++) {
+		special_form_ids[i] = intern_string(special_form_names[i]);
+	}
 }
 
 // Returns NULL if the procedure accepts n arguments. Returns an error message

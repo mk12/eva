@@ -116,7 +116,7 @@ struct Expression clone_expression(struct Expression expr) {
 				clone_expression(expr.box->pair.cdr));
 	case E_LAMBDA:;
 		int n = expr.box->lambda.arity;
-		int *params = malloc(n * sizeof *params);
+		InternID *params = malloc(n * sizeof *params);
 		for (int i = 0; i < n; i++) {
 			params[i] = expr.box->lambda.params[i];
 		}
