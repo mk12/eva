@@ -105,11 +105,11 @@ void unbind(struct Environment *env, InternID key) {
 			ents[i-1].expr = ents[i].expr;
 		} else {
 			if (ents[i].key == key) {
+				release_expression(ents[i].expr);
 				shift = true;
 			}
 		}
 	}
-	release_expression(env->table[index].expr);
 	env->table[index].len--;
 	env->total_entries--;
 }
