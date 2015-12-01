@@ -16,6 +16,7 @@ static const char *err_not_proc = "expected operand to be a procedure";
 static const char *err_not_pair = "expected operand to be a pair";
 static const char *err_unbound_var = "use of unbound variable";
 static const char *err_ill_list = "ill-formed list";
+static const char *err_ill_quote = "ill-formed special form: quote";
 
 #define N_SPECIAL_FORMS 9
 
@@ -149,17 +150,17 @@ static struct ArrayResult sexpr_array(struct Expression list) {
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
 			result.err_msg = err_ill_list;
-			return;
+			return result;
 		}
-		expr = expr.box->cdr;
+		expr = expr.box->pair.cdr;
 		result.size++;
 	}
 
 	result.exprs = malloc(result.size * sizeof *result.exprs);
 	expr = list;
 	for (int i = 0; i < result.size; i++) {
-		result.exprs[i] = expr.box->car;
-		expr = expr.box->cdr;
+		result.exprs[i] = expr.box->pair.car;
+		expr = expr.box->pair.cdr;
 	}
 	return result;
 }
@@ -323,7 +324,7 @@ static struct EvalResult apply(
 		}
 		result = eval(proc.box->lambda.body, env);
 		for (int i = n - 1; i >= 0; i--) {
-			unbind_last(proc.box->lambda.params[i]);
+			unbind_last(env, proc.box->lambda.params[i]);
 		}
 	}
 	return result;
@@ -336,11 +337,18 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 
 	switch (expr.type) {
 	case E_PAIR:
-		if (expr.box->car.type == E_SYMBOL) {
-			InternID id = expr.box->car.symbol_id;
+		if (expr.box->pair.car.type == E_SYMBOL) {
+			InternID id = expr.box->pair.car.symbol_id;
 			if (id == special_form_ids[F_DEFINE]) {
 			} else if (id == special_form_ids[F_LAMBDA]) {
 			} else if (id == special_form_ids[F_QUOTE]) {
+				if (expr.box->pair.cdr.type != E_PAIR
+						|| expr.box->pair.cdr.box->pair.cdr.type != E_NULL) {
+					result.err_msg = err_ill_quote;
+					break;
+				}
+				result.expr = retain_expression(
+						expr.box->pair.cdr.box->pair.car);
 			} else if (id == special_form_ids[F_COND]) {
 			} else if (id == special_form_ids[F_IF]) {
 			} else if (id == special_form_ids[F_LET]) {
@@ -348,13 +356,14 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 			} else if (id == special_form_ids[F_AND]) {
 			} else if (id == special_form_ids[F_OR]) {
 			}
+			break;
 		}
-		struct EvalResult proc = eval(expr.box->car, env);
+		struct EvalResult proc = eval(expr.box->pair.car, env);
 		if (proc.err_msg) {
 			result.err_msg = proc.err_msg;
 			break;
 		}
-		struct ArrayResult args = sexpr_array(expr.box->cdr);
+		struct ArrayResult args = sexpr_array(expr.box->pair.cdr);
 		if (args.err_msg) {
 			result.err_msg = args.err_msg;
 			break;
@@ -368,7 +377,7 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 			args.exprs[i] = arg.expr;
 		}
 		if (!result.err_msg) {
-			result = apply(proc, args.exprs, args.size, env);
+			result = apply(proc.expr, args.exprs, args.size, env);
 		}
 		free(args.exprs);
 		break;
