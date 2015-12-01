@@ -1,33 +1,37 @@
 // Copyright 2015 Mitchell Kember. Subject to the MIT License.
 
 #include <stdio.h>
+#include <stdlib.h>
 
+#include <readline/readline.h>
+#include <readline/history.h>
+
+#include "env.h"
 #include "eval.h"
+#include "parse.h"
 
 int main(void) {
+	struct Environment *env = default_environment();
 	setup_eval();
+
+	for (;;) {
+		char *str = readline("eva> ");
+		struct ParseResult pres = parse(str);
+		if (pres.err_msg) {
+			fputs(pres.err_msg, stderr);
+		} else {
+			struct EvalResult eres = eval(pres.expr, env);
+			if (eres.err_msg) {
+				fputs(eres.err_msg, stderr);
+			} else {
+				print_expression(eres.expr);
+				release_expression(eres.expr);
+			}
+			release_expression(pres.expr);
+		}
+		putchar('\n');
+		add_history(str);
+		free(str);
+	}
 	return 0;
 }
-
-// TODO:
-// becuase of eval/apply recursion, env define logic can't be pulled out
-// instead expose eval-block which takes seq of expressions and maintains the
-// array itself.
-//
-// Releasing expresssions:
-// code tree is +1 when parsed; after evaluating, release it.
-//
-// But REPL evaluates one by one ...
-//
-//
-//
-//
-// The body of the procedure is not the single expression, it is the list of
-// expressions.
-// - add "(begin" and then implement begin blocks
-// - OR don't allow block structure ?
-// - need same thing in cond
-// - need evaluate that takes (e1 e2 e3) and evaluates each one at a time
-// - then "(begin" can call this on the cdr, easy.
-//
-// Env should be a big hash table.
