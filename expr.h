@@ -22,9 +22,9 @@ enum ExpressionType {
 
 #define N_SPECIAL_PROCS 23
 
-// There are 20 types of special procedures. Special procedures (as distinct
-// from special *forms*, which require special evaluation rules) are implemented
-// by the interpreter.
+// There are 20 special procedures. Special procedures (as distinct from special
+// *forms*, which require special evaluation rules) are implemented by the
+// interpreter.
 enum SpecialType {
 	// Eval and apply:
 	S_EVAL, S_APPLY,
