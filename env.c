@@ -17,21 +17,21 @@ struct Entry {
 };
 
 struct Bucket {
-	int size;
+	int cap;
 	int len;
 	struct Entry *entries;
 };
 
 struct Environment {
 	int size;
-	int count;
+	int total_entries;
 	struct Bucket *table;
 };
 
 struct Environment *empty_environment(void) {
 	struct Environment *env = malloc(sizeof *env);
 	env->size = DEFAULT_TABLE_SIZE;
-	env->count = 0;
+	env->total_entries = 0;
 	env->table = calloc(env->size, sizeof *env->table);
 	return env;
 }
@@ -60,20 +60,21 @@ static void bind_unchecked(
 		struct Environment *env, InternID key, struct Expression expr) {
 	struct Bucket *bucket = env->table + (key % env->size);
 	if (!bucket->entries) {
-		bucket->size = DEFAULT_BUCKET_SIZE;
-		bucket->entries = malloc(bucket->size * sizeof *bucket->entries);
-	} else if (bucket->len >= bucket->size) {
-		bucket->size *= 2;
+		bucket->cap = DEFAULT_BUCKET_SIZE;
+		bucket->entries = malloc(bucket->cap * sizeof *bucket->entries);
+	} else if (bucket->len >= bucket->cap) {
+		bucket->cap *= 2;
 		bucket->entries = realloc(
-				bucket->entries, bucket->size * sizeof *bucket->entries);
+				bucket->entries, bucket->cap * sizeof *bucket->entries);
 	}
 	bucket->entries[bucket->len].key = key;
 	bucket->entries[bucket->len].expr = retain_expression(expr);
 	bucket->len++;
+	env->total_entries++;
 }
 
 void bind(struct Environment *env, InternID key, struct Expression expr) {
-	if (3 * env->size >= 4 * env->count) {
+	if (3 * env->size >= 4 * env->total_entries) {
 		int old_size = env->size;
 		struct Bucket *old_table = env->table;
 		env->size *= 2;
@@ -110,7 +111,7 @@ void unbind(struct Environment *env, InternID key) {
 	}
 	release_expression(env->table[index].expr);
 	env->table[index].len--;
-	env->count--;
+	env->total_entries--;
 }
 
 void unbind_last(struct Environment *env, InternID key) {
@@ -119,5 +120,5 @@ void unbind_last(struct Environment *env, InternID key) {
 	struct Entry *ents = env->table[index];
 	release_expression(ents[len-1].expr);
 	env->table[index].len--;
-	env->count--;
+	env->total_entries--;
 }
