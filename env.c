@@ -48,7 +48,7 @@ struct LookupResult lookup(struct Environment *env, InternID key) {
 	int index = key % env->size;
 	int len = env->table[index].len;
 	struct Entry *ents = env->table[index].entries;
-	for (int i = 0; i < len; i++) {
+	for (int i = len - 1; i >= 0; i--) {
 		if (ents[i].key == key) {
 			return (struct LookupResult){ .found = true, .expr = ents[i].expr };
 		}
