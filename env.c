@@ -68,7 +68,7 @@ static void bind_unchecked(
 				bucket->entries, bucket->size * sizeof *bucket->entries);
 	}
 	bucket->entries[bucket->len].key = key;
-	bucket->entries[bucket->len].expr = expr;
+	bucket->entries[bucket->len].expr = retain_expression(expr);
 	bucket->len++;
 }
 
@@ -108,12 +108,16 @@ void unbind(struct Environment *env, InternID key) {
 			}
 		}
 	}
+	release_expression(env->table[index].expr);
 	env->table[index].len--;
 	env->count--;
 }
 
 void unbind_last(struct Environment *env, InternID key) {
-	struct Bucket bucket = env->table[key % env->size];
-	bucket.len--;
+	int index = key % env->size;
+	int len = env->table[index].len;
+	struct Entry *ents = env->table[index];
+	release_expression(ents[len-1].expr);
+	env->table[index].len--;
 	env->count--;
 }
