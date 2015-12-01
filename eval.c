@@ -245,8 +245,8 @@ static struct EvalResult apply(
 			bind(env, proc.box->lambda.params[i], args[i]);
 		}
 		result = eval(proc.box->lambda.body, env);
-		for (int i = 0; i < n; i++) {
-			unbind(env, proc.box->lambda.params[i]);
+		for (int i = n - 1; i >= 0; i--) {
+			unbind_last(proc.box->lambda.params[i]);
 		}
 	}
 	return result;
