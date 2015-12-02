@@ -379,12 +379,16 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 		if (!result.err_msg) {
 			result = apply(proc.expr, args.exprs, args.size, env);
 		}
+		release_expression(proc.expr);
+		for (int i = 0; i < args.size; i++) {
+			release_expression(args.exprs[i]);
+		}
 		free(args.exprs);
 		break;
 	case E_SYMBOL:;
 		struct LookupResult look = lookup(env, expr.symbol_id);
 		if (look.found) {
-			result.expr = look.expr;
+			result.expr = retain_expression(look.expr);
 		} else {
 			result.err_msg = err_unbound_var;
 		}

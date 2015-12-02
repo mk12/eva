@@ -50,8 +50,8 @@ struct Expression new_special(enum SpecialType type) {
 struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	struct Box *box = malloc(sizeof *box);
 	box->ref_count = 1;
-	box->pair.car = car;
-	box->pair.cdr = cdr;
+	box->pair.car = retain_expression(car);
+	box->pair.cdr = retain_expression(cdr);
 	return (struct Expression){ .type = E_PAIR, .box = box };
 }
 

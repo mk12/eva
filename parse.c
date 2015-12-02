@@ -90,22 +90,29 @@ static struct ParseResult parse_pair(const char *text) {
 		s += second.chars_read;
 		if (second.err_msg) {
 			result.err_msg = second.err_msg;
+			release_expression(first.expr);
 			goto END;
 		}
 		if (*s != ')') {
 			result.err_msg = err_expected_rparen;
+			release_expression(first.expr);
 			goto END;
 		}
 		s++;
 		result.expr = new_pair(first.expr, second.expr);
+		release_expression(first.expr);
+		release_expression(second.expr);
 	} else {
 		struct ParseResult rest = parse_pair(s);
 		s += rest.chars_read;
 		if (rest.err_msg) {
 			result.err_msg = rest.err_msg;
+			release_expression(first.expr);
 			goto END;
 		}
 		result.expr = new_pair(first.expr, rest.expr);
+		release_expression(first.expr);
+		release_expression(rest.expr);
 	}
 
 END:
