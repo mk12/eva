@@ -10,29 +10,37 @@
 #include "eval.h"
 #include "parse.h"
 
+static const char *prompt = "eva> ";
+
 int main(void) {
 	struct Environment *env = default_environment();
 	setup_eval();
 
 	for (;;) {
-		char *str = readline("eva> ");
+		// Read a line of input.
+		char *str = readline(prompt);
+		// Exit on the EOF condition.
 		if (!str) {
 			putchar('\n');
 			break;
 		}
-		struct ParseResult pres = parse(str);
-		if (pres.err_msg) {
-			fputs(pres.err_msg, stderr);
+		// Parse the string as an s-expression.
+		struct ParseResult code = parse(str);
+		if (code.err_msg) {
+			fputs(code.err_msg, stderr);
 		} else {
-			struct EvalResult eres = eval(pres.expr, env);
-			if (eres.err_msg) {
-				fputs(eres.err_msg, stderr);
+			// Evaluate the code.
+			struct EvalResult result = eval_top(code.expr, env);
+			if (result.err_msg) {
+				fputs(result.err_msg, stderr);
 			} else {
-				print_expression(eres.expr);
-				release_expression(eres.expr);
+				// Print the resulting expression.
+				print_expression(result.expr);
+				release_expression(result.expr);
 			}
-			release_expression(pres.expr);
+			release_expression(code.expr);
 		}
+
 		putchar('\n');
 		add_history(str);
 		free(str);
