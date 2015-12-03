@@ -275,7 +275,7 @@ static struct EvalResult apply_special(
 		result.expr = new_number(diff);
 		break;
 	case S_MUL:;
-		int prod = 0;
+		int prod = 1;
 		for (int i = 0; i < n; i++) {
 			prod *= args[i].number;
 		}
@@ -356,7 +356,6 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 			} else if (id == special_form_ids[F_AND]) {
 			} else if (id == special_form_ids[F_OR]) {
 			}
-			break;
 		}
 		struct EvalResult proc = eval(expr.box->pair.car, env);
 		if (proc.err_msg) {

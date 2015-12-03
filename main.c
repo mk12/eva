@@ -16,6 +16,10 @@ int main(void) {
 
 	for (;;) {
 		char *str = readline("eva> ");
+		if (!str) {
+			putchar('\n');
+			break;
+		}
 		struct ParseResult pres = parse(str);
 		if (pres.err_msg) {
 			fputs(pres.err_msg, stderr);

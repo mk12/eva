@@ -26,7 +26,7 @@ static bool parse_int(const char *s, int n, int *result) {
 	bool leading_zero = true;
 	for (int i = 0; i < n; i++) {
 		char c = s[i];
-		if (i == 0 && c == '-') {
+		if (i == 0 && c == '-' && n > 1) {
 			sign = -1;
 			continue;
 		}
@@ -52,16 +52,16 @@ static int skip_whitespace(const char *text) {
 	while (isspace(*s)) {
 		s++;
 	}
-	return text - s;
+	return s - text;
 }
 
 // Returns the number of characters at the beginning of text that form a symbol.
 static int skip_symbol(const char *text) {
 	const char *s = text;
-	while (!isspace(*s) && *s != '(' && *s != ')') {
+	while (*s && !isspace(*s) && *s != '(' && *s != ')') {
 		s++;
 	}
-	return text - s;
+	return s - text;
 }
 
 // Parses a pair, assuming the opening '(' has already been read.
