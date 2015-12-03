@@ -16,8 +16,11 @@ static const char *err_not_proc = "expected operand to be a procedure";
 static const char *err_not_pair = "expected operand to be a pair";
 static const char *err_unbound_var = "use of unbound variable";
 static const char *err_ill_list = "ill-formed list";
+static const char *err_ill_define = "ill-formed special form: define";
+static const char *err_ill_placed_define = "ill-placed special form: define";
 static const char *err_ill_quote = "ill-formed special form: quote";
 static const char *err_special_var = "special form can't be used as variable";
+static const char *err_ill_if = "ill-formed special form: if";
 
 #define N_SPECIAL_FORMS 9
 
@@ -345,7 +348,41 @@ static struct EvalResult eval(
 		if (expr.box->pair.car.type == E_SYMBOL) {
 			InternID id = expr.box->pair.car.symbol_id;
 			if (id == special_form_ids[F_DEFINE]) {
+				if (!allow_define) {
+					result.err_msg = err_ill_placed_define;
+					break;
+				}
+				if (expr.box->pair.cdr.type != E_PAIR
+						|| expr.box->pair.cdr.box->pair.car.type != E_SYMBOL
+						|| expr.box->pair.cdr.box->pair.cdr.type != E_PAIR
+						|| expr.box->pair.cdr.box->pair.cdr.box->pair.cdr.type
+						!= E_NULL) {
+					result.err_msg = err_ill_define;
+					break;
+				}
+				InternID id = expr.box->pair.cdr.box->pair.car.symbol_id;
+				for (int i = 0; i < N_SPECIAL_FORMS; i++) {
+					if (id == special_form_ids[i]) {
+						result.err_msg = err_special_var;
+						break;
+					}
+				}
+				if (result.err_msg) {
+					break;
+				}
+				struct EvalResult val = eval(
+						expr.box->pair.cdr.box->pair.cdr.box->pair.car,
+						env,
+						false);
+				if (val.err_msg) {
+					result.err_msg = val.err_msg;
+					break;
+				}
+				result.expr = val.expr;
+				bind(env, id, val.expr);
+				break;
 			} else if (id == special_form_ids[F_LAMBDA]) {
+				break;
 			} else if (id == special_form_ids[F_QUOTE]) {
 				if (expr.box->pair.cdr.type != E_PAIR
 						|| expr.box->pair.cdr.box->pair.cdr.type != E_NULL) {
