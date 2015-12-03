@@ -32,6 +32,9 @@ enum SpecialForms {
 	F_OR
 };
 
+static struct EvalResult eval(
+		struct Expression expr, struct Environment *env, bool allow_define);
+
 // Names of special forms.
 static const char *special_form_names[N_SPECIAL_FORMS] = {
 	"define", "lambda", "quote", "cond", "if", "let", "let*", "and", "or"
@@ -177,13 +180,13 @@ static struct EvalResult apply_special(
 	result.err_msg = NULL;
 	switch (type) {
 	case S_EVAL:
-		result = eval(args[0], env);
+		result = eval(args[0], env, true);
 		break;
 	case S_APPLY:;
 		struct Expression quote = new_symbol(special_form_ids[F_QUOTE]);
 		struct Expression proc = new_pair(quote, new_pair(args[0], new_null()));
 		struct Expression app = new_pair(proc, args[1]);
-		result = eval(app, env);
+		result = eval(app, env, false);
 		release_expression(app);
 		break;
 	case S_NULL:
@@ -322,7 +325,7 @@ static struct EvalResult apply(
 		for (int i = 0; i < n; i++) {
 			bind(env, proc.box->lambda.params[i], args[i]);
 		}
-		result = eval(proc.box->lambda.body, env);
+		result = eval(proc.box->lambda.body, env, false);
 		for (int i = n - 1; i >= 0; i--) {
 			unbind_last(env, proc.box->lambda.params[i]);
 		}
@@ -331,7 +334,8 @@ static struct EvalResult apply(
 }
 
 // Evaluates a single expression.
-struct EvalResult eval(struct Expression expr, struct Environment *env) {
+static struct EvalResult eval(
+		struct Expression expr, struct Environment *env, bool allow_define) {
 	struct EvalResult result;
 	result.err_msg = NULL;
 
@@ -349,15 +353,83 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 				}
 				result.expr = retain_expression(
 						expr.box->pair.cdr.box->pair.car);
+				break;
 			} else if (id == special_form_ids[F_COND]) {
+				break;
 			} else if (id == special_form_ids[F_IF]) {
+				struct ArrayResult args = sexpr_array(expr.box->pair.cdr);
+				if (args.err_msg) {
+					result.err_msg = args.err_msg;
+					break;
+				}
+				if (args.size != 3) {
+					result.err_msg = err_ill_if;
+					break;
+				}
+				struct EvalResult cond = eval(args.exprs[0], env, false);
+				if (cond.err_msg) {
+					result.err_msg = cond.err_msg;
+					break;
+				}
+				int i = (cond.expr.type != E_BOOLEAN || cond.expr.boolean) ? 1 : 2;
+				release_expression(cond.expr);
+				struct EvalResult branch = eval(args.exprs[i], env, false);
+				free(args.exprs);
+				if (branch.err_msg) {
+					result.err_msg = branch.err_msg;
+					break;
+				}
+				result.expr = branch.expr;
+				break;
 			} else if (id == special_form_ids[F_LET]) {
+				break;
 			} else if (id == special_form_ids[F_LET_STAR]) {
+				break;
 			} else if (id == special_form_ids[F_AND]) {
+				struct ArrayResult args = sexpr_array(expr.box->pair.cdr);
+				if (args.err_msg) {
+					result.err_msg = args.err_msg;
+					break;
+				}
+				result.expr = new_boolean(true);
+				for (int i = 0; i < args.size; i++) {
+					struct EvalResult arg = eval(args.exprs[i], env, false);
+					if (arg.err_msg) {
+						result.err_msg = arg.err_msg;
+						break;
+					}
+					release_expression(result.expr);
+					result.expr = arg.expr;
+					if (result.expr.type == E_BOOLEAN && !result.expr.boolean) {
+						break;
+					}
+				}
+				free(args.exprs);
+				break;
 			} else if (id == special_form_ids[F_OR]) {
+				struct ArrayResult args = sexpr_array(expr.box->pair.cdr);
+				if (args.err_msg) {
+					result.err_msg = args.err_msg;
+					break;
+				}
+				result.expr = new_boolean(false);
+				for (int i = 0; i < args.size; i++) {
+					struct EvalResult arg = eval(args.exprs[i], env, false);
+					if (arg.err_msg) {
+						result.err_msg = arg.err_msg;
+						break;
+					}
+					release_expression(result.expr);
+					result.expr = arg.expr;
+					if (result.expr.type != E_BOOLEAN || result.expr.boolean) {
+						break;
+					}
+				}
+				free(args.exprs);
+				break;
 			}
 		}
-		struct EvalResult proc = eval(expr.box->pair.car, env);
+		struct EvalResult proc = eval(expr.box->pair.car, env, false);
 		if (proc.err_msg) {
 			result.err_msg = proc.err_msg;
 			break;
@@ -368,7 +440,7 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 			break;
 		}
 		for (int i = 0; i < args.size; i++) {
-			struct EvalResult arg = eval(args.exprs[i], env);
+			struct EvalResult arg = eval(args.exprs[i], env, false);
 			if (arg.err_msg) {
 				result.err_msg = arg.err_msg;
 				break;
@@ -399,4 +471,8 @@ struct EvalResult eval(struct Expression expr, struct Environment *env) {
 	}
 
 	return result;
+}
+
+struct EvalResult eval_top(struct Expression expr, struct Environment *env) {
+	return eval(expr, env, true);
 }

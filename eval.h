@@ -15,9 +15,9 @@ struct EvalResult {
 // This should be called once at the beginning of the program.
 void setup_eval(void);
 
-// Evaluates the expression in the given environment, returning the resulting
-// expression. Modifies the environment if the expression contains a definition.
-// If the expression can't be evaluated, provides an error message.
-struct EvalResult eval(struct Expression expr, struct Environment *env);
+// Evaluates a top-level expression in the given environment, returning a new
+// expression. Modifies the environment if the expression is a definition. If
+// the expression can't be evaluated, provides an error message.
+struct EvalResult eval_top(struct Expression expr, struct Environment *env);
 
 #endif
