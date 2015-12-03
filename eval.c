@@ -17,6 +17,7 @@ static const char *err_not_pair = "expected operand to be a pair";
 static const char *err_unbound_var = "use of unbound variable";
 static const char *err_ill_list = "ill-formed list";
 static const char *err_ill_quote = "ill-formed special form: quote";
+static const char *err_special_var = "special form can't be used as variable";
 
 #define N_SPECIAL_FORMS 9
 
@@ -456,7 +457,16 @@ static struct EvalResult eval(
 		}
 		free(args.exprs);
 		break;
-	case E_SYMBOL:;
+	case E_SYMBOL:
+		for (int i = 0; i < N_SPECIAL_FORMS; i++) {
+			if (expr.symbol_id == special_form_ids[i]) {
+				result.err_msg = err_special_var;
+				break;
+			}
+		}
+		if (result.err_msg) {
+			break;
+		}
 		struct LookupResult look = lookup(env, expr.symbol_id);
 		if (look.found) {
 			result.expr = retain_expression(look.expr);
