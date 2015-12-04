@@ -123,3 +123,15 @@ void unbind_last(struct Environment *env, InternID key) {
 	env->table[index].len--;
 	env->total_entries--;
 }
+
+void free_environment(struct Environment *env) {
+	for (int i = 0; i < env->size; i++) {
+		int len = env->table[i].len;
+		struct Entry *ents = env->table[i].entries;
+		for (int j = 0; j < len; j++) {
+			release_expression(ents[j].expr);
+		}
+		free(ents);
+	}
+	free(env);
+}

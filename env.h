@@ -35,4 +35,7 @@ void unbind(struct Environment *env, InternID key);
 // recently added variable.
 void unbind_last(struct Environment *env, InternID key);
 
+// Frees all memory used by the environment and releases bound expressions.
+void free_environment(struct Environment *env);
+
 #endif
