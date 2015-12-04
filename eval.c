@@ -306,6 +306,16 @@ static struct EvalResult apply_special(
 	case S_NOT:
 		result.expr = new_boolean(!args[0].boolean);
 		break;
+	case S_READ:
+		break;
+	case S_WRITE:
+		print_expression(args[0]);
+		result.expr = new_boolean(true);
+		break;
+	case S_NEWLINE:
+		putchar('\n'):
+		result.expr = new_boolean(true);
+		break;
 	}
 	return result;
 }
