@@ -24,10 +24,11 @@ struct Environment *default_environment(void);
 // Looks up an expression in the environment by its key.
 struct LookupResult lookup(struct Environment *env, InternID key);
 
-// Binds a new variable in the environment.
+// Binds a new variable in the environment, retaining the expression.
 void bind(struct Environment *env, InternID key, struct Expression expr);
 
-// Unbinds a variable in the envrionment. The variable must be present.
+// Unbinds a variable in the environment, releasing the expression. If the key
+// is not found in the environment, this is a no-op.
 void unbind(struct Environment *env, InternID key);
 
 // Like unbind, but more efficient. Requires the key to correspond to the most

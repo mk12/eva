@@ -110,8 +110,10 @@ void unbind(struct Environment *env, InternID key) {
 			}
 		}
 	}
-	env->table[index].len--;
-	env->total_entries--;
+	if (shift) {
+		env->table[index].len--;
+		env->total_entries--;
+	}
 }
 
 void unbind_last(struct Environment *env, InternID key) {
