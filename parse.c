@@ -46,10 +46,23 @@ static bool parse_int(const char *s, int n, int *result) {
 	return true;
 }
 
-// Returns the number of leading whitespace characters in text.
+// Returns the number of leading whitespace characters in the text. Comments,
+// which go from a semicolon to the end of the line, are treated as whitespace.
 static int skip_whitespace(const char *text) {
 	const char *s = text;
-	while (isspace(*s)) {
+	bool comment = false;
+	while (*s) {
+		if (comment) {
+			if (*s == '\n') {
+				comment = false;
+			}
+		} else {
+			if (*s == ';') {
+				comment = true;
+			} else if (!isspace(*s)) {
+				break;
+			}
+		}
 		s++;
 	}
 	return s - text;
@@ -58,7 +71,7 @@ static int skip_whitespace(const char *text) {
 // Returns the number of characters at the beginning of text that form a symbol.
 static int skip_symbol(const char *text) {
 	const char *s = text;
-	while (*s && !isspace(*s) && *s != '(' && *s != ')') {
+	while (*s && *s != ';' && *s != '(' && *s != ')' && !isspace(*s)) {
 		s++;
 	}
 	return s - text;
