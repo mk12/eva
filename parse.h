@@ -11,9 +11,8 @@ struct ParseResult {
 	const char *err_msg;
 };
 
-// Parses a string as an s-expression (an expression that contains only pairs,
-// symbols, and numbers). If the string cannot be parsed as an s-expression,
-// provides an error message.
+// Parses a string as an s-expression that contains only pairs, symbols, and
+// numbers. If the string cannot be parsed, provides an error message.
 struct ParseResult parse(const char *text);
 
 #endif
