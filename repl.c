@@ -54,7 +54,12 @@ void repl(struct Environment *env) {
 			putchar('\n');
 			return;
 		}
-		add_history(line);
+		if (*line) {
+			add_history(line);
+		} else {
+			free(line);
+			continue;
+		}
 
 		int length = strlen(line);
 		int read = 1;
@@ -68,6 +73,10 @@ void repl(struct Environment *env) {
 						free(line);
 						putchar('\n');
 						return;
+					}
+					if (!*more) {
+						free(more);
+						continue;
 					}
 					add_history(more);
 					int more_length = strlen(more);
