@@ -146,6 +146,7 @@ void repl(struct Environment *env) {
 					free(more);
 					continue;
 				} else {
+					code.chars_read++;
 					fputs(code.err_msg, stderr);
 					putchar('\n');
 				}
