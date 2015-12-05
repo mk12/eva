@@ -7,6 +7,9 @@
 
 struct Environment;
 
+// This should be called once at the beginning of the program.
+void setup_readline(void);
+
 // Executes the given program. Optionally prints the last expression evaluated.
 // Upon encountering an error, prints an error messge and returns early.
 void execute(const char *text, struct Environment *env, bool print);

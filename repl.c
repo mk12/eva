@@ -15,6 +15,10 @@
 static const char *primary_prompt = "eva> ";
 static const char *secondary_prompt = "...> ";
 
+void setup_readline(void) {
+	rl_bind_key('\t', rl_insert);
+}
+
 void execute(const char *text, struct Environment *env, bool print) {
 	struct EvalResult result;
 	result.err_msg = NULL;
@@ -48,7 +52,6 @@ void execute(const char *text, struct Environment *env, bool print) {
 }
 
 void repl(struct Environment *env) {
-	rl_bind_key('\t', rl_insert);
 	for (;;) {
 		char *line = readline(primary_prompt);
 		if (!line) {

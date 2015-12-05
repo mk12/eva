@@ -6,6 +6,7 @@
 
 int main(void) {
 	struct Environment *env = default_environment();
+	setup_readline();
 	setup_eval();
 	repl(env);
 	free_environment(env);
