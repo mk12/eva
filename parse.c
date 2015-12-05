@@ -185,3 +185,7 @@ struct ParseResult parse(const char *text) {
 	result.chars_read = s - text;
 	return result;
 }
+
+bool more_input(const char *err_msg) {
+	return err_msg == err_unexpected_eoi || err_msg == err_expected_rparen;
+}

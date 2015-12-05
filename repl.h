@@ -5,21 +5,20 @@
 
 struct Environment;
 
-// Runs the Read-Eval-Print Loop:
+// Executes the given program. Optionally prints the last expression evaluated.
+// Upon encountering an error, prints an error messge and returns early.
+void execute(const char *text, struct Environment *env, bool print);
+
+// Runs the Read-Eval-Print Loop. Each iteration has five steps:
 //
 // 1. Present the promp "eva> ".
-// 2. Read a line of input using GNU Readline, and parse it.
-// 3. Read and parse more lines of input if necessary.
+// 2. Parse a line of input read by GNU Readline.
+// 3. Read and parse more lines if necessary.
 // 4. Evaluate the code.
-// 5. Print the resulting expression.
-// 6. Repeat.
+// 5. Print the resulting expression or an error message.
 //
 // Updates the environment with top-level defintions as they are encountered.
-// Exits upon EOF (Ctrl-D) or SIGINT (Ctrl-C).
+// Returns upon EOF (Ctrl-D) or SIGINT (Ctrl-C).
 void repl(struct Environment *env);
-
-// Executes the given program. Unlike the REPL, does not print anything unless
-// the program contains printing commands.
-void execute(const char *text, struct Environment *env);
 
 #endif
