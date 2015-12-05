@@ -5,6 +5,7 @@
 #include "env.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 // Evaluation error messages.
@@ -316,7 +317,7 @@ static struct EvalResult apply_special(
 		result.expr = new_boolean(true);
 		break;
 	case S_NEWLINE:
-		putchar('\n'):
+		putchar('\n');
 		result.expr = new_boolean(true);
 		break;
 	}

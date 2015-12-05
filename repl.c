@@ -15,15 +15,14 @@
 static const char *primary_prompt = "eva> ";
 static const char *secondary_prompt = "...> ";
 
-void EvalResult execute(
-		const char *text, struct Environment *env, bool print) {
+void execute(const char *text, struct Environment *env, bool print) {
 	struct EvalResult result;
 	result.err_msg = NULL;
 
 	int length = strlen(text);
 	int offset = 0;
 	while (offset < length) {
-		struct ParseResult code = parse(text + offset, NULL);
+		struct ParseResult code = parse(text + offset);
 		if (code.err_msg) {
 			fputs(code.err_msg, stderr);
 			break;
@@ -56,7 +55,7 @@ void repl(struct Environment *env) {
 		int length = strlen(line);
 		int offset = 0;
 		while (offset < length) {
-			struct ParseResult code = parse(line + offset, read_more);
+			struct ParseResult code = parse(line + offset);
 			if (code.err_msg) {
 				if (more_input(code.err_msg)) {
 					char *more = readline(secondary_prompt);
