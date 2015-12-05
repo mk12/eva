@@ -92,14 +92,17 @@ void repl(struct Environment *env) {
 					putchar('\n');
 				}
 			} else {
+				int pos_before = ftell(stdout);
 				struct EvalResult result = eval_top(code.expr, env);
 				if (result.err_msg) {
 					fputs(result.err_msg, stderr);
 					putchar('\n');
 				} else {
-					print_expression(result.expr);
+					if (ftell(stdout) == pos_before) {
+						print_expression(result.expr);
+						putchar('\n');
+					}
 					release_expression(result.expr);
-					putchar('\n');
 				}
 				release_expression(code.expr);
 			}
