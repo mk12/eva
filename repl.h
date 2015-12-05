@@ -5,10 +5,18 @@
 
 #include <stdbool.h>
 
+#include "parse.h"
+
 struct Environment;
 
 // This should be called once at the beginning of the program.
 void setup_readline(void);
+
+// Reads and parses an s-expression from standard input using GNU Readline
+// (without prompts). If more input remains when the parse is complete, returns
+// those characters to the buffer. If the parse is incomplete at the end of a
+// line, waits for another line to be entered.
+struct ParseResult read_sexpr(void);
 
 // Executes the given program. Optionally prints the last expression evaluated.
 // Upon encountering an error, prints an error messge and returns early.

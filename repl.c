@@ -19,6 +19,53 @@ void setup_readline(void) {
 	rl_bind_key('\t', rl_insert);
 }
 
+struct ParseResult read_sexpr(void) {
+	struct ParseResult result;
+	result.chars_read = 0;
+	result.err_msg = NULL;
+
+	char *line = readline("");
+	if (!line) {
+		line = strdup("");
+	} else if (*line) {
+		add_history(line);
+	}
+
+	int length = strlen(line);
+	struct ParseResult data = parse(line);
+	while (more_input(data.err_msg)) {
+		char *more = readline("");
+		if (!more) {
+			break;
+		} else if (!*more) {
+			free(more);
+			continue;
+		}
+		add_history(more);
+		int more_length = strlen(more);
+		line = realloc(line, length + more_length + 2);
+		line[length] = '\n';
+		memcpy(line + length + 1, more, more_length);
+		line[length + more_length + 1] = '\0';
+		length += more_length + 1;
+		data = parse(line);
+		free(more);
+	}
+
+	if (data.err_msg) {
+		fputs(data.err_msg, stderr);
+		putchar('\n');
+	} else {
+		char *unused = line + data.chars_read;
+		while (unused < line + length) {
+			ungetc(*unused++, stdin);
+		}
+	}
+
+	free(line);
+	return data;
+}
+
 void execute(const char *text, struct Environment *env, bool print) {
 	struct EvalResult result;
 	result.err_msg = NULL;

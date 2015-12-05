@@ -3,6 +3,7 @@
 #include "eval.h"
 
 #include "env.h"
+#include "repl.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -319,7 +320,13 @@ static struct EvalResult apply_special(
 	case S_NOT:
 		result.expr = new_boolean(!args[0].boolean);
 		break;
-	case S_READ:
+	case S_READ:;
+		struct ParseResult data = read_sexpr();
+		if (data.err_msg) {
+			result.err_msg = data.err_msg;
+		} else {
+			result.expr = data.expr;
+		}
 		break;
 	case S_WRITE:
 		print_expression(args[0]);
