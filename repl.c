@@ -71,10 +71,11 @@ void repl(struct Environment *env) {
 					}
 					add_history(more);
 					int more_length = strlen(more);
-					char *combined = realloc(line, length + more_length + 1);
-					memcpy(combined + length, more, more_length);
-					combined[length + more_length] = '\0';
-					length += more_length;
+					char *combined = realloc(line, length + more_length + 2);
+					combined[length] = '\n';
+					memcpy(combined + length + 1, more, more_length);
+					combined[length + more_length + 1] = '\0';
+					length += more_length + 1;
 					continue;
 				} else {
 					fputs(code.err_msg, stderr);
