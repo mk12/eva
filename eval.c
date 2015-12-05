@@ -22,6 +22,7 @@ static const char *err_ill_placed_define = "ill-placed special form: define";
 static const char *err_ill_quote = "ill-formed special form: quote";
 static const char *err_special_var = "special form can't be used as variable";
 static const char *err_ill_if = "ill-formed special form: if";
+static const char *err_divide_zero = "division by zero";
 
 #define N_SPECIAL_FORMS 9
 
@@ -93,11 +94,20 @@ static const char *check_arg_types(
 	case S_ADD:
 	case S_SUB:
 	case S_MUL:
+		for (int i = 0; i < n; i++) {
+			if (args[i].type != E_NUMBER) {
+				return err_not_num;
+			}
+		}
+		break;
 	case S_DIV:
 	case S_REM:
 		for (int i = 0; i < n; i++) {
 			if (args[i].type != E_NUMBER) {
 				return err_not_num;
+			}
+			if (i > 0 && args[i].number == 0) {
+				return err_divide_zero;
 			}
 		}
 		break;
