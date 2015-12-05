@@ -89,6 +89,7 @@ void repl(struct Environment *env) {
 					memcpy(line + length + 1, more, more_length);
 					line[length + more_length + 1] = '\0';
 					length += more_length + 1;
+					free(more);
 					continue;
 				} else {
 					fputs(code.err_msg, stderr);
