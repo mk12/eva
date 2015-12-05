@@ -23,6 +23,7 @@ static const char *err_ill_placed_define = "ill-placed special form: define";
 static const char *err_ill_quote = "ill-formed special form: quote";
 static const char *err_special_var = "special form can't be used as variable";
 static const char *err_ill_if = "ill-formed special form: if";
+static const char *err_ill_lambda = "ill-formed special form: lambda";
 static const char *err_divide_zero = "division by zero";
 
 #define N_SPECIAL_FORMS 9
@@ -412,6 +413,49 @@ static struct EvalResult eval(
 				bind(env, id, val.expr);
 				break;
 			} else if (id == special_form_ids[F_LAMBDA]) {
+				struct ArrayResult parts = sexpr_array(expr.box->pair.cdr);
+				if (parts.err_msg) {
+					result.err_msg = parts.err_msg;
+					break;
+				}
+				if (parts.size < 2) {
+					result.err_msg = err_ill_lambda;
+					free(parts.exprs);
+					break;
+				}
+				struct ArrayResult params = sexpr_array(parts.exprs[0]);
+				if (params.err_msg) {
+					result.err_msg = params.err_msg;
+					free(parts.exprs);
+					break;
+				}
+				struct Expression body;
+				if (parts.size == 2) {
+					body = retain_expression(parts.exprs[1]);
+				} else {
+					body = new_pair(
+						new_symbol(S_BEGIN),
+						expr.box->pair.cdr.box->pair.cdr
+					);
+				}
+				InternID *param_ids = malloc(params.size * sizeof *param_ids);
+				for (int i = 0; i < params.size; i++) {
+					if (params.exprs[i].type != E_SYMBOL) {
+						result.err_msg = err_ill_lambda;
+						free(params.exprs);
+						free(parts.exprs);
+						release_expression(body);
+						break;
+					}
+					param_ids[i] = params.exprs[i].symbol_id;
+				}
+				if (result.err_msg) {
+					break;
+				}
+				free(params.exprs);
+				result.expr = new_lambda(params.size, param_ids, body);
+				release_expression(body);
+				free(parts.exprs);
 				break;
 			} else if (id == special_form_ids[F_QUOTE]) {
 				if (expr.box->pair.cdr.type != E_PAIR
@@ -432,11 +476,13 @@ static struct EvalResult eval(
 				}
 				if (args.size != 3) {
 					result.err_msg = err_ill_if;
+					free(args.exprs);
 					break;
 				}
 				struct EvalResult cond = eval(args.exprs[0], env, false);
 				if (cond.err_msg) {
 					result.err_msg = cond.err_msg;
+					free(args.exprs);
 					break;
 				}
 				int i = (cond.expr.type != E_BOOLEAN || cond.expr.boolean) ? 1 : 2;
