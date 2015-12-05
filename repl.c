@@ -20,8 +20,9 @@ void execute(const char *text, struct Environment *env, bool print) {
 	result.err_msg = NULL;
 
 	int length = strlen(text);
+	int read = 1;
 	int offset = 0;
-	while (offset < length) {
+	while (read > 0 && offset < length) {
 		struct ParseResult code = parse(text + offset);
 		if (code.err_msg) {
 			fputs(code.err_msg, stderr);
@@ -41,6 +42,7 @@ void execute(const char *text, struct Environment *env, bool print) {
 			}
 			release_expression(code.expr);
 		}
+		read = code.chars_read;
 		offset += code.chars_read;
 	}
 }
@@ -55,8 +57,9 @@ void repl(struct Environment *env) {
 		add_history(line);
 
 		int length = strlen(line);
+		int read = 1;
 		int offset = 0;
-		while (offset < length) {
+		while (read > 0 && offset < length) {
 			struct ParseResult code = parse(line + offset);
 			if (code.err_msg) {
 				if (more_input(code.err_msg)) {
@@ -89,6 +92,7 @@ void repl(struct Environment *env) {
 				}
 				release_expression(code.expr);
 			}
+			read = code.chars_read;
 			offset += code.chars_read;
 		}
 		free(line);
