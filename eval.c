@@ -261,10 +261,10 @@ static struct EvalResult apply_special(
 		result.expr = new_pair(args[0], args[1]);
 		break;
 	case S_CAR:
-		result.expr = args[0].box->pair.car;
+		result.expr = retain_expression(args[0].box->pair.car);
 		break;
 	case S_CDR:
-		result.expr = args[0].box->pair.cdr;
+		result.expr = retain_expression(args[0].box->pair.cdr);
 		break;
 	case S_ADD:;
 		int sum = 0;
