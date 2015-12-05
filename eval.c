@@ -101,7 +101,6 @@ static const char *check_arg_types(
 			}
 		}
 		break;
-	case S_EVAL:
 	case S_CAR:
 	case S_CDR:
 		if (args[0].type != E_PAIR) {
