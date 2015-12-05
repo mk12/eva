@@ -15,6 +15,9 @@
 static const char *primary_prompt = "eva> ";
 static const char *secondary_prompt = "...> ";
 
+static char *saved_line = NULL;
+static int saved_line_offset = 0;
+
 void setup_readline(void) {
 	rl_bind_key('\t', rl_insert);
 }
@@ -24,11 +27,19 @@ struct ParseResult read_sexpr(void) {
 	result.chars_read = 0;
 	result.err_msg = NULL;
 
-	char *line = readline("");
-	if (!line) {
-		line = strdup("");
-	} else if (*line) {
-		add_history(line);
+	char *line;
+	if (saved_line) {
+		line = strdup(saved_line + saved_line_offset);
+		free(saved_line);
+		saved_line = NULL;
+		saved_line_offset = 0;
+	} else {
+		line = readline("");
+		if (!line) {
+			line = strdup("");
+		} else if (*line) {
+			add_history(line);
+		}
 	}
 
 	int length = strlen(line);
@@ -52,14 +63,13 @@ struct ParseResult read_sexpr(void) {
 		free(more);
 	}
 
-	if (!data.err_msg) {
-		char *unused = line + data.chars_read;
-		while (unused < line + length) {
-			ungetc(*unused++, stdin);
-		}
+	if (data.chars_read + 1 < length) {
+		saved_line = line;
+		saved_line_offset = data.chars_read + 1;
+	} else {
+		free(line);
 	}
 
-	free(line);
 	return data;
 }
 
