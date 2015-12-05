@@ -9,7 +9,7 @@
 #include <string.h>
 
 const struct { const char *name; int arity; } special_procs[N_SPECIAL_PROCS] = {
-	{"eval", 1}, {"apply", 2},
+	{"eval", 1}, {"apply", 2}, {"begin", -2},
 	{"null?", 1}, {"symbol?", 1}, {"number?", 1}, {"boolean?", 1},
 	{"pair?", 1}, {"procedure?", 1},
 	{"eq?", 2},

@@ -193,6 +193,9 @@ static struct EvalResult apply_special(
 		result = eval(app, env, false);
 		release_expression(app);
 		break;
+	case S_BEGIN:
+		result.expr = retain_expression(args[n-1]);
+		break;
 	case S_NULL:
 		result.expr = new_boolean(args[0].type == E_NULL);
 		break;
