@@ -26,9 +26,14 @@ static bool parse_int(const char *s, int n, int *result) {
 	bool leading_zero = true;
 	for (int i = 0; i < n; i++) {
 		char c = s[i];
-		if (i == 0 && c == '-' && n > 1) {
-			sign = -1;
-			continue;
+		if (i == 0 && n > 1) {
+			if (c == '+') {
+				continue;
+			}
+			if (c == '-') {
+				sign = -1;
+				continue;
+			}
 		}
 		if (c  < '0' || c > '9') {
 			return false;
