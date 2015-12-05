@@ -25,11 +25,13 @@ void execute(const char *text, struct Environment *env, bool print) {
 		struct ParseResult code = parse(text + offset);
 		if (code.err_msg) {
 			fputs(code.err_msg, stderr);
+			putchar('\n');
 			break;
 		} else {
 			struct EvalResult result = eval_top(code.expr, env);
 			if (result.err_msg) {
 				fputs(result.err_msg, stderr);
+				putchar('\n');
 			} else {
 				if (print && offset + code.chars_read >= length) {
 					print_expression(result.expr);
@@ -73,11 +75,13 @@ void repl(struct Environment *env) {
 					continue;
 				} else {
 					fputs(code.err_msg, stderr);
+					putchar('\n');
 				}
 			} else {
 				struct EvalResult result = eval_top(code.expr, env);
 				if (result.err_msg) {
 					fputs(result.err_msg, stderr);
+					putchar('\n');
 				} else {
 					print_expression(result.expr);
 					release_expression(result.expr);
