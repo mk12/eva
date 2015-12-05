@@ -434,7 +434,7 @@ static struct EvalResult eval(
 					body = retain_expression(parts.exprs[1]);
 				} else {
 					body = new_pair(
-						new_symbol(S_BEGIN),
+						new_special(S_BEGIN),
 						expr.box->pair.cdr.box->pair.cdr
 					);
 				}
