@@ -52,10 +52,7 @@ struct ParseResult read_sexpr(void) {
 		free(more);
 	}
 
-	if (data.err_msg) {
-		fputs(data.err_msg, stderr);
-		putchar('\n');
-	} else {
+	if (!data.err_msg) {
 		char *unused = line + data.chars_read;
 		while (unused < line + length) {
 			ungetc(*unused++, stdin);
