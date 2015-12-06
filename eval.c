@@ -153,6 +153,7 @@ static const char *check_application(
 
 struct ArrayResult {
 	int size;
+	bool dot;
 	struct Expression *exprs;
 	const char *err_msg;
 };
@@ -160,17 +161,29 @@ struct ArrayResult {
 // Converts a list of a flat array of expressions. Returns an error messge if
 // the expression is not a well-formed list. Copies elements of the list
 // directly to the new array, but does not alter reference counts.
-static struct ArrayResult sexpr_array(struct Expression list) {
+//
+// If dot is true, then lists such as (1 2 . 3) are also allowed, where the
+// final cdr is the final element of the array, not the null value. This also
+// means that a single non-list value will be returned as a singleton array
+// (instead of causing an error, which it will when dot is false).
+static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 	struct ArrayResult result;
 	result.size = 0;
+	result.dot = false;
 	result.exprs = NULL;
 	result.err_msg = NULL;
 
 	struct Expression expr = list;
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
-			result.err_msg = err_ill_list;
-			return result;
+			if (dot) {
+				result.dot = true;
+				result.size++;
+				break;
+			} else {
+				result.err_msg = err_ill_list;
+				return result;
+			}
 		}
 		expr = expr.box->pair.cdr;
 		result.size++;
@@ -179,7 +192,12 @@ static struct ArrayResult sexpr_array(struct Expression list) {
 	result.exprs = malloc(result.size * sizeof *result.exprs);
 	expr = list;
 	for (int i = 0; i < result.size; i++) {
-		result.exprs[i] = expr.box->pair.car;
+		if (result.dot && i == result.size - 1) {
+			result.exprs[i] = expr;
+			break;
+		} else {
+			result.exprs[i] = expr.box->pair.car;
+		}
 		expr = expr.box->pair.cdr;
 	}
 	return result;
@@ -358,11 +376,24 @@ static struct EvalResult apply(
 		result = apply_special(proc.special_type, args, n, env);
 	} else {
 		assert(proc.type == E_LAMBDA);
-		for (int i = 0; i < n; i++) {
+		int arity = proc.box->lambda.arity;
+		int limit = arity < 0 ? -arity - 1 : n;
+		int n_passed = arity < 0 ? limit + 1 : limit;
+		for (int i = 0; i < limit; i++) {
 			bind(env, proc.box->lambda.params[i], args[i]);
 		}
+		if (arity < 0) {
+			struct Expression list = new_null();
+			for (int i = n - 1; i >= limit; i--) {
+				struct Expression old = list;
+				list = new_pair(args[i], list);
+				release_expression(old);
+			}
+			bind(env, proc.box->lambda.params[limit], list);
+			release_expression(list);
+		}
 		result = eval(proc.box->lambda.body, env, false);
-		for (int i = n - 1; i >= 0; i--) {
+		for (int i = n_passed - 1; i >= 0; i--) {
 			unbind_last(env, proc.box->lambda.params[i]);
 		}
 	}
@@ -414,7 +445,7 @@ static struct EvalResult eval(
 				bind(env, id, val.expr);
 				break;
 			} else if (id == special_form_ids[F_LAMBDA]) {
-				struct ArrayResult parts = sexpr_array(expr.box->pair.cdr);
+				struct ArrayResult parts = sexpr_array(expr.box->pair.cdr, false);
 				if (parts.err_msg) {
 					result.err_msg = parts.err_msg;
 					break;
@@ -424,7 +455,7 @@ static struct EvalResult eval(
 					free(parts.exprs);
 					break;
 				}
-				struct ArrayResult params = sexpr_array(parts.exprs[0]);
+				struct ArrayResult params = sexpr_array(parts.exprs[0], true);
 				if (params.err_msg) {
 					result.err_msg = params.err_msg;
 					free(parts.exprs);
@@ -466,7 +497,8 @@ static struct EvalResult eval(
 					break;
 				}
 				free(params.exprs);
-				result.expr = new_lambda(params.size, param_ids, body);
+				int arity = params.dot ? -params.size : params.size;
+				result.expr = new_lambda(arity, param_ids, body);
 				release_expression(body);
 				free(parts.exprs);
 				break;
@@ -482,7 +514,7 @@ static struct EvalResult eval(
 			} else if (id == special_form_ids[F_COND]) {
 				break;
 			} else if (id == special_form_ids[F_IF]) {
-				struct ArrayResult args = sexpr_array(expr.box->pair.cdr);
+				struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
 				if (args.err_msg) {
 					result.err_msg = args.err_msg;
 					break;
@@ -513,7 +545,7 @@ static struct EvalResult eval(
 			} else if (id == special_form_ids[F_LET_STAR]) {
 				break;
 			} else if (id == special_form_ids[F_AND]) {
-				struct ArrayResult args = sexpr_array(expr.box->pair.cdr);
+				struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
 				if (args.err_msg) {
 					result.err_msg = args.err_msg;
 					break;
@@ -534,7 +566,7 @@ static struct EvalResult eval(
 				free(args.exprs);
 				break;
 			} else if (id == special_form_ids[F_OR]) {
-				struct ArrayResult args = sexpr_array(expr.box->pair.cdr);
+				struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
 				if (args.err_msg) {
 					result.err_msg = args.err_msg;
 					break;
@@ -561,7 +593,7 @@ static struct EvalResult eval(
 			result.err_msg = proc.err_msg;
 			break;
 		}
-		struct ArrayResult args = sexpr_array(expr.box->pair.cdr);
+		struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
 		if (args.err_msg) {
 			result.err_msg = args.err_msg;
 			break;
