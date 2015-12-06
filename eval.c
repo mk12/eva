@@ -22,11 +22,13 @@ static const char *err_ill_define = "ill-formed special form: define";
 static const char *err_ill_placed_define = "ill-placed special form: define";
 static const char *err_ill_quote = "ill-formed special form: quote";
 static const char *err_ill_if = "ill-formed special form: if";
+static const char *err_ill_cond = "ill-formed special form: cond";
 static const char *err_ill_lambda = "ill-formed special form: lambda";
 static const char *err_ill_begin = "ill-formed special form: begin";
 static const char *err_divide_zero = "division by zero";
 static const char *err_dup_param = "duplicate parameter in parameter list";
 static const char *err_special_var = "special form can't be used as variable";
+static const char *err_non_exhaustive = "non-exhaustive cond";
 
 #define N_SPECIAL_FORMS 10
 
@@ -159,6 +161,18 @@ struct ArrayResult {
 	struct Expression *exprs;
 	const char *err_msg;
 };
+
+// Returns NULL if the expression is a well formed list. Returns an error
+// message otherwise.
+static const char *check_list(struct Expression expr) {
+	while (expr.type != E_NULL) {
+		if (expr.type != E_PAIR) {
+			return err_ill_list;
+		}
+		expr = expr.box->pair.cdr;
+	}
+	return NULL;
+}
 
 // Converts a list of a flat array of expressions. Returns an error messge if
 // the expression is not a well-formed list. Copies elements of the list
@@ -541,6 +555,67 @@ static struct EvalResult eval(
 				free(args.exprs);
 				break;
 			} else if (id == special_form_ids[F_COND]) {
+				struct ArrayResult parts = sexpr_array(expr.box->pair.cdr, false);
+				if (parts.err_msg) {
+					result.err_msg = parts.err_msg;
+					break;
+				}
+				if (parts.size < 1) {
+					result.err_msg = err_ill_cond;
+					free(parts.exprs);
+					break;
+				}
+				int i;
+				bool found = false;
+				for (i = 0; i < parts.size; i++) {
+					struct ArrayResult args = sexpr_array(parts.exprs[i], false);
+					if (args.err_msg) {
+						result.err_msg = args.err_msg;
+						break;
+					}
+					if (args.size < 2) {
+						result.err_msg = err_ill_cond;
+						break;
+					}
+					struct EvalResult cond = eval(args.exprs[0], env, false);
+					if (cond.err_msg) {
+						result.err_msg = cond.err_msg;
+						free(args.exprs);
+						break;
+					}
+					bool yes = cond.expr.type != E_BOOLEAN || cond.expr.boolean;
+					release_expression(cond.expr);
+					if (yes) {
+						if (args.size == 2) {
+							result = eval(args.exprs[1], env, false);
+						} else {
+							struct Expression block = new_pair(
+								new_symbol(special_form_ids[F_BEGIN]),
+								parts.exprs[i].box->pair.cdr
+							);
+							result = eval(block, env, false);
+							release_expression(block);
+						}
+						free(args.exprs);
+						found = true;
+						break;
+					}
+					free(args.exprs);
+				}
+				if (!result.err_msg && !found) {
+					result.err_msg = err_non_exhaustive;
+				}
+				if (result.err_msg) {
+					free(parts.exprs);
+					break;
+				}
+				for (; i < parts.size; i++) {
+					result.err_msg = check_list(parts.exprs[i]);
+					if (result.err_msg) {
+						break;
+					}
+				}
+				free(parts.exprs);
 				break;
 			} else if (id == special_form_ids[F_IF]) {
 				struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);

@@ -41,6 +41,7 @@ struct Environment *default_environment(void) {
 	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
 		bind(env, intern_string(special_name(i)), new_special(i));
 	}
+	bind(env, intern_string("else"), new_boolean(true));
 	return env;
 }
 
