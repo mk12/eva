@@ -20,13 +20,13 @@ enum ExpressionType {
 	E_LAMBDA
 };
 
-#define N_SPECIAL_PROCS 27
+#define N_SPECIAL_PROCS 26
 
 // Special procedures (as distinct from special *forms*, which require special
 // evaluation rules) are procedures implemented by the interpreter.
 enum SpecialType {
-	// General:
-	S_EVAL, S_APPLY, S_BEGIN,
+	// Eval and apply:
+	S_EVAL, S_APPLY,
 	// Type predicates:
 	S_NULL, S_SYMBOL, S_NUMBER, S_BOOLEAN, S_PAIR, S_PROCEDURE,
 	// Equality (identity):

@@ -21,18 +21,20 @@ static const char *err_ill_list = "ill-formed list";
 static const char *err_ill_define = "ill-formed special form: define";
 static const char *err_ill_placed_define = "ill-placed special form: define";
 static const char *err_ill_quote = "ill-formed special form: quote";
-static const char *err_special_var = "special form can't be used as variable";
 static const char *err_ill_if = "ill-formed special form: if";
 static const char *err_ill_lambda = "ill-formed special form: lambda";
+static const char *err_ill_begin = "ill-formed special form: begin";
 static const char *err_divide_zero = "division by zero";
 static const char *err_dup_param = "duplicate parameter in parameter list";
+static const char *err_special_var = "special form can't be used as variable";
 
-#define N_SPECIAL_FORMS 9
+#define N_SPECIAL_FORMS 10
 
 enum SpecialForms {
 	F_DEFINE,
 	F_LAMBDA,
 	F_QUOTE,
+	F_BEGIN,
 	F_COND,
 	F_IF,
 	F_LET,
@@ -46,7 +48,7 @@ static struct EvalResult eval(
 
 // Names of special forms.
 static const char *special_form_names[N_SPECIAL_FORMS] = {
-	"define", "lambda", "quote", "cond", "if", "let", "let*", "and", "or"
+	"define", "lambda", "quote", "begin", "cond", "if", "let", "let*", "and", "or"
 };
 
 // Intern identifiers of special forms.
@@ -223,9 +225,6 @@ static struct EvalResult apply_special(
 		struct Expression app = new_pair(proc, args[1]);
 		result = eval(app, env, false);
 		release_expression(app);
-		break;
-	case S_BEGIN:
-		result.expr = retain_expression(args[n-1]);
 		break;
 	case S_NULL:
 		result.expr = new_boolean(args[0].type == E_NULL);
@@ -466,7 +465,7 @@ static struct EvalResult eval(
 					body = retain_expression(parts.exprs[1]);
 				} else {
 					body = new_pair(
-						new_special(S_BEGIN),
+						new_symbol(special_form_ids[F_BEGIN]),
 						expr.box->pair.cdr.box->pair.cdr
 					);
 				}
@@ -510,6 +509,42 @@ static struct EvalResult eval(
 				}
 				result.expr = retain_expression(
 						expr.box->pair.cdr.box->pair.car);
+				break;
+			} else if (id == special_form_ids[F_BEGIN]) {
+				struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
+				if (args.err_msg) {
+					result.err_msg = args.err_msg;
+					break;
+				}
+				if (args.size < 1) {
+					result.err_msg = err_ill_begin;
+					free(args.exprs);
+					break;
+				}
+				for (int i = 0; i < args.size - 1; i++) {
+					struct EvalResult arg = eval(args.exprs[i], env, true);
+					if (arg.err_msg) {
+						result.err_msg = arg.err_msg;
+						break;
+					}
+				}
+				if (result.err_msg) {
+					free(args.exprs);
+					break;
+				}
+				result = eval(args.exprs[args.size-1], env, false);
+				if (result.err_msg) {
+					free(args.exprs);
+					break;
+				}
+				for (int i = args.size - 2; i >= 0; i--) {
+					if (args.exprs[i].type == E_PAIR
+							&& args.exprs[i].box->pair.car.type == E_SYMBOL
+							&& args.exprs[i].box->pair.car.symbol_id == special_form_ids[F_DEFINE]) {
+						unbind_last(env, args.exprs[i].box->pair.cdr.box->pair.car.symbol_id);
+					}
+				}
+				free(args.exprs);
 				break;
 			} else if (id == special_form_ids[F_COND]) {
 				break;
