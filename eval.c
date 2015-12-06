@@ -473,18 +473,12 @@ static struct EvalResult eval(
 				for (int i = 0; i < params.size; i++) {
 					if (params.exprs[i].type != E_SYMBOL) {
 						result.err_msg = err_ill_lambda;
-						free(params.exprs);
-						free(parts.exprs);
-						release_expression(body);
 						break;
 					}
 					param_ids[i] = params.exprs[i].symbol_id;
 					for (int j = 0; j < i; j++) {
 						if (param_ids[i] == param_ids[j]) {
 							result.err_msg = err_dup_param;
-							free(params.exprs);
-							free(parts.exprs);
-							release_expression(body);
 							break;
 						}
 					}
@@ -493,6 +487,9 @@ static struct EvalResult eval(
 					}
 				}
 				if (result.err_msg) {
+					free(params.exprs);
+					free(parts.exprs);
+					release_expression(body);
 					break;
 				}
 				free(params.exprs);
