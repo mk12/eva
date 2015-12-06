@@ -112,7 +112,7 @@ static struct ParseResult parse_pair(const char *text) {
 			goto END;
 		}
 		if (*s != ')') {
-			result.err_msg = err_expected_rparen;
+			result.err_msg = *s ? err_expected_rparen : err_unexpected_eoi;
 			release_expression(first.expr);
 			goto END;
 		}
@@ -192,5 +192,5 @@ struct ParseResult parse(const char *text) {
 }
 
 bool more_input(const char *err_msg) {
-	return err_msg == err_unexpected_eoi || err_msg == err_expected_rparen;
+	return err_msg == err_unexpected_eoi;
 }
