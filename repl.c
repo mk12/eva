@@ -89,20 +89,19 @@ void execute(const char *text, struct Environment *env, bool print) {
 			fputs(code.err_msg, stderr);
 			putchar('\n');
 			break;
-		} else {
-			struct EvalResult result = eval_top(code.expr, env);
-			if (result.err_msg) {
-				fputs(result.err_msg, stderr);
-				putchar('\n');
-			} else {
-				if (print && offset + code.chars_read >= length) {
-					print_expression(result.expr);
-					putchar('\n');
-				}
-				release_expression(result.expr);
-			}
-			release_expression(code.expr);
 		}
+		struct EvalResult result = eval_top(code.expr, env);
+		if (result.err_msg) {
+			fputs(result.err_msg, stderr);
+			putchar('\n');
+			break;
+		}
+		if (print && offset + code.chars_read >= length) {
+			print_expression(result.expr);
+			putchar('\n');
+		}
+		release_expression(result.expr);
+		release_expression(code.expr);
 		read = code.chars_read;
 		offset += code.chars_read;
 	}
