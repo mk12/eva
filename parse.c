@@ -11,7 +11,7 @@
 #include <string.h>
 
 // Parse error messages.
-static const char *err_unexpected_eoi = "unexpected end of input";
+const char *err_unexpected_eoi = "unexpected end of input";
 static const char *err_expected_rparen = "expected character ')'";
 static const char *err_unexpected_rparen = "unexpected character ')'";
 static const char *err_improper_dot = "improperly placed dot";
@@ -189,8 +189,4 @@ struct ParseResult parse(const char *text) {
 	}
 	result.chars_read = s - text;
 	return result;
-}
-
-bool more_input(const char *err_msg) {
-	return err_msg == err_unexpected_eoi;
 }

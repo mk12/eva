@@ -28,23 +28,22 @@ struct ParseResult read_sexpr(void) {
 	result.err_msg = NULL;
 
 	char *line;
+	int length;
+	struct ParseResult data;
 	if (saved_line) {
 		line = strdup(saved_line + saved_line_offset);
 		free(saved_line);
 		saved_line = NULL;
 		saved_line_offset = 0;
+		length = strlen(line);
+		data = parse(line);
 	} else {
-		line = readline("");
-		if (!line) {
-			line = strdup("");
-		} else if (*line) {
-			add_history(line);
-		}
+		line = strdup("");
+		length = 0;
+		data.err_msg = err_unexpected_eoi;
 	}
 
-	int length = strlen(line);
-	struct ParseResult data = parse(line);
-	while (more_input(data.err_msg)) {
+	while (data.err_msg == err_unexpected_eoi) {
 		char *more = readline("");
 		if (!more) {
 			break;
@@ -57,16 +56,13 @@ struct ParseResult read_sexpr(void) {
 		line = realloc(line, length + more_length + 2);
 		line[length] = '\n';
 		memcpy(line + length + 1, more, more_length);
+		free(more);
 		line[length + more_length + 1] = '\0';
 		length += more_length + 1;
 		data = parse(line);
-		free(more);
 	}
 
-	if (data.err_msg) {
-		data.chars_read++;
-	}
-	if (data.chars_read < length) {
+	if (!data.err_msg && data.chars_read < length) {
 		saved_line = line;
 		saved_line_offset = data.chars_read;
 	} else {
@@ -127,7 +123,7 @@ void repl(struct Environment *env) {
 		while (read > 0 && offset < length) {
 			struct ParseResult code = parse(line + offset);
 			if (code.err_msg) {
-				if (more_input(code.err_msg)) {
+				if (code.err_msg == err_unexpected_eoi) {
 					char *more = readline(secondary_prompt);
 					if (!more) {
 						free(line);
@@ -143,14 +139,14 @@ void repl(struct Environment *env) {
 					line = realloc(line, length + more_length + 2);
 					line[length] = '\n';
 					memcpy(line + length + 1, more, more_length);
+					free(more);
 					line[length + more_length + 1] = '\0';
 					length += more_length + 1;
-					free(more);
 					continue;
 				} else {
-					code.chars_read++;
 					fputs(code.err_msg, stderr);
 					putchar('\n');
+					break;
 				}
 			} else {
 				int pos_before = ftell(stdout);
