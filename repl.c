@@ -113,7 +113,9 @@ void repl(struct Environment *env, bool print) {
 	for (;;) {
 		char *line = readline(print ? primary_prompt : "");
 		if (!line) {
-			putchar('\n');
+			if (print) {
+				putchar('\n');
+			}
 			return;
 		}
 		if (*line) {
