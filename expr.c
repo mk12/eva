@@ -18,7 +18,7 @@ const struct { const char *name; int arity; } special_procs[N_SPECIAL_PROCS] = {
 	{"cons", 2}, {"car", 1}, {"cdr", 1},
 	{"+", -1}, {"-", -2}, {"*", -1}, {"/", -2}, {"remainder", 2},
 	{"not", 1},
-	{"read", 0}, {"write", 1}, {"newline", 0}
+	{"read", 0}, {"write", 1}
 };
 
 int special_arity(enum SpecialType type) {

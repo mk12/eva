@@ -20,7 +20,7 @@ enum ExpressionType {
 	E_LAMBDA
 };
 
-#define N_SPECIAL_PROCS 26
+#define N_SPECIAL_PROCS 25
 
 // Special procedures (as distinct from special *forms*, which require special
 // evaluation rules) are procedures implemented by the interpreter.
@@ -40,7 +40,7 @@ enum SpecialType {
 	// Boolean negation (and/or are special forms):
 	S_NOT,
 	// Reading and writing:
-	S_READ, S_WRITE, S_NEWLINE
+	S_READ, S_WRITE
 };
 
 // Expression is the algebraic data type used for all values in Scheme. Code and
