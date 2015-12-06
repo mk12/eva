@@ -12,6 +12,9 @@ struct Environment;
 // This should be called once at the beginning of the program.
 void setup_readline(void);
 
+// Prints an error message to standard error.
+void print_error(const char *err_msg);
+
 // Reads and parses an s-expression from standard input using GNU Readline
 // (without prompts). If the parse is incomplete at the end of a line, waits for
 // another line to be entered. If there is leftover input, saves it and starts

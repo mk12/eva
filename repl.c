@@ -22,6 +22,10 @@ void setup_readline(void) {
 	rl_bind_key('\t', rl_insert);
 }
 
+void print_error(const char *err_msg) {
+	fprintf(stderr, "ERROR: %s\n", err_msg);
+}
+
 struct ParseResult read_sexpr(void) {
 	struct ParseResult result;
 	result.chars_read = 0;
@@ -82,14 +86,12 @@ void execute(const char *text, struct Environment *env, bool print) {
 	while (read > 0 && offset < length) {
 		struct ParseResult code = parse(text + offset);
 		if (code.err_msg) {
-			fputs(code.err_msg, stderr);
-			putchar('\n');
+			print_error(code.err_msg);
 			break;
 		}
 		struct EvalResult result = eval_top(code.expr, env);
 		if (result.err_msg) {
-			fputs(result.err_msg, stderr);
-			putchar('\n');
+			print_error(result.err_msg);
 			break;
 		}
 		if (print && offset + code.chars_read >= length) {
@@ -144,15 +146,13 @@ void repl(struct Environment *env) {
 					length += more_length + 1;
 					continue;
 				} else {
-					fputs(code.err_msg, stderr);
-					putchar('\n');
+					print_error(code.err_msg);
 					break;
 				}
 			} else {
 				struct EvalResult result = eval_top(code.expr, env);
 				if (result.err_msg) {
-					fputs(result.err_msg, stderr);
-					putchar('\n');
+					print_error(result.err_msg);
 				} else {
 					print_expression(result.expr);
 					putchar('\n');
