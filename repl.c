@@ -12,6 +12,8 @@
 #include "eval.h"
 #include "parse.h"
 
+const char *error_prefix = "ERROR: ";
+
 static const char *primary_prompt = "eva> ";
 static const char *secondary_prompt = "...> ";
 
@@ -22,8 +24,8 @@ void setup_readline(void) {
 	rl_bind_key('\t', rl_insert);
 }
 
-void print_error(const char *err_msg) {
-	fprintf(stderr, "ERROR: %s\n", err_msg);
+static void print_error(const char *err_msg) {
+	fprintf(stderr, "%s%s\n", error_prefix, err_msg);
 }
 
 struct ParseResult read_sexpr(void) {
