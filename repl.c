@@ -78,7 +78,7 @@ struct ParseResult read_sexpr(void) {
 	return data;
 }
 
-void execute(const char *text, struct Environment *env, bool print) {
+bool execute(const char *text, struct Environment *env, bool print) {
 	struct EvalResult result;
 	result.err_msg = NULL;
 
@@ -89,12 +89,13 @@ void execute(const char *text, struct Environment *env, bool print) {
 		struct ParseResult code = parse(text + offset);
 		if (code.err_msg) {
 			print_error(code.err_msg);
-			break;
+			return false;
 		}
 		struct EvalResult result = eval_top(code.expr, env);
 		if (result.err_msg) {
 			print_error(result.err_msg);
-			break;
+			release_expression(code.expr);
+			return false;
 		}
 		if (print && offset + code.chars_read >= length) {
 			print_expression(result.expr);
@@ -105,17 +106,20 @@ void execute(const char *text, struct Environment *env, bool print) {
 		read = code.chars_read;
 		offset += code.chars_read;
 	}
+	return true;
 }
 
-void repl(struct Environment *env) {
+void repl(struct Environment *env, bool print) {
 	for (;;) {
-		char *line = readline(primary_prompt);
+		char *line = readline(print ? primary_prompt : "");
 		if (!line) {
 			putchar('\n');
 			return;
 		}
 		if (*line) {
-			add_history(line);
+			if (print) {
+				add_history(line);
+			}
 		} else {
 			free(line);
 			continue;
@@ -128,7 +132,7 @@ void repl(struct Environment *env) {
 			struct ParseResult code = parse(line + offset);
 			if (code.err_msg) {
 				if (code.err_msg == err_unexpected_eoi) {
-					char *more = readline(secondary_prompt);
+					char *more = readline(print ? secondary_prompt : "");
 					if (!more) {
 						free(line);
 						putchar('\n');
@@ -138,7 +142,9 @@ void repl(struct Environment *env) {
 						free(more);
 						continue;
 					}
-					add_history(more);
+					if (print) {
+						add_history(more);
+					}
 					int more_length = strlen(more);
 					line = realloc(line, length + more_length + 2);
 					line[length] = '\n';
@@ -156,8 +162,10 @@ void repl(struct Environment *env) {
 				if (result.err_msg) {
 					print_error(result.err_msg);
 				} else {
-					print_expression(result.expr);
-					putchar('\n');
+					if (print) {
+						print_expression(result.expr);
+						putchar('\n');
+					}
 					release_expression(result.expr);
 				}
 				release_expression(code.expr);

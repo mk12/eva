@@ -22,8 +22,9 @@ void setup_readline(void);
 struct ParseResult read_sexpr(void);
 
 // Executes the given program. Optionally prints the last expression evaluated.
-// Upon encountering an error, prints an error messge and returns early.
-void execute(const char *text, struct Environment *env, bool print);
+// Upon encountering an error, prints an error messge and returns false.
+// Otherwise, returns true.
+bool execute(const char *text, struct Environment *env, bool print);
 
 // Runs the Read-Eval-Print Loop. Each iteration has five steps:
 //
@@ -35,6 +36,8 @@ void execute(const char *text, struct Environment *env, bool print);
 //
 // Updates the environment with top-level defintions as they are encountered.
 // Returns upon EOF (Ctrl-D) or SIGINT (Ctrl-C).
-void repl(struct Environment *env);
+//
+// If print is false, skips steps 1 and 5.
+void repl(struct Environment *env, bool print);
 
 #endif
