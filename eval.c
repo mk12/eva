@@ -25,6 +25,7 @@ static const char *err_special_var = "special form can't be used as variable";
 static const char *err_ill_if = "ill-formed special form: if";
 static const char *err_ill_lambda = "ill-formed special form: lambda";
 static const char *err_divide_zero = "division by zero";
+static const char *err_dup_param = "duplicate parameter in parameter list";
 
 #define N_SPECIAL_FORMS 9
 
@@ -448,6 +449,18 @@ static struct EvalResult eval(
 						break;
 					}
 					param_ids[i] = params.exprs[i].symbol_id;
+					for (int j = 0; j < i; j++) {
+						if (param_ids[i] == param_ids[j]) {
+							result.err_msg = err_dup_param;
+							free(params.exprs);
+							free(parts.exprs);
+							release_expression(body);
+							break;
+						}
+					}
+					if (result.err_msg) {
+						break;
+					}
 				}
 				if (result.err_msg) {
 					break;
