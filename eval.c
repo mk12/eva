@@ -231,7 +231,7 @@ static struct EvalResult apply_special(
 	result.err_msg = NULL;
 	switch (type) {
 	case S_EVAL:
-		result = eval(args[0], env, true);
+		result = eval(args[0], env, false);
 		break;
 	case S_APPLY:;
 		struct Expression quote = new_symbol(special_form_ids[F_QUOTE]);
