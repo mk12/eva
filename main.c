@@ -24,6 +24,7 @@ struct ReadResult {
 	const char *err_msg;
 };
 
+// Reads the entire contents of a file into a buffer.
 static struct ReadResult read_file(const char *filename) {
 	struct ReadResult result;
 	result.err_msg = NULL;
@@ -62,24 +63,29 @@ static struct ReadResult read_file(const char *filename) {
 }
 
 int main(int argc, char **argv) {
+	// Print the usage message if passed the -h flag.
 	if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
 		puts("usage: eva [file] [-e code]");
 		return 0;
 	}
 
+	// Set up the environment and evaluator.
 	struct Environment *env = default_environment();
 	setup_readline();
 	setup_eval();
 
-	bool interactive = argc == 1 || !isatty(0);
+	// Loop over all the command-line arguments..
+	bool interactive = false;
 	bool error = false;
 	for (int i = 1; i < argc; i++) {
+		// Check for the interactive flag.
 		if (strcmp(argv[i], "-") == 0
 				|| strcmp(argv[i], "-i") == 0
 				|| strcmp(argv[i], "--interactive") == 0) {
 			interactive = true;
 			continue;
 		}
+		// Check for inline expression commands.
 		if (strcmp(argv[i], "-e") == 0) {
 			i++;
 			if (i == argc) {
@@ -87,18 +93,21 @@ int main(int argc, char **argv) {
 				error = true;
 				break;
 			}
+			// Execute the expression.
 			if (!execute(argv[i], env, true)) {
 				error = true;
 				break;
 			}
 			continue;
 		}
+		// Assume the argument is a filename.
 		struct ReadResult result = read_file(argv[i]);
 		if (result.err_msg) {
 			fprintf(stderr, "%s%s '%s'\n", error_prefix, result.err_msg, argv[i]);
 			error = true;
 			break;
 		}
+		// Execute the contents of the file.
 		bool success = execute(result.buf, env, false);
 		free(result.buf);
 		if (!success) {
@@ -111,10 +120,14 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	if (interactive) {
-		repl(env, isatty(0));
+	// Start the REPL if interactive mode was specified, or if no arguments were
+	// provided and this is a TTY (input is coming from stdin, not a pipe).
+	bool tty = isatty(0);
+	if (interactive || (argc == 1 && tty)) {
+		repl(env, tty);
 	}
 
+	// Clean up and exit.
 	free_environment(env);
 	return 0;
 }
