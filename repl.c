@@ -68,7 +68,7 @@ struct ParseResult read_sexpr(void) {
 		data = parse(line);
 	}
 
-	if (!data.err_msg && data.chars_read < length) {
+	if (!data.err_msg && data.chars_read > 0 && data.chars_read < length) {
 		saved_line = line;
 		saved_line_offset = data.chars_read;
 	} else {
