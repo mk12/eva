@@ -38,16 +38,20 @@ struct Environment *empty_environment(void) {
 
 struct Environment *default_environment(void) {
 	struct Environment *env = empty_environment();
+	// Bind all special procedure names to their expressions.
 	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
 		bind(env, intern_string(special_name(i)), new_special(i));
 	}
+	// Bind the symbol "else" to true (used in the cond special form).
 	bind(env, intern_string("else"), new_boolean(true));
 	return env;
 }
 
 struct LookupResult lookup(struct Environment *env, InternID key) {
+	// Look up the bucket corresponding to the key.
 	int index = key % env->size;
 	int len = env->table[index].len;
+	// Check each entry in the bucket.
 	struct Entry *ents = env->table[index].entries;
 	for (int i = len - 1; i >= 0; i--) {
 		if (ents[i].key == key) {
@@ -59,27 +63,35 @@ struct LookupResult lookup(struct Environment *env, InternID key) {
 
 static void bind_unchecked(
 		struct Environment *env, InternID key, struct Expression expr) {
+	// Look up the bucket corresponding to the key.
 	struct Bucket *bucket = env->table + (key % env->size);
 	if (!bucket->entries) {
+		// Initialize the bucket if it is empty.
 		bucket->cap = DEFAULT_BUCKET_SIZE;
 		bucket->entries = malloc(bucket->cap * sizeof *bucket->entries);
 	} else if (bucket->len >= bucket->cap) {
+		// Grow the array if necessary.
 		bucket->cap *= 2;
 		bucket->entries = realloc(
 				bucket->entries, bucket->cap * sizeof *bucket->entries);
 	}
+	// Add an entry to the end to bind the expression.
 	bucket->entries[bucket->len].key = key;
 	bucket->entries[bucket->len].expr = retain_expression(expr);
+	// Update the counts.
 	bucket->len++;
 	env->total_entries++;
 }
 
 void bind(struct Environment *env, InternID key, struct Expression expr) {
+	// Check if the load factor is greater than 0.75.
 	if (4 * env->total_entries >= 3 * env->size) {
 		int old_size = env->size;
 		struct Bucket *old_table = env->table;
+		// Create a table with double the number of buckets.
 		env->size *= 2;
 		env->table = calloc(env->size, sizeof *env->table);
+		// Bind all the expressions into the new table.
 		for (int i = 0; i < old_size; i++) {
 			for (int j = 0; j < old_table[i].len; j++) {
 				struct Entry ent = old_table[i].entries[j];
@@ -90,14 +102,16 @@ void bind(struct Environment *env, InternID key, struct Expression expr) {
 			}
 		}
 		free(old_table);
-
 	}
+	// Bind the new expression.
 	bind_unchecked(env, key, expr);
 }
 
 void unbind(struct Environment *env, InternID key) {
+	// Look up the bucket corresponding to the key.
 	int index = key % env->size;
 	int len = env->table[index].len;
+	// Check each entry in the bucket.
 	struct Entry *ents = env->table[index].entries;
 	bool shift = false;
 	for (int i = 0; i < len; i++) {
@@ -111,6 +125,7 @@ void unbind(struct Environment *env, InternID key) {
 			}
 		}
 	}
+	// Update the counts if an expression was unbound.
 	if (shift) {
 		env->table[index].len--;
 		env->total_entries--;
@@ -118,9 +133,12 @@ void unbind(struct Environment *env, InternID key) {
 }
 
 void unbind_last(struct Environment *env, InternID key) {
+	// Look up the bucket corresponding to the key.
 	int index = key % env->size;
 	int len = env->table[index].len;
+	// Unbind the most recently bound expression.
 	release_expression(env->table[index].entries[len-1].expr);
+	// Update the counts.
 	env->table[index].len--;
 	env->total_entries--;
 }
