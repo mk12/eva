@@ -86,10 +86,10 @@ struct Expression new_number(int n);
 struct Expression new_boolean(bool b);
 struct Expression new_special(enum SpecialType type);
 
-// Constructors for boxed expressions. Refernce counts are initially set to 1.
-// Weak constructors do not retain their subexpressions.
+// Constructors for boxed expressions. They set the reference count to 1 and
+// they treat subexpression arguments (car, cdr, body) as being "moved" into the
+// new object; that is, they take ownership without retaining them.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
-struct Expression new_pair_weak(struct Expression car, struct Expression cdr);
 struct Expression new_lambda(
 		int arity, InternID *params, struct Expression body);
 

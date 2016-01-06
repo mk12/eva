@@ -118,7 +118,7 @@ static struct ParseResult parse_pair(const char *text) {
 			goto END;
 		}
 		s++;
-		result.expr = new_pair_weak(first.expr, second.expr);
+		result.expr = new_pair(first.expr, second.expr);
 	} else {
 		struct ParseResult rest = parse_pair(s);
 		s += rest.chars_read;
@@ -127,7 +127,7 @@ static struct ParseResult parse_pair(const char *text) {
 			release_expression(first.expr);
 			goto END;
 		}
-		result.expr = new_pair_weak(first.expr, rest.expr);
+		result.expr = new_pair(first.expr, rest.expr);
 	}
 
 END:

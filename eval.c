@@ -248,9 +248,13 @@ static struct EvalResult apply_special(
 		result = eval(args[0], env, false);
 		break;
 	case S_APPLY:;
-		struct Expression quote = new_symbol(special_form_ids[F_QUOTE]);
-		struct Expression proc = new_pair(quote, new_pair(args[0], new_null()));
-		struct Expression app = new_pair(proc, args[1]);
+		struct Expression app = new_pair(
+			new_pair(
+				new_symbol(special_form_ids[F_QUOTE]),
+				new_pair(retain_expression(args[0]), new_null())
+			),
+			retain_expression(args[1])
+		);
 		result = eval(app, env, false);
 		release_expression(app);
 		break;
@@ -316,7 +320,10 @@ static struct EvalResult apply_special(
 		result.expr = new_boolean(args[0].number >= args[1].number);
 		break;
 	case S_CONS:
-		result.expr = new_pair(args[0], args[1]);
+		result.expr = new_pair(
+			retain_expression(args[0]),
+			retain_expression(args[1])
+		);
 		break;
 	case S_CAR:
 		result.expr = retain_expression(args[0].box->pair.car);
@@ -413,9 +420,7 @@ static struct EvalResult apply(
 		if (arity < 0) {
 			struct Expression list = new_null();
 			for (int i = n - 1; i >= limit; i--) {
-				struct Expression old = list;
-				list = new_pair(args[i], list);
-				release_expression(old);
+				list = new_pair(retain_expression(args[i]), list);
 			}
 			bind(env, proc.box->lambda.params[limit], list);
 			release_expression(list);
@@ -497,7 +502,7 @@ static struct EvalResult eval(
 				} else {
 					body = new_pair(
 						new_symbol(special_form_ids[F_BEGIN]),
-						expr.box->pair.cdr.box->pair.cdr
+						retain_expression(expr.box->pair.cdr.box->pair.cdr)
 					);
 				}
 				InternID *param_ids = malloc(params.size * sizeof *param_ids);
@@ -526,7 +531,6 @@ static struct EvalResult eval(
 				free(params.exprs);
 				int arity = params.dot ? -params.size : params.size;
 				result.expr = new_lambda(arity, param_ids, body);
-				release_expression(body);
 				free(parts.exprs);
 				break;
 			} else if (id == special_form_ids[F_QUOTE]) {
@@ -611,7 +615,7 @@ static struct EvalResult eval(
 						} else {
 							struct Expression block = new_pair(
 								new_symbol(special_form_ids[F_BEGIN]),
-								parts.exprs[i].box->pair.cdr
+								retain_expression(parts.exprs[i].box->pair.cdr)
 							);
 							result = eval(block, env, false);
 							release_expression(block);
