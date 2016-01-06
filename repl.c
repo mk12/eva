@@ -174,7 +174,7 @@ void repl(struct Environment *env, bool print) {
 					buf[buf_length] = '\n';
 					memcpy(buf + buf_length + 1, line, line_length);
 					free(line);
-					line[buf_length + line_length + 1] = '\0';
+					buf[buf_length + line_length + 1] = '\0';
 					buf_length += line_length + 1;
 					continue;
 				} else {
