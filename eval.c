@@ -722,17 +722,25 @@ static struct EvalResult eval(
 			result.err_msg = args.err_msg;
 			break;
 		}
+		int err_i;
 		for (int i = 0; i < args.size; i++) {
 			struct EvalResult arg = eval(args.exprs[i], env, false);
 			if (arg.err_msg) {
+				err_i = i;
 				result.err_msg = arg.err_msg;
 				break;
 			}
 			args.exprs[i] = arg.expr;
 		}
-		if (!result.err_msg) {
-			result = apply(proc.expr, args.exprs, args.size, env);
+		if (result.err_msg) {
+			release_expression(proc.expr);
+			for (int i = 0; i < err_i; i++) {
+				release_expression(args.exprs[i]);
+			}
+			free(args.exprs);
+			break;
 		}
+		result = apply(proc.expr, args.exprs, args.size, env);
 		release_expression(proc.expr);
 		for (int i = 0; i < args.size; i++) {
 			release_expression(args.exprs[i]);
