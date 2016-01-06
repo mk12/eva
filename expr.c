@@ -68,6 +68,7 @@ struct Expression new_lambda(
 }
 
 static void dealloc_expression(struct Expression expr) {
+	// Free the expression's box and release sub-boxes.
 	switch (expr.type) {
 	case E_PAIR:
 		release_expression(expr.box->pair.car);
@@ -85,6 +86,7 @@ static void dealloc_expression(struct Expression expr) {
 }
 
 struct Expression retain_expression(struct Expression expr) {
+	// Increase the reference count of the box.
 	switch (expr.type) {
 	case E_PAIR:
 	case E_LAMBDA:
@@ -97,6 +99,7 @@ struct Expression retain_expression(struct Expression expr) {
 }
 
 void release_expression(struct Expression expr) {
+	// Decrease the reference count of the box, and deallocate if it reaches 0.
 	switch (expr.type) {
 	case E_PAIR:
 	case E_LAMBDA:
@@ -111,6 +114,7 @@ void release_expression(struct Expression expr) {
 }
 
 struct Expression clone_expression(struct Expression expr) {
+	// Recursively clone sub-boxes to make a deep copy.
 	switch (expr.type) {
 	case E_PAIR:
 		return new_pair(
@@ -128,6 +132,8 @@ struct Expression clone_expression(struct Expression expr) {
 	}
 }
 
+// Prints a pair to standard output, assuming the left parenthesis has already
+// been printed. Uses standard Lisp s-expression notation.
 static void print_pair(struct Box *box, bool first) {
 	if (!first) {
 		putchar(' ');
@@ -141,6 +147,7 @@ static void print_pair(struct Box *box, bool first) {
 		print_pair(box->pair.cdr.box, false);
 		break;
 	default:
+		// Print a dot before the last cdr if it is not null.
 		fputs(" . ", stdout);
 		print_expression(box->pair.cdr);
 		putchar(')');

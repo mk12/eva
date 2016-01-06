@@ -121,7 +121,8 @@ int main(int argc, char **argv) {
 	}
 
 	// Start the REPL if interactive mode was specified, or if no arguments were
-	// provided and this is a TTY (input is coming from stdin, not a pipe).
+	// provided and this is a TTY (meaning input is coming from the keyboard,
+	// not from a pipe).
 	bool tty = isatty(0);
 	if (interactive || (argc == 1 && tty)) {
 		repl(env, tty);
