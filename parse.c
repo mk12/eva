@@ -5,6 +5,7 @@
 #include "expr.h"
 #include "intern.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -173,6 +174,7 @@ struct ParseResult parse(const char *text) {
 		break;
 	default:;
 		int len = skip_symbol(s);
+		assert(len > 0);
 		int number;
 		if (parse_int(s, len, &number)) {
 			result.expr = new_number(number);
@@ -186,6 +188,7 @@ struct ParseResult parse(const char *text) {
 
 	if (!result.err_msg) {
 		s += skip_whitespace(s);
+		assert(s > text);
 	}
 	result.chars_read = s - text;
 	return result;
