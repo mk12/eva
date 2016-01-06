@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define REF_COUNT_LOGGING 1
+//#define REF_COUNT_LOGGING 1
 
 // Counters for the total number of allocated boxes and the total of all
 // reference counts, used for debugging.
