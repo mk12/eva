@@ -8,6 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define REF_COUNT_LOGGING 1
+
+// Counters for the total number of allocated boxes and the total of all
+// reference counts, used for debugging.
+static int total_box_count = 0;
+static int total_ref_count = 0;
+
 // Names and arities of special procedures.
 const struct { const char *name; int arity; } special_procs[N_SPECIAL_PROCS] = {
 	{"eval", 1}, {"apply", 2},
@@ -49,20 +56,36 @@ struct Expression new_special(enum SpecialType type) {
 	return (struct Expression){ .type = E_SPECIAL, .special_type = type };
 }
 
-struct Expression new_pair(struct Expression car, struct Expression cdr) {
-	struct Box *box = malloc(sizeof *box);
-	box->ref_count = 1;
-	box->pair.car = retain_expression(car);
-	box->pair.cdr = retain_expression(cdr);
-	return (struct Expression){ .type = E_PAIR, .box = box };
+// Log information about reference counts.
+static void log_ref_count(const char *action, struct Expression expr) {
+	bool pair = expr.type == E_PAIR;
+	assert(pair || expr.type == E_LAMBDA);
+	printf("[%d/%d] %7s %6s [%d] ", total_ref_count, total_box_count, action,
+			pair ? "pair" : "lambda", expr.box->ref_count);
+	if (pair) {
+		putchar('(');
+		print_expression(expr.box->pair.car);
+		fputs(" . ", stdout);
+		print_expression(expr.box->pair.cdr);
+	} else {
+		fputs("(lambda (?) ", stdout);
+		print_expression(expr.box->lambda.body);
+	}
+	fputs(")\n", stdout);
 }
 
-struct Expression new_pair_weak(struct Expression car, struct Expression cdr) {
+struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	struct Box *box = malloc(sizeof *box);
 	box->ref_count = 1;
 	box->pair.car = car;
 	box->pair.cdr = cdr;
-	return (struct Expression){ .type = E_PAIR, .box = box };
+	struct Expression expr = { .type = E_PAIR, .box = box };
+#if REF_COUNT_LOGGING
+	total_box_count++;
+	total_ref_count++;
+	log_ref_count("create", expr);
+#endif
+	return expr;
 }
 
 struct Expression new_lambda(
@@ -71,11 +94,23 @@ struct Expression new_lambda(
 	box->ref_count = 1;
 	box->lambda.arity = arity;
 	box->lambda.params = params;
-	box->lambda.body = retain_expression(body);
-	return (struct Expression){ .type = E_LAMBDA, .box = box };
+	box->lambda.body = body;
+	struct Expression expr = { .type = E_LAMBDA, .box = box };
+#if REF_COUNT_LOGGING
+	total_box_count++;
+	total_ref_count++;
+	log_ref_count("create", expr);
+#endif
+	return expr;
 }
 
 static void dealloc_expression(struct Expression expr) {
+#if REF_COUNT_LOGGING
+	if (expr.type == E_PAIR || expr.type == E_LAMBDA) {
+		total_box_count--;
+		log_ref_count("dealloc", expr);
+	}
+#endif
 	// Free the expression's box and release sub-boxes.
 	switch (expr.type) {
 	case E_PAIR:
@@ -99,6 +134,10 @@ struct Expression retain_expression(struct Expression expr) {
 	case E_PAIR:
 	case E_LAMBDA:
 		expr.box->ref_count++;
+#if REF_COUNT_LOGGING
+		total_ref_count++;
+		log_ref_count("retain", expr);
+#endif
 		break;
 	default:
 		break;
@@ -112,6 +151,10 @@ void release_expression(struct Expression expr) {
 	case E_PAIR:
 	case E_LAMBDA:
 		expr.box->ref_count--;
+#if REF_COUNT_LOGGING
+		total_ref_count--;
+		log_ref_count("release", expr);
+#endif
 		if (expr.box->ref_count <= 0) {
 			dealloc_expression(expr);
 		}
