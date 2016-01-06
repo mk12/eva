@@ -79,11 +79,11 @@ struct ParseResult read_sexpr(void) {
 	}
 
 	// Save any leftover input.
-	if (!data.err_msg && data.chars_read > 0 && data.chars_read < length) {
-		saved_buffer = line;
+	if (!data.err_msg && data.chars_read > 0 && data.chars_read < buf_length) {
+		saved_buffer = buf;
 		saved_buffer_offset = data.chars_read;
 	} else {
-		free(line);
+		free(buf);
 	}
 
 	return data;
@@ -135,7 +135,7 @@ void repl(struct Environment *env, bool print) {
 		if (*buf) {
 			// Add to the GNU Readline history if necessary.
 			if (print) {
-				add_history(line);
+				add_history(buf);
 			}
 		} else {
 			// Empty string: ignore it.
@@ -146,7 +146,7 @@ void repl(struct Environment *env, bool print) {
 		int buf_length = strlen(buf);
 		int offset = 0;
 		// Parse and evaluate until there is no text left.
-		while (offset < length) {
+		while (offset < buf_length) {
 			// Parse from the current offset.
 			struct ParseResult code = parse(buf + offset);
 			if (code.err_msg) {
@@ -175,7 +175,7 @@ void repl(struct Environment *env, bool print) {
 					memcpy(buf + buf_length + 1, line, line_length);
 					free(line);
 					line[buf_length + line_length + 1] = '\0';
-					length += line_length + 1;
+					buf_length += line_length + 1;
 					continue;
 				} else {
 					print_error(code.err_msg);
@@ -198,6 +198,6 @@ void repl(struct Environment *env, bool print) {
 			offset += code.chars_read;
 		}
 
-		free(line);
+		free(buf);
 	}
 }
