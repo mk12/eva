@@ -57,6 +57,14 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	return (struct Expression){ .type = E_PAIR, .box = box };
 }
 
+struct Expression new_pair_weak(struct Expression car, struct Expression cdr) {
+	struct Box *box = malloc(sizeof *box);
+	box->ref_count = 1;
+	box->pair.car = car;
+	box->pair.cdr = cdr;
+	return (struct Expression){ .type = E_PAIR, .box = box };
+}
+
 struct Expression new_lambda(
 		int arity, InternID *params, struct Expression body) {
 	struct Box *box = malloc(sizeof *box);

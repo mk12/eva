@@ -79,15 +79,17 @@ struct Box {
 int special_arity(enum SpecialType type);
 const char *special_name(enum SpecialType type);
 
-// Constructor functions for immediate expressions.
+// Constructors for immediate expressions.
 struct Expression new_null(void);
 struct Expression new_symbol(InternID id);
 struct Expression new_number(int n);
 struct Expression new_boolean(bool b);
 struct Expression new_special(enum SpecialType type);
 
-// Constructor functions for boxed expressions. Sets the reference count to 1.
+// Constructors for boxed expressions. Refernce counts are initially set to 1.
+// Weak constructors do not retain their subexpressions.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
+struct Expression new_pair_weak(struct Expression car, struct Expression cdr);
 struct Expression new_lambda(
 		int arity, InternID *params, struct Expression body);
 
