@@ -210,6 +210,10 @@ static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 		expr = expr.box->pair.cdr;
 		result.size++;
 	}
+	// Skip allocating the array if the list is empty.
+	if (result.size == 0) {
+		return result;
+	}
 
 	// Allocate the array.
 	result.exprs = malloc(result.size * sizeof *result.exprs);
