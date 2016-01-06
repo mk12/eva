@@ -15,6 +15,7 @@ static const char *err_arity = "wrong number of arguments passed to procedure";
 static const char *err_not_num = "expected operand to be a number";
 static const char *err_not_bool = "expected operand to be a boolean";
 static const char *err_not_proc = "expected operand to be a procedure";
+static const char *err_not_list = "expected operand to be null or a pair";
 static const char *err_not_pair = "expected operand to be a pair";
 static const char *err_unbound_var = "use of unbound variable";
 static const char *err_ill_list = "ill-formed list";
@@ -91,8 +92,8 @@ static const char *check_arg_types(
 		if (args[0].type != E_SPECIAL && args[0].type != E_LAMBDA) {
 			return err_not_proc;
 		}
-		if (args[1].type != E_PAIR) {
-			return err_not_pair;
+		if (args[1].type != E_NULL && args[1].type != E_PAIR) {
+			return err_not_list;
 		}
 		break;
 	case S_NUM_EQ:
