@@ -57,6 +57,7 @@ static const char *special_form_names[N_SPECIAL_FORMS] = {
 static InternID special_form_ids[N_SPECIAL_FORMS];
 
 void setup_eval(void) {
+	// Intern all the special form names.
 	for (int i = 0; i < N_SPECIAL_FORMS; i++) {
 		special_form_ids[i] = intern_string(special_form_names[i]);
 	}
@@ -73,6 +74,7 @@ static const char *check_arg_count(struct Expression proc, int n) {
 		arity = proc.box->lambda.arity;
 	}
 
+	// Return err_arity if the arity doesn't match.
 	if (arity >= 0) {
 		return n == arity ? NULL : err_arity;
 	} else {
@@ -114,6 +116,7 @@ static const char *check_arg_types(
 				return err_not_num;
 			}
 			if (i > 0 && args[i].number == 0) {
+				// This technically isn't a type error.
 				return err_divide_zero;
 			}
 		}
@@ -139,16 +142,18 @@ static const char *check_arg_types(
 // message otherwise (including the case where proc is not a procedure).
 static const char *check_application(
 		struct Expression proc, struct Expression *args, int n) {
+	// Check the type of the procedure.
 	bool special = proc.type == E_SPECIAL;
 	bool lambda = proc.type == E_LAMBDA;
 	if (!special && !lambda) {
 		return err_op_not_proc;
 	}
-
+	// Check the number of arguments.
 	const char *err_msg = check_arg_count(proc, n);
 	if (err_msg) {
 		return err_msg;
 	}
+	// Check the type of the arguments.
 	if (special) {
 		err_msg = check_arg_types(proc.special_type, args, n);
 	}
@@ -174,7 +179,7 @@ static const char *check_list(struct Expression expr) {
 	return NULL;
 }
 
-// Converts a list of a flat array of expressions. Returns an error messge if
+// Converts a list to a flat array of expressions. Returns an error messge if
 // the expression is not a well-formed list. Copies elements of the list
 // directly to the new array, but does not alter reference counts.
 //
@@ -189,6 +194,7 @@ static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 	result.exprs = NULL;
 	result.err_msg = NULL;
 
+	// Count the number of elements in the list.
 	struct Expression expr = list;
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
@@ -205,10 +211,14 @@ static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 		result.size++;
 	}
 
+	// Allocate the array.
 	result.exprs = malloc(result.size * sizeof *result.exprs);
+	// Return to the beginning and copy the expressions to the array.
 	expr = list;
 	for (int i = 0; i < result.size; i++) {
 		if (result.dot && i == result.size - 1) {
+			// Special case: in a list such as (1 2 . 3), the final element 3 is
+			// not a car but rather the final cdr itself.
 			result.exprs[i] = expr;
 			break;
 		} else {
@@ -377,6 +387,7 @@ static struct EvalResult apply(
 		int n,
 		struct Environment *env) {
 	struct EvalResult result;
+	// Check the number of arguments and their types.
 	result.err_msg = check_application(proc, args, n);
 	if (result.err_msg) {
 		return result;
@@ -389,9 +400,12 @@ static struct EvalResult apply(
 		int arity = proc.box->lambda.arity;
 		int limit = arity < 0 ? -arity - 1 : n;
 		int n_passed = arity < 0 ? limit + 1 : limit;
+		// Bind each argument to its corresponding formal parameter.
 		for (int i = 0; i < limit; i++) {
 			bind(env, proc.box->lambda.params[i], args[i]);
 		}
+		// If a variable number of arguments is allowed, collect them in a list
+		// and pass it as the final parameter.
 		if (arity < 0) {
 			struct Expression list = new_null();
 			for (int i = n - 1; i >= limit; i--) {
@@ -402,7 +416,9 @@ static struct EvalResult apply(
 			bind(env, proc.box->lambda.params[limit], list);
 			release_expression(list);
 		}
+		// Evaluate the body of the procedure.
 		result = eval(proc.box->lambda.body, env, false);
+		// Unbind all the arguments.
 		for (int i = n_passed - 1; i >= 0; i--) {
 			unbind_last(env, proc.box->lambda.params[i]);
 		}
