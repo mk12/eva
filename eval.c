@@ -25,6 +25,7 @@ static const char *err_ill_quote = "ill-formed special form: quote";
 static const char *err_ill_if = "ill-formed special form: if";
 static const char *err_ill_cond = "ill-formed special form: cond";
 static const char *err_ill_lambda = "ill-formed special form: lambda";
+static const char *err_ill_let = "ill-formed special form: let";
 static const char *err_ill_begin = "ill-formed special form: begin";
 static const char *err_divide_zero = "division by zero";
 static const char *err_dup_param = "duplicate parameter in parameter list";
@@ -670,6 +671,73 @@ static struct EvalResult eval(
 				result.expr = branch.expr;
 				break;
 			} else if (id == special_form_ids[F_LET]) {
+				struct ArrayResult parts = sexpr_array(expr.box->pair.cdr, false);
+				if (parts.err_msg) {
+					result.err_msg = parts.err_msg;
+					break;
+				}
+				if (parts.size < 2) {
+					result.err_msg = err_ill_let;
+					free(parts.exprs);
+					break;
+				}
+				if (parts.exprs[0].type != E_NULL && parts.exprs[0].type != E_PAIR) {
+					result.err_msg = err_ill_let;
+					free(parts.exprs);
+					break;
+				}
+				struct ArrayResult bindings = sexpr_array(parts.exprs[0], false);
+				struct Expression *vals = malloc(bindings.size * sizeof *vals);
+				if (bindings.err_msg) {
+					result.err_msg = bindings.err_msg;
+					free(parts.exprs);
+					break;
+				}
+				int i;
+				for (i = 0; i < bindings.size; i++) {
+					struct Expression b = bindings.exprs[i];
+					if (b.type != E_PAIR
+							|| b.box->pair.car.type != E_SYMBOL
+							|| b.box->pair.cdr.type != E_PAIR
+							|| b.box->pair.cdr.box->pair.cdr.type != E_NULL) {
+						result.err_msg = err_ill_let;
+						break;
+					}
+					struct EvalResult val = eval(b.box->pair.cdr.box->pair.car, env, false);
+					if (val.err_msg) {
+						result.err_msg = val.err_msg;
+						break;
+					}
+					vals[i] = val.expr;
+				}
+				if (result.err_msg) {
+					for (int j = 0; j < i; j++) {
+						release_expression(vals[j]);
+					}
+					free(bindings.exprs);
+					free(parts.exprs);
+					break;
+				}
+				for (i = 0; i < bindings.size; i++) {
+					bind(env, bindings.exprs[i].box->pair.car.symbol_id, vals[i]);
+					release_expression(vals[i]);
+				}
+				struct Expression body;
+				if (parts.size == 2) {
+					body = retain_expression(parts.exprs[1]);
+				} else {
+					body = new_pair(
+						new_symbol(special_form_ids[F_BEGIN]),
+						retain_expression(expr.box->pair.cdr.box->pair.cdr)
+					);
+				}
+				result = eval(body, env, true);
+				release_expression(body);
+				for (i = bindings.size - 1; i >= 0; i--) {
+					unbind_last(env, bindings.exprs[i].box->pair.car.symbol_id);
+				}
+				free(bindings.exprs);
+				free(parts.exprs);
 				break;
 			} else if (id == special_form_ids[F_LET_STAR]) {
 				break;
