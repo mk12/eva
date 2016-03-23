@@ -1,0 +1,8 @@
+CC = clang
+OPTIONS = -std=c11 -O3 -DNDEBUG
+WARNINGS = -Weverything -pedantic
+COMPILE = $(CC) $(OPTIONS) $(WARNINGS) -c
+LINK = $(CC) -lreadline
+
+: foreach src/*.c |> ^ CC %f^ $(COMPILE) %f -o %o |> build/%B.o
+: build/*.o |> ^ Linking binary "eva"^ $(LINK) %f -o %o |> bin/eva
