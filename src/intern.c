@@ -68,8 +68,8 @@ InternID intern_string_n(const char *str, size_t n) {
 
 const char *find_string(InternID id) {
 	// Decode the hash value and the position.
-	int h = id & (TABLE_SIZE - 1);
-	int pos = id >> TABLE_SIZE_BITS;
+	size_t h = id & (TABLE_SIZE - 1);
+	size_t pos = id >> TABLE_SIZE_BITS;
 	// Look up the interned string.
 	return table[h].strings[pos];
 }

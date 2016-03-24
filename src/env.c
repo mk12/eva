@@ -55,7 +55,7 @@ struct LookupResult lookup(struct Environment *env, InternID key) {
 	// Check each entry in the bucket.
 	struct Entry *ents = env->table[index].entries;
 	for (size_t i = 1; i <= len; i++) {
-		if (ents[i].key == key) {
+		if (ents[len-i].key == key) {
 			return (struct LookupResult){
 				.found = true,
 				.expr = ents[len-i].expr
