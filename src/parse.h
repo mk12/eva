@@ -6,7 +6,7 @@
 #include "expr.h"
 
 struct ParseResult {
-	int chars_read;
+	size_t chars_read;
 	struct Expression expr;
 	const char *err_msg;
 };

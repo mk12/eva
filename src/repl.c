@@ -18,7 +18,7 @@ static const char *primary_prompt = "eva> ";
 static const char *secondary_prompt = "...> ";
 
 static char *saved_buffer = NULL;
-static int saved_buffer_offset = 0;
+static size_t saved_buffer_offset = 0;
 
 void setup_readline(void) {
 	// Disable tab completion.
@@ -35,7 +35,7 @@ struct ParseResult read_sexpr(void) {
 	result.err_msg = NULL;
 
 	char *buf;
-	int buf_length;
+	size_t buf_length;
 	struct ParseResult data;
 	if (saved_buffer) {
 		// If there is leftover input, use it.
@@ -67,7 +67,7 @@ struct ParseResult read_sexpr(void) {
 		// Add to the GNU Readline history.
 		add_history(line);
 		// Concatenate the line to the end of the buffer.
-		int line_length = strlen(line);
+		size_t line_length = strlen(line);
 		buf = realloc(buf, buf_length + line_length + 2);
 		buf[buf_length] = '\n';
 		memcpy(buf + buf_length + 1, line, line_length);
@@ -90,10 +90,8 @@ struct ParseResult read_sexpr(void) {
 }
 
 bool execute(const char *text, struct Environment *env, bool print) {
-	struct EvalResult result;
-	result.err_msg = NULL;
-	int length = strlen(text);
-	int offset = 0;
+	size_t length = strlen(text);
+	size_t offset = 0;
 
 	// Parse and evaluate until there is no text left.
 	while (offset < length) {
@@ -143,8 +141,8 @@ void repl(struct Environment *env, bool print) {
 			continue;
 		}
 
-		int buf_length = strlen(buf);
-		int offset = 0;
+		size_t buf_length = strlen(buf);
+		size_t offset = 0;
 		// Parse and evaluate until there is no text left.
 		while (offset < buf_length) {
 			// Parse from the current offset.
@@ -168,7 +166,7 @@ void repl(struct Environment *env, bool print) {
 						// Add to the GNU Readline history.
 						add_history(line);
 					}
-					int line_length = strlen(line);
+					size_t line_length = strlen(line);
 					// Concatenate the line to the end of the buffer.
 					buf = realloc(buf, buf_length + line_length + 2);
 					buf[buf_length] = '\n';

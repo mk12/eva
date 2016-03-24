@@ -17,14 +17,14 @@ struct Entry {
 };
 
 struct Bucket {
-	int cap;
-	int len;
+	size_t cap;
+	size_t len;
 	struct Entry *entries;
 };
 
 struct Environment {
-	int size;
-	int total_entries;
+	size_t size;
+	size_t total_entries;
 	struct Bucket *table;
 };
 
@@ -40,7 +40,8 @@ struct Environment *default_environment(void) {
 	struct Environment *env = empty_environment();
 	// Bind all special procedure names to their expressions.
 	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
-		bind(env, intern_string(special_name(i)), new_special(i));
+		enum SpecialType type = (enum SpecialType)i;
+		bind(env, intern_string(special_name(type)), new_special(type));
 	}
 	// Bind the symbol "else" to true (used in the cond special form).
 	bind(env, intern_string("else"), new_boolean(true));
@@ -49,13 +50,16 @@ struct Environment *default_environment(void) {
 
 struct LookupResult lookup(struct Environment *env, InternID key) {
 	// Look up the bucket corresponding to the key.
-	int index = key % env->size;
-	int len = env->table[index].len;
+	size_t index = key % env->size;
+	size_t len = env->table[index].len;
 	// Check each entry in the bucket.
 	struct Entry *ents = env->table[index].entries;
-	for (int i = len - 1; i >= 0; i--) {
+	for (size_t i = 1; i <= len; i++) {
 		if (ents[i].key == key) {
-			return (struct LookupResult){ .found = true, .expr = ents[i].expr };
+			return (struct LookupResult){
+				.found = true,
+				.expr = ents[len-i].expr
+			};
 		}
 	}
 	return (struct LookupResult){ .found = false };
@@ -86,14 +90,14 @@ static void bind_unchecked(
 void bind(struct Environment *env, InternID key, struct Expression expr) {
 	// Check if the load factor is greater than 0.75.
 	if (4 * env->total_entries >= 3 * env->size) {
-		int old_size = env->size;
+		size_t old_size = env->size;
 		struct Bucket *old_table = env->table;
 		// Create a table with double the number of buckets.
 		env->size *= 2;
 		env->table = calloc(env->size, sizeof *env->table);
 		// Bind all the expressions into the new table.
-		for (int i = 0; i < old_size; i++) {
-			for (int j = 0; j < old_table[i].len; j++) {
+		for (size_t i = 0; i < old_size; i++) {
+			for (size_t j = 0; j < old_table[i].len; j++) {
 				struct Entry ent = old_table[i].entries[j];
 				bind_unchecked(env, ent.key, ent.expr);
 			}
@@ -109,12 +113,12 @@ void bind(struct Environment *env, InternID key, struct Expression expr) {
 
 void unbind(struct Environment *env, InternID key) {
 	// Look up the bucket corresponding to the key.
-	int index = key % env->size;
-	int len = env->table[index].len;
+	size_t index = key % env->size;
+	size_t len = env->table[index].len;
 	// Check each entry in the bucket.
 	struct Entry *ents = env->table[index].entries;
 	bool shift = false;
-	for (int i = 0; i < len; i++) {
+	for (size_t i = 0; i < len; i++) {
 		if (shift) {
 			ents[i-1].key = ents[i].key;
 			ents[i-1].expr = ents[i].expr;
@@ -134,8 +138,8 @@ void unbind(struct Environment *env, InternID key) {
 
 void unbind_last(struct Environment *env, InternID key) {
 	// Look up the bucket corresponding to the key.
-	int index = key % env->size;
-	int len = env->table[index].len;
+	size_t index = key % env->size;
+	size_t len = env->table[index].len;
 	// Unbind the most recently bound expression.
 	release_expression(env->table[index].entries[len-1].expr);
 	// Update the counts.
@@ -144,10 +148,10 @@ void unbind_last(struct Environment *env, InternID key) {
 }
 
 void free_environment(struct Environment *env) {
-	for (int i = 0; i < env->size; i++) {
-		int len = env->table[i].len;
+	for (size_t i = 0; i < env->size; i++) {
+		size_t len = env->table[i].len;
 		struct Entry *ents = env->table[i].entries;
-		for (int j = 0; j < len; j++) {
+		for (size_t j = 0; j < len; j++) {
 			release_expression(ents[j].expr);
 		}
 		free(ents);

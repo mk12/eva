@@ -10,8 +10,8 @@
 #define DEFAULT_BUCKET_SIZE 16
 
 struct Bucket {
-	int cap;
-	int len;
+	size_t cap;
+	size_t len;
 	char **strings;
 };
 
@@ -21,11 +21,11 @@ InternID intern_string(const char *str) {
 	return intern_string_n(str, strlen(str));
 }
 
-InternID intern_string_n(const char *str, int n) {
+InternID intern_string_n(const char *str, size_t n) {
 	// Calculate the hash value of the string.
 	InternID h = 5381;
-	for (int i = 0; i < n; i++) {
-		h = ((h << 5) + h) + str[i];
+	for (size_t i = 0; i < n; i++) {
+		h = ((h << 5) + h) + (InternID)str[i];
 	}
 	h %= TABLE_SIZE;
 
@@ -38,10 +38,10 @@ InternID intern_string_n(const char *str, int n) {
 	}
 
 	// Check if the same string has already been interned.
-	for (int i = 0; i < bucket->len; i++) {
+	for (size_t i = 0; i < bucket->len; i++) {
 		if (strncmp(str, bucket->strings[i], n) == 0) {
 			// If so, return its intern ID.
-			return (i << TABLE_SIZE_BITS) | h;
+			return (InternID)(i << TABLE_SIZE_BITS) | h;
 		}
 	}
 	
@@ -57,13 +57,13 @@ InternID intern_string_n(const char *str, int n) {
 	strncpy(new_str, str, n);
 	new_str[n] = '\0';
 	// Add the string to the bucket.
-	int pos = bucket->len;
+	size_t pos = bucket->len;
 	bucket->strings[pos] = new_str;
 	// Update the count.
 	bucket->len++;
 
 	// Create an intern ID by combining the position bits and hash bits.
-	return (pos << TABLE_SIZE_BITS) | h;
+	return (InternID)(pos << TABLE_SIZE_BITS) | h;
 }
 
 const char *find_string(InternID id) {

@@ -1,6 +1,7 @@
 CC = clang
 OPTIONS = -std=c11 -O3 -DNDEBUG
 WARNINGS = -Weverything -pedantic
+WARNINGS += -Wno-padded -Wno-switch-enum
 COMPILE = $(CC) $(OPTIONS) $(WARNINGS) -c
 LINK = $(CC) -lreadline
 

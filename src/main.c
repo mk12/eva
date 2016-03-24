@@ -15,9 +15,9 @@
 #include "eval.h"
 #include "repl.h"
 
-const char *err_open_file = "can't open file";
-const char *err_read_file = "can't read file";
-const char *err_no_expr = "expected expression after -e";
+static const char *err_open_file = "can't open file";
+static const char *err_read_file = "can't read file";
+static const char *err_no_expr = "expected expression after -e";
 
 struct ReadResult {
 	char *buf;
@@ -50,8 +50,8 @@ static struct ReadResult read_file(const char *filename) {
 		result.err_msg = err_open_file;
 		return result;
 	}
-	result.buf = malloc(bufsize + 1);
-	size_t length = fread(result.buf, 1, bufsize, file);
+	result.buf = malloc((size_t)bufsize + 1);
+	size_t length = fread(result.buf, 1, (size_t)bufsize, file);
 	fclose(file);
 	if (length == 0) {
 		free(result.buf);

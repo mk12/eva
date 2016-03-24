@@ -21,11 +21,11 @@ static const char *err_invalid_literal = "invalid hash literal";
 // Attempts to parse a string of n characters (does not require a null
 // terminator) as an integer. On success, stores the integer in result and
 // returns true. Otherwise, returns false.
-static bool parse_int(const char *s, int n, int *result) {
+static bool parse_int(const char *s, size_t n, int *result) {
 	int val = 0;
 	int sign = 1;
 	bool leading_zero = true;
-	for (int i = 0; i < n; i++) {
+	for (size_t i = 0; i < n; i++) {
 		char c = s[i];
 		if (i == 0 && n > 1) {
 			if (c == '+') {
@@ -54,7 +54,7 @@ static bool parse_int(const char *s, int n, int *result) {
 
 // Returns the number of leading whitespace characters in the text. Comments,
 // which go from a semicolon to the end of the line, are treated as whitespace.
-static int skip_whitespace(const char *text) {
+static size_t skip_whitespace(const char *text) {
 	const char *s = text;
 	bool comment = false;
 	while (*s) {
@@ -71,16 +71,16 @@ static int skip_whitespace(const char *text) {
 		}
 		s++;
 	}
-	return s - text;
+	return (size_t)(s - text);
 }
 
 // Returns the number of characters at the beginning of text that form a symbol.
-static int skip_symbol(const char *text) {
+static size_t skip_symbol(const char *text) {
 	const char *s = text;
 	while (*s && *s != ';' && *s != '(' && *s != ')' && !isspace(*s)) {
 		s++;
 	}
-	return s - text;
+	return (size_t)(s - text);
 }
 
 // Parses a pair, assuming the opening '(' has already been read.
@@ -131,7 +131,7 @@ static struct ParseResult parse_pair(const char *text) {
 	}
 
 END:
-	result.chars_read = s - text;
+	result.chars_read = (size_t)(s - text);
 	return result;
 }
 
@@ -169,7 +169,7 @@ struct ParseResult parse(const char *text) {
 		}
 		break;
 	default:;
-		int len = skip_symbol(s);
+		size_t len = skip_symbol(s);
 		assert(len > 0);
 		int number;
 		if (parse_int(s, len, &number)) {
@@ -186,6 +186,6 @@ struct ParseResult parse(const char *text) {
 		s += skip_whitespace(s);
 		assert(s > text);
 	}
-	result.chars_read = s - text;
+	result.chars_read = (size_t)(s - text);
 	return result;
 }

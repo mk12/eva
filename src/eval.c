@@ -60,14 +60,14 @@ static InternID special_form_ids[N_SPECIAL_FORMS];
 
 void setup_eval(void) {
 	// Intern all the special form names.
-	for (int i = 0; i < N_SPECIAL_FORMS; i++) {
+	for (size_t i = 0; i < N_SPECIAL_FORMS; i++) {
 		special_form_ids[i] = intern_string(special_form_names[i]);
 	}
 }
 
 // Returns NULL if the procedure accepts n arguments. Returns an error message
 // otherwise. Assumes proc is a procedure.
-static const char *check_arg_count(struct Expression proc, int n) {
+static const char *check_arg_count(struct Expression proc, size_t n) {
 	int arity;
 	if (proc.type == E_SPECIAL) {
 		arity = special_arity(proc.special_type);
@@ -78,16 +78,16 @@ static const char *check_arg_count(struct Expression proc, int n) {
 
 	// Return err_arity if the arity doesn't match.
 	if (arity >= 0) {
-		return n == arity ? NULL : err_arity;
+		return n == (size_t)arity ? NULL : err_arity;
 	} else {
-		return n >= -(arity + 1) ? NULL : err_arity;
+		return n >= (size_t)(-arity - 1) ? NULL : err_arity;
 	}
 }
 
 // Returns NULL if all argument are of the correct type. Returns an error
 // message otherwise. Assumes the correct number of arguments are provided.
 static const char *check_arg_types(
-		enum SpecialType type, struct Expression *args, int n) {
+		enum SpecialType type, struct Expression *args, size_t n) {
 	switch (type) {
 	case S_APPLY:
 		if (args[0].type != E_SPECIAL && args[0].type != E_LAMBDA) {
@@ -105,7 +105,7 @@ static const char *check_arg_types(
 	case S_ADD:
 	case S_SUB:
 	case S_MUL:
-		for (int i = 0; i < n; i++) {
+		for (size_t i = 0; i < n; i++) {
 			if (args[i].type != E_NUMBER) {
 				return err_not_num;
 			}
@@ -113,7 +113,7 @@ static const char *check_arg_types(
 		break;
 	case S_DIV:
 	case S_REM:
-		for (int i = 0; i < n; i++) {
+		for (size_t i = 0; i < n; i++) {
 			if (args[i].type != E_NUMBER) {
 				return err_not_num;
 			}
@@ -143,7 +143,7 @@ static const char *check_arg_types(
 // Returns NULL if the application of proc to args is valid. Returns an error
 // message otherwise (including the case where proc is not a procedure).
 static const char *check_application(
-		struct Expression proc, struct Expression *args, int n) {
+		struct Expression proc, struct Expression *args, size_t n) {
 	// Check the type of the procedure.
 	bool special = proc.type == E_SPECIAL;
 	bool lambda = proc.type == E_LAMBDA;
@@ -163,7 +163,7 @@ static const char *check_application(
 }
 
 struct ArrayResult {
-	int size;
+	size_t size;
 	bool dot;
 	struct Expression *exprs;
 	const char *err_msg;
@@ -221,7 +221,7 @@ static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 	result.exprs = malloc(result.size * sizeof *result.exprs);
 	// Return to the beginning and copy the expressions to the array.
 	expr = list;
-	for (int i = 0; i < result.size; i++) {
+	for (size_t i = 0; i < result.size; i++) {
 		if (result.dot && i == result.size - 1) {
 			// Special case: in a list such as (1 2 . 3), the final element 3 is
 			// not a car but rather the final cdr itself.
@@ -241,7 +241,7 @@ static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 static struct EvalResult apply_special(
 		enum SpecialType type,
 		struct Expression *args,
-		int n,
+		size_t n,
 		struct Environment *env) {
 	struct EvalResult result;
 	result.err_msg = NULL;
@@ -334,8 +334,8 @@ static struct EvalResult apply_special(
 		result.expr = retain_expression(args[0].box->pair.cdr);
 		break;
 	case S_ADD:;
-		int sum = 0;
-		for (int i = 0; i < n; i++) {
+		long sum = 0;
+		for (size_t i = 0; i < n; i++) {
 			sum += args[i].number;
 		}
 		result.expr = new_number(sum);
@@ -345,15 +345,15 @@ static struct EvalResult apply_special(
 			result.expr = new_number(-args[0].number);
 			break;
 		}
-		int diff = args[0].number;
-		for (int i = 1; i < n; i++) {
+		long diff = args[0].number;
+		for (size_t i = 1; i < n; i++) {
 			diff -= args[i].number;
 		}
 		result.expr = new_number(diff);
 		break;
 	case S_MUL:;
-		int prod = 1;
-		for (int i = 0; i < n; i++) {
+		long prod = 1;
+		for (size_t i = 0; i < n; i++) {
 			prod *= args[i].number;
 		}
 		result.expr = new_number(prod);
@@ -363,14 +363,14 @@ static struct EvalResult apply_special(
 			result.expr = new_number(1 / args[0].number);
 			break;
 		}
-		int quot = args[0].number;
-		for (int i = 1; i < n; i++) {
+		long quot = args[0].number;
+		for (size_t i = 1; i < n; i++) {
 			quot /= args[i].number;
 		}
 		result.expr = new_number(quot);
 		break;
 	case S_REM:;
-		int rem = args[0].number % args[1].number;
+		long rem = args[0].number % args[1].number;
 		result.expr = new_number(rem);
 		break;
 	case S_NOT:
@@ -397,7 +397,7 @@ static struct EvalResult apply_special(
 static struct EvalResult apply(
 		struct Expression proc,
 		struct Expression *args,
-		int n,
+		size_t n,
 		struct Environment *env) {
 	struct EvalResult result;
 	// Check the number of arguments and their types.
@@ -411,18 +411,18 @@ static struct EvalResult apply(
 	} else {
 		assert(proc.type == E_LAMBDA);
 		int arity = proc.box->lambda.arity;
-		int limit = arity < 0 ? -arity - 1 : n;
-		int n_passed = arity < 0 ? limit + 1 : limit;
+		size_t limit = arity < 0 ? (size_t)(-arity - 1) : n;
+		size_t n_passed = arity < 0 ? limit + 1 : limit;
 		// Bind each argument to its corresponding formal parameter.
-		for (int i = 0; i < limit; i++) {
+		for (size_t i = 0; i < limit; i++) {
 			bind(env, proc.box->lambda.params[i], args[i]);
 		}
 		// If a variable number of arguments is allowed, collect them in a list
 		// and pass it as the final parameter.
 		if (arity < 0) {
 			struct Expression list = new_null();
-			for (int i = n - 1; i >= limit; i--) {
-				list = new_pair(retain_expression(args[i]), list);
+			for (size_t i = 1; i <= n - limit; i++) {
+				list = new_pair(retain_expression(args[n-i]), list);
 			}
 			bind(env, proc.box->lambda.params[limit], list);
 			release_expression(list);
@@ -430,8 +430,8 @@ static struct EvalResult apply(
 		// Evaluate the body of the procedure.
 		result = eval(proc.box->lambda.body, env, false);
 		// Unbind all the arguments.
-		for (int i = n_passed - 1; i >= 0; i--) {
-			unbind_last(env, proc.box->lambda.params[i]);
+		for (size_t i = 1; i <= n_passed; i++) {
+			unbind_last(env, proc.box->lambda.params[n_passed-i]);
 		}
 	}
 	return result;
@@ -460,9 +460,9 @@ static struct EvalResult eval(
 					result.err_msg = err_ill_define;
 					break;
 				}
-				InternID id = expr.box->pair.cdr.box->pair.car.symbol_id;
-				for (int i = 0; i < N_SPECIAL_FORMS; i++) {
-					if (id == special_form_ids[i]) {
+				InternID name_id = expr.box->pair.cdr.box->pair.car.symbol_id;
+				for (size_t i = 0; i < N_SPECIAL_FORMS; i++) {
+					if (name_id == special_form_ids[i]) {
 						result.err_msg = err_special_var;
 						break;
 					}
@@ -479,7 +479,7 @@ static struct EvalResult eval(
 					break;
 				}
 				result.expr = val.expr;
-				bind(env, id, val.expr);
+				bind(env, name_id, val.expr);
 				break;
 			} else if (id == special_form_ids[F_LAMBDA]) {
 				struct ArrayResult parts = sexpr_array(expr.box->pair.cdr, false);
@@ -498,6 +498,11 @@ static struct EvalResult eval(
 					free(parts.exprs);
 					break;
 				}
+				if ((size_t)(int)params.size != params.size) {
+					result.err_msg = err_ill_lambda;
+					free(parts.exprs);
+					break;
+				}
 				struct Expression body;
 				if (parts.size == 2) {
 					body = retain_expression(parts.exprs[1]);
@@ -508,13 +513,13 @@ static struct EvalResult eval(
 					);
 				}
 				InternID *param_ids = malloc(params.size * sizeof *param_ids);
-				for (int i = 0; i < params.size; i++) {
+				for (size_t i = 0; i < params.size; i++) {
 					if (params.exprs[i].type != E_SYMBOL) {
 						result.err_msg = err_ill_lambda;
 						break;
 					}
 					param_ids[i] = params.exprs[i].symbol_id;
-					for (int j = 0; j < i; j++) {
+					for (size_t j = 0; j < i; j++) {
 						if (param_ids[i] == param_ids[j]) {
 							result.err_msg = err_dup_param;
 							break;
@@ -531,7 +536,7 @@ static struct EvalResult eval(
 					break;
 				}
 				free(params.exprs);
-				int arity = params.dot ? -params.size : params.size;
+				int arity = params.dot ? (int)-params.size : (int)params.size;
 				result.expr = new_lambda(arity, param_ids, body);
 				free(parts.exprs);
 				break;
@@ -555,7 +560,7 @@ static struct EvalResult eval(
 					free(args.exprs);
 					break;
 				}
-				for (int i = 0; i < args.size - 1; i++) {
+				for (size_t i = 0; i < args.size - 1; i++) {
 					struct EvalResult arg = eval(args.exprs[i], env, true);
 					if (arg.err_msg) {
 						result.err_msg = arg.err_msg;
@@ -571,11 +576,12 @@ static struct EvalResult eval(
 					free(args.exprs);
 					break;
 				}
-				for (int i = args.size - 2; i >= 0; i--) {
-					if (args.exprs[i].type == E_PAIR
-							&& args.exprs[i].box->pair.car.type == E_SYMBOL
-							&& args.exprs[i].box->pair.car.symbol_id == special_form_ids[F_DEFINE]) {
-						unbind_last(env, args.exprs[i].box->pair.cdr.box->pair.car.symbol_id);
+				for (size_t i = 2; i <= args.size; i++) {
+					struct Expression arg = args.exprs[args.size-i];
+					if (arg.type == E_PAIR
+							&& arg.box->pair.car.type == E_SYMBOL
+							&& arg.box->pair.car.symbol_id == special_form_ids[F_DEFINE]) {
+						unbind_last(env, arg.box->pair.cdr.box->pair.car.symbol_id);
 					}
 				}
 				free(args.exprs);
@@ -591,7 +597,7 @@ static struct EvalResult eval(
 					free(parts.exprs);
 					break;
 				}
-				int i;
+				size_t i;
 				bool found = false;
 				for (i = 0; i < parts.size; i++) {
 					struct ArrayResult args = sexpr_array(parts.exprs[i], false);
@@ -660,7 +666,7 @@ static struct EvalResult eval(
 					free(args.exprs);
 					break;
 				}
-				int i = (cond.expr.type != E_BOOLEAN || cond.expr.boolean) ? 1 : 2;
+				size_t i = (cond.expr.type != E_BOOLEAN || cond.expr.boolean) ? 1 : 2;
 				release_expression(cond.expr);
 				struct EvalResult branch = eval(args.exprs[i], env, false);
 				free(args.exprs);
@@ -693,7 +699,7 @@ static struct EvalResult eval(
 					free(parts.exprs);
 					break;
 				}
-				int i;
+				size_t i;
 				for (i = 0; i < bindings.size; i++) {
 					struct Expression b = bindings.exprs[i];
 					if (b.type != E_PAIR
@@ -711,7 +717,7 @@ static struct EvalResult eval(
 					vals[i] = val.expr;
 				}
 				if (result.err_msg) {
-					for (int j = 0; j < i; j++) {
+					for (size_t j = 0; j < i; j++) {
 						release_expression(vals[j]);
 					}
 					free(bindings.exprs);
@@ -733,8 +739,8 @@ static struct EvalResult eval(
 				}
 				result = eval(body, env, true);
 				release_expression(body);
-				for (i = bindings.size - 1; i >= 0; i--) {
-					unbind_last(env, bindings.exprs[i].box->pair.car.symbol_id);
+				for (i = 1; i <= bindings.size; i++) {
+					unbind_last(env, bindings.exprs[bindings.size-i].box->pair.car.symbol_id);
 				}
 				free(bindings.exprs);
 				free(parts.exprs);
@@ -748,7 +754,7 @@ static struct EvalResult eval(
 					break;
 				}
 				result.expr = new_boolean(true);
-				for (int i = 0; i < args.size; i++) {
+				for (size_t i = 0; i < args.size; i++) {
 					struct EvalResult arg = eval(args.exprs[i], env, false);
 					if (arg.err_msg) {
 						result.err_msg = arg.err_msg;
@@ -769,7 +775,7 @@ static struct EvalResult eval(
 					break;
 				}
 				result.expr = new_boolean(false);
-				for (int i = 0; i < args.size; i++) {
+				for (size_t i = 0; i < args.size; i++) {
 					struct EvalResult arg = eval(args.exprs[i], env, false);
 					if (arg.err_msg) {
 						result.err_msg = arg.err_msg;
@@ -795,8 +801,8 @@ static struct EvalResult eval(
 			result.err_msg = args.err_msg;
 			break;
 		}
-		int err_i;
-		for (int i = 0; i < args.size; i++) {
+		size_t err_i = 0;
+		for (size_t i = 0; i < args.size; i++) {
 			struct EvalResult arg = eval(args.exprs[i], env, false);
 			if (arg.err_msg) {
 				err_i = i;
@@ -807,7 +813,7 @@ static struct EvalResult eval(
 		}
 		if (result.err_msg) {
 			release_expression(proc.expr);
-			for (int i = 0; i < err_i; i++) {
+			for (size_t i = 0; i < err_i; i++) {
 				release_expression(args.exprs[i]);
 			}
 			free(args.exprs);
@@ -815,13 +821,13 @@ static struct EvalResult eval(
 		}
 		result = apply(proc.expr, args.exprs, args.size, env);
 		release_expression(proc.expr);
-		for (int i = 0; i < args.size; i++) {
+		for (size_t i = 0; i < args.size; i++) {
 			release_expression(args.exprs[i]);
 		}
 		free(args.exprs);
 		break;
 	case E_SYMBOL:
-		for (int i = 0; i < N_SPECIAL_FORMS; i++) {
+		for (size_t i = 0; i < N_SPECIAL_FORMS; i++) {
 			if (expr.symbol_id == special_form_ids[i]) {
 				result.err_msg = err_special_var;
 				break;

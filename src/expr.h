@@ -50,7 +50,7 @@ struct Expression {
 	enum ExpressionType type;
 	union {
 		InternID symbol_id;
-		int number;
+		long number;
 		bool boolean;
 		enum SpecialType special_type;
 		struct Box *box;
@@ -82,7 +82,7 @@ const char *special_name(enum SpecialType type);
 // Constructors for immediate expressions.
 struct Expression new_null(void);
 struct Expression new_symbol(InternID id);
-struct Expression new_number(int n);
+struct Expression new_number(long n);
 struct Expression new_boolean(bool b);
 struct Expression new_special(enum SpecialType type);
 
@@ -100,10 +100,6 @@ struct Expression retain_expression(struct Expression expr);
 // Decrements the reference count of the box. This is a no-op for immediates.
 // Also deallocates the expression if the reference count reaches zero.
 void release_expression(struct Expression expr);
-
-// Returns a deep copy of the expression by recursively created new boxes. Does
-// not alter the reference counts of the source expression.
-struct Expression clone_expression(struct Expression expr);
 
 // Prints the expression to standard output (not followed by a newline).
 void print_expression(struct Expression expr);

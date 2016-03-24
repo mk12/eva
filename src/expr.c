@@ -8,15 +8,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#define REF_COUNT_LOGGING 1
+#define REF_COUNT_LOGGING 0
 
 // Counters for the total number of allocated boxes and the total of all
 // reference counts, used for debugging.
+#if REF_COUNT_LOGGING
 static int total_box_count = 0;
 static int total_ref_count = 0;
+#endif
 
 // Names and arities of special procedures.
-const struct { const char *name; int arity; } special_procs[N_SPECIAL_PROCS] = {
+static const struct {
+	const char *name;
+	int arity;
+} special_procs[N_SPECIAL_PROCS] = {
 	{"eval", 1}, {"apply", 2},
 	{"null?", 1}, {"symbol?", 1}, {"number?", 1}, {"boolean?", 1},
 	{"pair?", 1}, {"procedure?", 1},
@@ -44,7 +49,7 @@ struct Expression new_symbol(InternID id) {
 	return (struct Expression){ .type = E_SYMBOL, .symbol_id = id };
 }
 
-struct Expression new_number(int n) {
+struct Expression new_number(long n) {
 	return (struct Expression){ .type = E_NUMBER, .number = n };
 }
 
@@ -57,6 +62,7 @@ struct Expression new_special(enum SpecialType type) {
 }
 
 // Log information about reference counts.
+#if REF_COUNT_LOGGING
 static void log_ref_count(const char *action, struct Expression expr) {
 	bool pair = expr.type == E_PAIR;
 	assert(pair || expr.type == E_LAMBDA);
@@ -73,6 +79,7 @@ static void log_ref_count(const char *action, struct Expression expr) {
 	}
 	fputs(")\n", stdout);
 }
+#endif
 
 struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	struct Box *box = malloc(sizeof *box);
@@ -164,25 +171,6 @@ void release_expression(struct Expression expr) {
 	}
 }
 
-struct Expression clone_expression(struct Expression expr) {
-	// Recursively clone sub-boxes to make a deep copy.
-	switch (expr.type) {
-	case E_PAIR:
-		return new_pair(
-				clone_expression(expr.box->pair.car),
-				clone_expression(expr.box->pair.cdr));
-	case E_LAMBDA:;
-		int n = expr.box->lambda.arity;
-		InternID *params = malloc(n * sizeof *params);
-		for (int i = 0; i < n; i++) {
-			params[i] = expr.box->lambda.params[i];
-		}
-		return new_lambda(n, params, clone_expression(expr.box->lambda.body));
-	default:
-		return expr;
-	}
-}
-
 // Prints a pair to standard output, assuming the left parenthesis has already
 // been printed. Uses standard Lisp s-expression notation.
 static void print_pair(struct Box *box, bool first) {
@@ -219,7 +207,7 @@ void print_expression(struct Expression expr) {
 		fputs(find_string(expr.symbol_id), stdout);
 		break;
 	case E_NUMBER:
-		printf("%d", expr.number);
+		printf("%ld", expr.number);
 		break;
 	case E_BOOLEAN:
 		printf("#%c", expr.boolean ? 't' : 'f');
