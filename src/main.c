@@ -1,5 +1,9 @@
 // Copyright 2015 Mitchell Kember. Subject to the MIT License.
 
+#include "env.h"
+#include "eval.h"
+#include "repl.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,10 +14,6 @@
 #include <io.h>
 #define isatty _isatty
 #endif
-
-#include "env.h"
-#include "eval.h"
-#include "repl.h"
 
 static const char *err_open_file = "can't open file";
 static const char *err_read_file = "can't read file";
