@@ -64,7 +64,8 @@ static struct ReadResult read_file(const char *filename) {
 
 int main(int argc, char **argv) {
 	// Print the usage message if passed the -h flag.
-	if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
+	if (argc == 2 &&
+			(strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
 		puts("usage: eva [file] [-e code]");
 		return 0;
 	}
@@ -103,7 +104,8 @@ int main(int argc, char **argv) {
 		// Assume the argument is a filename.
 		struct ReadResult result = read_file(argv[i]);
 		if (result.err_msg) {
-			fprintf(stderr, "%s%s '%s'\n", error_prefix, result.err_msg, argv[i]);
+			fprintf(stderr, "%s%s '%s'\n",
+				error_prefix, result.err_msg, argv[i]);
 			error = true;
 			break;
 		}
