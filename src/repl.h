@@ -1,4 +1,4 @@
-// Copyright 2015 Mitchell Kember. Subject to the MIT License.
+// Copyright 2016 Mitchell Kember. Subject to the MIT License.
 
 #ifndef REPL_H
 #define REPL_H

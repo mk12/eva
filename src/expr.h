@@ -1,4 +1,4 @@
-// Copyright 2015 Mitchell Kember. Subject to the MIT License.
+// Copyright 2016 Mitchell Kember. Subject to the MIT License.
 
 #ifndef EXPR_H
 #define EXPR_H
