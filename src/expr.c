@@ -213,7 +213,7 @@ void print_expression(struct Expression expr) {
 		printf("#%c", expr.boolean ? 't' : 'f');
 		break;
 	case E_LAMBDA:
-		printf("#<%p>", expr.box);
+		printf("#<%p>", (void *)expr.box);
 		break;
 	case E_SPECIAL:
 		printf("#<%s>", special_name(expr.special_type));
