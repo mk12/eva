@@ -9,31 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Evaluation error messages.
-static const char *err_op_not_proc = "operator is not a procedure";
-static const char *err_arity = "wrong number of arguments passed to procedure";
-static const char *err_not_num = "expected operand to be a number";
-static const char *err_not_bool = "expected operand to be a boolean";
-static const char *err_not_proc = "expected operand to be a procedure";
-static const char *err_not_list = "expected operand to be null or a pair";
-static const char *err_not_pair = "expected operand to be a pair";
-static const char *err_unbound_var = "use of unbound variable";
-static const char *err_ill_list = "ill-formed list";
-static const char *err_ill_define = "ill-formed special form: define";
-static const char *err_ill_placed_define = "ill-placed special form: define";
-static const char *err_ill_quote = "ill-formed special form: quote";
-static const char *err_ill_if = "ill-formed special form: if";
-static const char *err_ill_cond = "ill-formed special form: cond";
-static const char *err_ill_lambda = "ill-formed special form: lambda";
-static const char *err_ill_let = "ill-formed special form: let";
-static const char *err_ill_begin = "ill-formed special form: begin";
-static const char *err_divide_zero = "division by zero";
-static const char *err_dup_param = "duplicate parameter in parameter list";
-static const char *err_special_var = "special form can't be used as variable";
-static const char *err_non_exhaustive = "non-exhaustive cond";
-
 #define N_SPECIAL_FORMS 10
 
+// A special form is a form with special evaluation rules. The special forms
+// implement the core of the Eva language.
 enum SpecialForms {
 	F_DEFINE,
 	F_LAMBDA,
@@ -65,121 +44,12 @@ void setup_eval(void) {
 	}
 }
 
-// Returns NULL if the procedure accepts n arguments. Returns an error message
-// otherwise. Assumes proc is a procedure.
-static const char *check_arg_count(struct Expression proc, size_t n) {
-	int arity;
-	if (proc.type == E_SPECIAL) {
-		arity = special_arity(proc.special_type);
-	} else {
-		assert(proc.type == E_LAMBDA);
-		arity = proc.box->lambda.arity;
-	}
-
-	// Return err_arity if the arity doesn't match.
-	if (arity >= 0) {
-		return n == (size_t)arity ? NULL : err_arity;
-	} else {
-		return n >= (size_t)(-arity - 1) ? NULL : err_arity;
-	}
-}
-
-// Returns NULL if all argument are of the correct type. Returns an error
-// message otherwise. Assumes the correct number of arguments are provided.
-static const char *check_arg_types(
-		enum SpecialType type, struct Expression *args, size_t n) {
-	switch (type) {
-	case S_APPLY:
-		if (args[0].type != E_SPECIAL && args[0].type != E_LAMBDA) {
-			return err_not_proc;
-		}
-		if (args[1].type != E_NULL && args[1].type != E_PAIR) {
-			return err_not_list;
-		}
-		break;
-	case S_NUM_EQ:
-	case S_LT:
-	case S_GT:
-	case S_LE:
-	case S_GE:
-	case S_ADD:
-	case S_SUB:
-	case S_MUL:
-		for (size_t i = 0; i < n; i++) {
-			if (args[i].type != E_NUMBER) {
-				return err_not_num;
-			}
-		}
-		break;
-	case S_DIV:
-	case S_REM:
-		for (size_t i = 0; i < n; i++) {
-			if (args[i].type != E_NUMBER) {
-				return err_not_num;
-			}
-			if (i > 0 && args[i].number == 0) {
-				// This technically isn't a type error.
-				return err_divide_zero;
-			}
-		}
-		break;
-	case S_CAR:
-	case S_CDR:
-		if (args[0].type != E_PAIR) {
-			return err_not_pair;
-		}
-		break;
-	case S_NOT:
-		if (args[0].type != E_BOOLEAN) {
-			return err_not_bool;
-		}
-		break;
-	default:
-		break;
-	}
-	return NULL;
-}
-
-// Returns NULL if the application of proc to args is valid. Returns an error
-// message otherwise (including the case where proc is not a procedure).
-static const char *check_application(
-		struct Expression proc, struct Expression *args, size_t n) {
-	// Check the type of the procedure.
-	bool special = proc.type == E_SPECIAL;
-	bool lambda = proc.type == E_LAMBDA;
-	if (!special && !lambda) {
-		return err_op_not_proc;
-	}
-	// Check the number of arguments.
-	const char *err_msg = check_arg_count(proc, n);
-	if (err_msg) {
-		return err_msg;
-	}
-	// Check the type of the arguments.
-	if (special) {
-		err_msg = check_arg_types(proc.special_type, args, n);
-	}
-	return err_msg;
-}
-
 struct ArrayResult {
 	size_t size;
 	bool dot;
 	struct Expression *exprs;
 	const char *err_msg;
 };
-
-// Returns NULL if the expression is a well formed list. Returns an error
-// message otherwise.
-static const char *check_list(struct Expression expr) {
-	while (expr.type != E_NULL) {
-		if (expr.type != E_PAIR) {
-			return err_ill_list;
-		}
-		expr = expr.box->pair.cdr;
-	}
-	return NULL;
-}
 
 // Converts a list to a flat array of expressions. Returns an error messge if
 // the expression is not a well-formed list. Copies elements of the list
