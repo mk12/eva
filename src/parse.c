@@ -54,6 +54,7 @@ static bool parse_int(const char *s, size_t n, int *result) {
 
 // Returns the number of leading whitespace characters in the text. Comments,
 // which go from a semicolon to the end of the line, are treated as whitespace.
+// Shebangs ("#!" to the end of the line) are also treated as whitespace.
 static size_t skip_whitespace(const char *text) {
 	const char *s = text;
 	bool comment = false;
@@ -63,7 +64,7 @@ static size_t skip_whitespace(const char *text) {
 				comment = false;
 			}
 		} else {
-			if (*s == ';') {
+			if (*s == ';' || (*s == '#' && s[1] == '!')) {
 				comment = true;
 			} else if (!isspace(*s)) {
 				break;
