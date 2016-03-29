@@ -2,7 +2,6 @@
 
 #include "env.h"
 
-#include "expr.h"
 #include "intern.h"
 
 #include <stdlib.h>

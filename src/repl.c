@@ -4,7 +4,6 @@
 
 #include "error.h"
 #include "eval.h"
-#include "parse.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>

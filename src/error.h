@@ -3,6 +3,11 @@
 #ifndef ERROR_H
 #define ERROR_H
 
+#include "expr.h"
+#include "intern.h"
+
+#include <stddef.h>
+
 // Error types for parse errors.
 enum ParseErrorType {
 	ERR_EXPECTED_RPAREN,

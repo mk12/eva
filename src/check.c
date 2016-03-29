@@ -1,5 +1,9 @@
 // Copyright 2016 Mitchell Kember. Subject to the MIT License.
 
+#include "check.h"
+
+#include "error.h"
+
 static const char *check_arg_count(struct Expression proc, size_t n) {
 	int arity;
 	if (proc.type == E_SPECIAL) {

@@ -3,8 +3,9 @@
 #ifndef CHECK_H
 #define CHECK_H
 
-#include "error.h"
 #include "expr.h"
+
+struct EvalError;
 
 // Returns NULL if the application of 'proc' to 'args' is valid. Allocates and
 // returns an evaluation error otherwise, including the case where 'proc' is not

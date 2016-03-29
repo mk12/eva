@@ -3,18 +3,20 @@
 #ifndef PARSE_H
 #define PARSE_H
 
+#include "error.h"
 #include "expr.h"
 
-// ParseResult contains the result of parsing text. If 'err' is not NULL, then
-// 'expr' will have a meaningful value.
+// ParseResult contains the result of parsing text. The 'expr' field has a
+// meaningful value if and only if 'err_type' is -1.
 struct ParseResult {
 	size_t chars_read;
 	struct Expression expr;
-	struct ParseError *err;
+	enum ParseErrorType err_type;
 };
 
-// Parses a string as an s-expression of pairs, symbols, and numbers. If the
-// string cannot be parsed, allocates and returns an error.
+// Parses a string as an s-expression of pairs, symbols, and numbers. On
+// success, returns the parse result with 'err_type' set to -1. Otherwise,
+// returns the error type in the parse result.
 struct ParseResult parse(const char *text);
 
 #endif

@@ -2,7 +2,6 @@
 
 #include "parse.h"
 
-#include "expr.h"
 #include "intern.h"
 
 #include <assert.h>
@@ -11,16 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Parse error messages.
-const char *const err_unexpected_eoi = "unexpected end of input";
-static const char *const err_expected_rparen = "expected character ')'";
-static const char *const err_unexpected_rparen = "unexpected character ')'";
-static const char *const err_improper_dot = "improperly placed dot";
-static const char *const err_invalid_literal = "invalid hash literal";
-
-// Attempts to parse a string of n characters (does not require a null
-// terminator) as an integer. On success, stores the integer in result and
-// returns true. Otherwise, returns false.
+// Attempts to parse a string of 'n' characters as an integer. Does not require
+// a null terminator. On success, stores the integer in 'result' and returns
+// true. Otherwise, returns false.
 static bool parse_int(const char *s, size_t n, int *result) {
 	int val = 0;
 	int sign = 1;
@@ -52,7 +44,7 @@ static bool parse_int(const char *s, size_t n, int *result) {
 	return true;
 }
 
-// Returns the number of leading whitespace characters in the text. Comments,
+// Returns the number of leading whitespace characters in 'text'. Comments,
 // which go from a semicolon to the end of the line, are treated as whitespace.
 // Shebangs ("#!" to the end of the line) are also treated as whitespace.
 static size_t skip_whitespace(const char *text) {
@@ -75,7 +67,7 @@ static size_t skip_whitespace(const char *text) {
 	return (size_t)(s - text);
 }
 
-// Returns the number of characters at the beginning of text that form a symbol.
+// Returns the number of symbol characters at the beginning of 'text'.
 static size_t skip_symbol(const char *text) {
 	const char *s = text;
 	while (*s && *s != ';' && *s != '(' && *s != ')' && !isspace(*s)) {
@@ -84,10 +76,10 @@ static size_t skip_symbol(const char *text) {
 	return (size_t)(s - text);
 }
 
-// Parses a pair, assuming the opening '(' has already been read.
+// Parses a pair, assuming the opening left parenthesis has already been read.
 static struct ParseResult parse_pair(const char *text) {
 	struct ParseResult result;
-	result.err_msg = NULL;
+	result.err_type = -1;
 	const char *s = text;
 	s += skip_whitespace(s);
 
@@ -99,8 +91,8 @@ static struct ParseResult parse_pair(const char *text) {
 
 	struct ParseResult first = parse(s);
 	s += first.chars_read;
-	if (first.err_msg) {
-		result.err_msg = first.err_msg;
+	if (first.err_type != -1) {
+		result.err_type = first.err_type;
 		goto END;
 	}
 
@@ -108,13 +100,13 @@ static struct ParseResult parse_pair(const char *text) {
 		s++;
 		struct ParseResult second = parse(s);
 		s += second.chars_read;
-		if (second.err_msg) {
-			result.err_msg = second.err_msg;
+		if (second.err_type != -1) {
+			result.err_type = second.err_type;
 			release_expression(first.expr);
 			goto END;
 		}
 		if (*s != ')') {
-			result.err_msg = *s ? err_expected_rparen : err_unexpected_eoi;
+			result.err_type = *s ? ERR_EXPECTED_RPAREN : ERR_UNEXPECTED_EOI;
 			release_expression(first.expr);
 			goto END;
 		}
@@ -123,8 +115,8 @@ static struct ParseResult parse_pair(const char *text) {
 	} else {
 		struct ParseResult rest = parse_pair(s);
 		s += rest.chars_read;
-		if (rest.err_msg) {
-			result.err_msg = rest.err_msg;
+		if (rest.err_type) {
+			result.err_type = rest.err_type;
 			release_expression(first.expr);
 			goto END;
 		}
@@ -139,13 +131,13 @@ END:
 // Parses any expression.
 struct ParseResult parse(const char *text) {
 	struct ParseResult result;
-	result.err_msg = NULL;
+	result.err_type = -1;
 	const char *s = text;
 	s += skip_whitespace(s);
 
 	switch (*s) {
 	case '\0':
-		result.err_msg = err_unexpected_eoi;
+		result.err_type = ERR_UNEXPECTED_EOI;
 		break;
 	case '(':
 		s++;
@@ -153,10 +145,10 @@ struct ParseResult parse(const char *text) {
 		s += result.chars_read;
 		break;
 	case ')':
-		result.err_msg = err_unexpected_rparen;
+		result.err_type = ERR_UNEXPECTED_RPAREN;
 		break;
 	case '.':
-		result.err_msg = err_improper_dot;
+		result.err_type = ERR_INVALID_DOT;
 		break;
 	case '#':
 		if (*(s + 1) == 't') {
@@ -166,7 +158,7 @@ struct ParseResult parse(const char *text) {
 			s += 2;
 			result.expr = new_boolean(false);
 		} else {
-			result.err_msg = err_invalid_literal;
+			result.err_type = ERR_INVALID_LITERAL;
 		}
 		break;
 	default:;
@@ -183,7 +175,7 @@ struct ParseResult parse(const char *text) {
 		break;
 	}
 
-	if (!result.err_msg) {
+	if (result.err_type == -1) {
 		s += skip_whitespace(s);
 		assert(s > text);
 	}

@@ -6,6 +6,7 @@
 #include "intern.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 
 // There are 7 types of expressions.
 enum ExpressionType {

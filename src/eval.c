@@ -325,7 +325,7 @@ static struct EvalResult apply(
 	} else {
 		assert(proc.type == E_LAMBDA);
 		int arity = proc.box->lambda.arity;
-		size_t limit = arity < 0 ? (size_t)(-arity - 1) : n;
+		size_t limit = arity < 0 ? (size_t)(-(arity + 1)) : n;
 		size_t n_passed = arity < 0 ? limit + 1 : limit;
 		// Bind each argument to its corresponding formal parameter.
 		for (size_t i = 0; i < limit; i++) {

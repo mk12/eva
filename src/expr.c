@@ -3,8 +3,6 @@
 #include "expr.h"
 
 #include <assert.h>
-#include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -185,7 +183,7 @@ static void print_pair(struct Box *box, bool first, FILE *stream) {
 		putchar(')');
 		break;
 	case E_PAIR:
-		print_pair(box->pair.cdr.box, false);
+		print_pair(box->pair.cdr.box, false, stream);
 		break;
 	default:
 		// Print a dot before the last cdr if it is not null.
