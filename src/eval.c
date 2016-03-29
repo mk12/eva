@@ -255,7 +255,7 @@ static struct EvalResult apply_special(
 		}
 		break;
 	case S_WRITE:
-		print_expression(args[0]);
+		print_expression(args[0], stdout);
 		putchar('\n');
 		result.expr = new_boolean(true);
 		break;

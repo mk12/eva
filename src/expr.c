@@ -61,23 +61,24 @@ struct Expression new_special(enum SpecialType type) {
 	return (struct Expression){ .type = E_SPECIAL, .special_type = type };
 }
 
-// Log information about reference counts.
+// Logs information about reference counts to standard error.
 #if REF_COUNT_LOGGING
 static void log_ref_count(const char *action, struct Expression expr) {
 	bool pair = expr.type == E_PAIR;
 	assert(pair || expr.type == E_LAMBDA);
-	printf("[%d/%d] %7s %6s [%d] ", total_ref_count, total_box_count, action,
-			pair ? "pair" : "lambda", expr.box->ref_count);
+	fprintf(stderr, "[%d/%d] %7s %6s [%d] ",
+			total_ref_count, total_box_count, action, pair ? "pair" : "lambda",
+			expr.box->ref_count);
 	if (pair) {
-		putchar('(');
-		print_expression(expr.box->pair.car);
-		fputs(" . ", stdout);
-		print_expression(expr.box->pair.cdr);
+		putc('(', stderr);
+		print_expression(expr.box->pair.car, stderr);
+		fputs(" . ", stderr);
+		print_expression(expr.box->pair.cdr, stderr);
 	} else {
-		fputs("(lambda (?) ", stdout);
-		print_expression(expr.box->lambda.body);
+		fputs("(lambda (?) ", stderr);
+		print_expression(expr.box->lambda.body, stderr);
 	}
-	fputs(")\n", stdout);
+	fputs(")\n", stderr);
 }
 #endif
 
@@ -171,13 +172,13 @@ void release_expression(struct Expression expr) {
 	}
 }
 
-// Prints a pair to standard output, assuming the left parenthesis has already
-// been printed. Uses standard Lisp s-expression notation.
-static void print_pair(struct Box *box, bool first) {
+// Prints a pair to the 'stream', assuming the left parenthesis has already been
+// printed. Uses standard Lisp s-expression notation.
+static void print_pair(struct Box *box, bool first, FILE *stream) {
 	if (!first) {
 		putchar(' ');
 	}
-	print_expression(box->pair.car);
+	print_expression(box->pair.car, stream);
 	switch (box->pair.cdr.type) {
 	case E_NULL:
 		putchar(')');
@@ -188,35 +189,35 @@ static void print_pair(struct Box *box, bool first) {
 	default:
 		// Print a dot before the last cdr if it is not null.
 		fputs(" . ", stdout);
-		print_expression(box->pair.cdr);
+		print_expression(box->pair.cdr, stream);
 		putchar(')');
 		break;
 	}
 }
 
-void print_expression(struct Expression expr) {
+void print_expression(struct Expression expr, FILE *stream) {
 	switch (expr.type) {
 	case E_NULL:
-		fputs("()", stdout);
+		fputs("()", stream);
 		break;
 	case E_PAIR:
-		putchar('(');
-		print_pair(expr.box, true);
+		putc('(', stream);
+		print_pair(expr.box, true, stream);
 		break;
 	case E_SYMBOL:
-		fputs(find_string(expr.symbol_id), stdout);
+		fputs(find_string(expr.symbol_id), stream);
 		break;
 	case E_NUMBER:
-		printf("%ld", expr.number);
+		fprintf(stream, "%ld", expr.number);
 		break;
 	case E_BOOLEAN:
-		printf("#%c", expr.boolean ? 't' : 'f');
+		fprintf(stream, "#%c", expr.boolean ? 't' : 'f');
 		break;
 	case E_LAMBDA:
-		printf("#<%p>", (void *)expr.box);
+		fprintf(stream, "#<%p>", (void *)expr.box);
 		break;
 	case E_SPECIAL:
-		printf("#<%s>", special_name(expr.special_type));
+		fprintf(stream, "#<%s>", special_name(expr.special_type));
 		break;
 	}
 }

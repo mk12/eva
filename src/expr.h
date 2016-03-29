@@ -101,7 +101,7 @@ struct Expression retain_expression(struct Expression expr);
 // Also deallocates the expression if the reference count reaches zero.
 void release_expression(struct Expression expr);
 
-// Prints the expression to standard output (not followed by a newline).
-void print_expression(struct Expression expr);
+// Prints the expression to 'stream' (not followed by a newline).
+void print_expression(struct Expression expr, FILE *stream);
 
 #endif

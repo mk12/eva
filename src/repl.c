@@ -110,7 +110,7 @@ bool execute(const char *text, struct Environment *env, bool print) {
 		}
 		// If print is true and this is the last expression, print it.
 		if (print && offset + code.chars_read >= length) {
-			print_expression(result.expr);
+			print_expression(result.expr, stdout);
 			putchar('\n');
 		}
 		release_expression(result.expr);
@@ -186,7 +186,7 @@ void repl(struct Environment *env, bool print) {
 					print_error(result.err_msg);
 				} else {
 					if (print) {
-						print_expression(result.expr);
+						print_expression(result.expr, stdout);
 						putchar('\n');
 					}
 					release_expression(result.expr);
