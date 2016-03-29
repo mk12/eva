@@ -8,20 +8,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Constants for the environment table.
 #define DEFAULT_TABLE_SIZE 1024
 #define DEFAULT_BUCKET_SIZE 16
 
+// An entry maps an intern identifier to an expression.
 struct Entry {
 	InternId key;
 	struct Expression expr;
 };
 
+// A bucket is a dynamic array of entries.
 struct Bucket {
 	size_t cap;
 	size_t len;
 	struct Entry *entries;
 };
 
+// An environment is a dynamic hash table mapping symbols to expressions.
 struct Environment {
 	size_t size;
 	size_t total_entries;
