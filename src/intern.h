@@ -5,16 +5,17 @@
 
 #include <stddef.h>
 
-typedef unsigned int InternID;
+// An InternId is a unique identifier for an interned string.
+typedef unsigned int InternId;
 
 // Interns the string and returns its unique identifier.
-InternID intern_string(const char *str);
+InternId intern_string(const char *str);
 
 // Interns a string of n characters. Does not require a null terminator. If the
 // same string has previously been interned, returns the same identifier.
-InternID intern_string_n(const char *str, size_t n);
+InternId intern_string_n(const char *str, size_t n);
 
 // Looks up a string by identifier.
-const char *find_string(InternID id);
+const char *find_string(InternId id);
 
 #endif

@@ -46,7 +46,7 @@ struct Expression new_null(void) {
 	return (struct Expression){ .type = E_NULL };
 }
 
-struct Expression new_symbol(InternID id) {
+struct Expression new_symbol(InternId id) {
 	return (struct Expression){ .type = E_SYMBOL, .symbol_id = id };
 }
 
@@ -98,7 +98,7 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 }
 
 struct Expression new_lambda(
-		int arity, InternID *params, struct Expression body) {
+		int arity, InternId *params, struct Expression body) {
 	struct Box *box = malloc(sizeof *box);
 	box->ref_count = 1;
 	box->lambda.arity = arity;

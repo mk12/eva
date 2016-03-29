@@ -50,7 +50,7 @@ enum SpecialType {
 struct Expression {
 	enum ExpressionType type;
 	union {
-		InternID symbol_id;
+		InternId symbol_id;
 		long number;
 		bool boolean;
 		enum SpecialType special_type;
@@ -75,7 +75,7 @@ struct Box {
 			// element of 'params' will be bound to the list of extra arguments
 			// beyond the -(N+1)th argument.
 			int arity;
-			InternID *params;
+			InternId *params;
 			struct Expression body;
 		} lambda;
 	};
@@ -87,7 +87,7 @@ const char *special_name(enum SpecialType type);
 
 // Constructors for immediate expressions.
 struct Expression new_null(void);
-struct Expression new_symbol(InternID id);
+struct Expression new_symbol(InternId id);
 struct Expression new_number(long n);
 struct Expression new_boolean(bool b);
 struct Expression new_special(enum SpecialType type);
@@ -97,7 +97,7 @@ struct Expression new_special(enum SpecialType type);
 // the new object; that is, they take ownership without retaining them.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
 struct Expression new_lambda(
-		int arity, InternID *params, struct Expression body);
+		int arity, InternId *params, struct Expression body);
 
 // Increments the reference count of the box. This is a no-op for immediates.
 // Returns the expression for convenience.

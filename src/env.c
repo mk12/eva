@@ -12,7 +12,7 @@
 #define DEFAULT_BUCKET_SIZE 16
 
 struct Entry {
-	InternID key;
+	InternId key;
 	struct Expression expr;
 };
 
@@ -48,7 +48,7 @@ struct Environment *default_environment(void) {
 	return env;
 }
 
-struct LookupResult lookup(struct Environment *env, InternID key) {
+struct LookupResult lookup(struct Environment *env, InternId key) {
 	// Look up the bucket corresponding to the key.
 	size_t index = key % env->size;
 	size_t len = env->table[index].len;
@@ -66,7 +66,7 @@ struct LookupResult lookup(struct Environment *env, InternID key) {
 }
 
 static void bind_unchecked(
-		struct Environment *env, InternID key, struct Expression expr) {
+		struct Environment *env, InternId key, struct Expression expr) {
 	// Look up the bucket corresponding to the key.
 	struct Bucket *bucket = env->table + (key % env->size);
 	if (!bucket->entries) {
@@ -87,7 +87,7 @@ static void bind_unchecked(
 	env->total_entries++;
 }
 
-void bind(struct Environment *env, InternID key, struct Expression expr) {
+void bind(struct Environment *env, InternId key, struct Expression expr) {
 	// Check if the load factor is greater than 0.75.
 	if (4 * env->total_entries >= 3 * env->size) {
 		size_t old_size = env->size;
@@ -111,7 +111,7 @@ void bind(struct Environment *env, InternID key, struct Expression expr) {
 	bind_unchecked(env, key, expr);
 }
 
-void unbind(struct Environment *env, InternID key) {
+void unbind(struct Environment *env, InternId key) {
 	// Look up the bucket corresponding to the key.
 	size_t index = key % env->size;
 	size_t len = env->table[index].len;
@@ -136,7 +136,7 @@ void unbind(struct Environment *env, InternID key) {
 	}
 }
 
-void unbind_last(struct Environment *env, InternID key) {
+void unbind_last(struct Environment *env, InternId key) {
 	// Look up the bucket corresponding to the key.
 	size_t index = key % env->size;
 	size_t len = env->table[index].len;

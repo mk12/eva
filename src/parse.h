@@ -8,11 +8,11 @@
 struct ParseResult {
 	size_t chars_read;
 	struct Expression expr;
-	const char *err_msg;
+	struct ParseError *err;
 };
 
 // Error message used when more input was expected.
-extern const char *err_unexpected_eoi;
+extern const char *const err_unexpected_eoi;
 
 // Parses a string as an s-expression that contains only pairs, symbols, and
 // numbers. If the string cannot be parsed, provides an error message.

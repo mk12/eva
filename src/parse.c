@@ -12,11 +12,11 @@
 #include <string.h>
 
 // Parse error messages.
-const char *err_unexpected_eoi = "unexpected end of input";
-static const char *err_expected_rparen = "expected character ')'";
-static const char *err_unexpected_rparen = "unexpected character ')'";
-static const char *err_improper_dot = "improperly placed dot";
-static const char *err_invalid_literal = "invalid hash literal";
+const char *const err_unexpected_eoi = "unexpected end of input";
+static const char *const err_expected_rparen = "expected character ')'";
+static const char *const err_unexpected_rparen = "unexpected character ')'";
+static const char *const err_improper_dot = "improperly placed dot";
+static const char *const err_invalid_literal = "invalid hash literal";
 
 // Attempts to parse a string of n characters (does not require a null
 // terminator) as an integer. On success, stores the integer in result and
@@ -176,7 +176,7 @@ struct ParseResult parse(const char *text) {
 		if (parse_int(s, len, &number)) {
 			result.expr = new_number(number);
 		} else {
-			InternID symbol_id = intern_string_n(s, len);
+			InternId symbol_id = intern_string_n(s, len);
 			result.expr = new_symbol(symbol_id);
 		}
 		s += len;

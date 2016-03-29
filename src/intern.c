@@ -17,15 +17,15 @@ struct Bucket {
 
 static struct Bucket table[TABLE_SIZE];
 
-InternID intern_string(const char *str) {
+InternId intern_string(const char *str) {
 	return intern_string_n(str, strlen(str));
 }
 
-InternID intern_string_n(const char *str, size_t n) {
+InternId intern_string_n(const char *str, size_t n) {
 	// Calculate the hash value of the string.
-	InternID h = 5381;
+	InternId h = 5381;
 	for (size_t i = 0; i < n; i++) {
-		h = ((h << 5) + h) + (InternID)str[i];
+		h = ((h << 5) + h) + (InternId)str[i];
 	}
 	h %= TABLE_SIZE;
 
@@ -41,7 +41,7 @@ InternID intern_string_n(const char *str, size_t n) {
 	for (size_t i = 0; i < bucket->len; i++) {
 		if (strncmp(str, bucket->strings[i], n) == 0) {
 			// If so, return its intern ID.
-			return (InternID)(i << TABLE_SIZE_BITS) | h;
+			return (InternId)(i << TABLE_SIZE_BITS) | h;
 		}
 	}
 	
@@ -63,10 +63,10 @@ InternID intern_string_n(const char *str, size_t n) {
 	bucket->len++;
 
 	// Create an intern ID by combining the position bits and hash bits.
-	return (InternID)(pos << TABLE_SIZE_BITS) | h;
+	return (InternId)(pos << TABLE_SIZE_BITS) | h;
 }
 
-const char *find_string(InternID id) {
+const char *find_string(InternId id) {
 	// Decode the hash value and the position.
 	size_t h = id & (TABLE_SIZE - 1);
 	size_t pos = id >> TABLE_SIZE_BITS;

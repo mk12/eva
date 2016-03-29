@@ -1,7 +1,5 @@
 // Copyright 2016 Mitchell Kember. Subject to the MIT License.
 
-// Returns NULL if the procedure accepts n arguments. Returns an error message
-// otherwise. Assumes proc is a procedure.
 static const char *check_arg_count(struct Expression proc, size_t n) {
 	int arity;
 	if (proc.type == E_SPECIAL) {
@@ -19,8 +17,6 @@ static const char *check_arg_count(struct Expression proc, size_t n) {
 	}
 }
 
-// Returns NULL if all argument are of the correct type. Returns an error
-// message otherwise. Assumes the correct number of arguments are provided.
 static const char *check_arg_types(
 		enum SpecialType type, struct Expression *args, size_t n) {
 	switch (type) {
@@ -75,8 +71,6 @@ static const char *check_arg_types(
 	return NULL;
 }
 
-// Returns NULL if the application of proc to args is valid. Returns an error
-// message otherwise (including the case where proc is not a procedure).
 const char *check_application(
 		struct Expression proc, struct Expression *args, size_t n) {
 	// Check the type of the procedure.
@@ -97,9 +91,6 @@ const char *check_application(
 	return err_msg;
 }
 
-
-// Returns NULL if the expression is a well formed list. Returns an error
-// message otherwise.
 const char *check_list(struct Expression expr) {
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {

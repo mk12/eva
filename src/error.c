@@ -1,24 +1,116 @@
 // Copyright 2016 Mitchell Kember. Subject to the MIT License.
 
-// Evaluation error messages.
-const char *err_op_not_proc = "operator is not a procedure";
-const char *err_arity = "wrong number of arguments passed to procedure";
-const char *err_not_num = "expected operand to be a number";
-const char *err_not_bool = "expected operand to be a boolean";
-const char *err_not_proc = "expected operand to be a procedure";
-const char *err_not_list = "expected operand to be null or a pair";
-const char *err_not_pair = "expected operand to be a pair";
-const char *err_unbound_var = "use of unbound variable";
-const char *err_ill_list = "ill-formed list";
-const char *err_ill_define = "ill-formed special form: define";
-const char *err_ill_placed_define = "ill-placed special form: define";
-const char *err_ill_quote = "ill-formed special form: quote";
-const char *err_ill_if = "ill-formed special form: if";
-const char *err_ill_cond = "ill-formed special form: cond";
-const char *err_ill_lambda = "ill-formed special form: lambda";
-const char *err_ill_let = "ill-formed special form: let";
-const char *err_ill_begin = "ill-formed special form: begin";
-const char *err_divide_zero = "division by zero";
-const char *err_dup_param = "duplicate parameter in parameter list";
-const char *err_special_var = "special form can't be used as variable";
-const char *err_non_exhaustive = "non-exhaustive cond";
+#include "error.h"
+
+#include "expr.h"
+#include "intern.h"
+
+#include <assert.h>
+#include <stdio.h>
+
+// Prefix to use for all error messages.
+static const char *const prefix = "ERROR: ";
+
+// Strings to use for parse error types.
+static const char parse_error_messages[] = {
+	[ERR_EXPECTED_RPAREN]   = "expected character ')'",
+	[ERR_INVALID_DOT]       = "improperly placed dot",
+	[ERR_INVALID_LITERAL]   = "invalid hash literal",
+	[ERR_UNEXPECTED_EOI]    = "unexpected end of input",
+	[ERR_UNEXPECTED_RPAREN] = "unexpected character ')'"
+};
+
+// Strings to use for evaluation error types.
+static const char eval_error_messages[] = {
+	[ERR_ARITY]          = "",
+	[ERR_DIV_ZERO]       = "division by zero",
+	[ERR_DUP_PARAM]      = "duplicate parameter '%s'",
+	[ERR_SYNTAX]         = "syntax error in '%s'",
+	[ERR_NON_EXHAUSTIVE] = "non-exhaustive cond",
+	[ERR_OPERAND]        = "expected operand to be a %s",
+	[ERR_OPERATOR]       = "operator is not a procedure",
+	[ERR_SPECIAL_VAR]    = "cannot use special form '%s' as a variable",
+	[ERR_UNBOUND_VAR]    = "use of unbound variable '%s'"
+};
+
+void print_error(const char *err_msg) {
+	fputs(prefix, stderr);
+	fputs(err_msg, stderr);
+	putc('\n', stderr);
+}
+
+void print_file_error(const struct FileError *err) {
+	fprintf(stderr, "%s%s: %s\n", prefix, err.filename, strerror(err.errno));
+}
+
+void print_parse_error(const struct ParseError *err) {
+	// Find the start and end of the line.
+	size_t start = err.position;
+	size_t end = err.position;
+	while (start > 0 && err.text[start-1] != '\n') {
+		start--;
+	}
+	while (err.text[end] && err.text[end] != '\n') {
+		end++;
+	}
+
+	// Find the row (line number) and column.
+	size_t row = 1;
+	size_t col = err.position - start + 1;
+	for (size_t i = 0; i < start; i++) {
+		if (err.text[i] == '\n') {
+			row++;
+		}
+	}
+
+	// Print the file information, error message, and the line of code.
+	fprintf(stderr, "%s%s:%zu:%zu: %s\n%.*s\n%*s^\n"
+		prefix, err.filename, row, col, parse_error_messages[err.type],
+		end - start, start, position - start, "");
+}
+
+void print_eval_error(const struct EvalError *err) {
+	fputs(prefix, stderr);
+	const char *format = eval_error_messages[err.type];
+	switch (err.type) {
+	case ERR_DIV_ZERO:
+	case ERR_NON_EXHAUSTIVE:
+	case ERR_OPERATOR:
+		fputs(format, stderr);
+		break;
+	case ERR_SYNTAX:
+		fprintf(stderr, format, err.name);
+		break;
+	case ERR_DUP_PARAM:
+	case ERR_OPERAND:
+	case ERR_SPECIAL_VAR:
+	case ERR_UNBOUND_VAR:
+		fprintf(stderr, format, find_string(err.symbol_id));
+		break;
+	case ERR_ARITY:
+		assert(err.arity.expected != 0);
+		if (err.arity.expected < 0) {
+			fprintf(stderr, "expected at least %d argument%s, got %zu",
+				-err.arity.expected - 1,
+				err.arity.expected == -2 ? "" : "s",
+				err.arity.actual);
+		} else {
+			fprintf(stderr, "expected %d argument%s, got %zu",
+				err.arity.expected,
+				err.arity.expected == 1 ? "" : "s",
+				err.arity.actual);
+		}
+		break;
+	}
+	putc('\n', stderr);
+
+	switch (err.type) {
+	case ERR_OPERAND:
+	case ERR_OPERATOR:
+		fputs("    ", stderr);
+		print_expression(err.expr, stderr);
+		putc('\n', stderr);
+	default:
+		break;
+	}
+}

@@ -9,9 +9,6 @@
 
 struct Environment;
 
-// Prefix used when printing error messages.
-extern const char *error_prefix;
-
 // This should be called once at the beginning of the program.
 void setup_readline(void);
 

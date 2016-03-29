@@ -2,6 +2,7 @@
 
 #include "repl.h"
 
+#include "error.h"
 #include "eval.h"
 #include "parse.h"
 
@@ -12,10 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char *error_prefix = "ERROR: ";
-
-static const char *primary_prompt = "eva> ";
-static const char *secondary_prompt = "...> ";
+static const char *const primary_prompt = "eva> ";
+static const char *const secondary_prompt = "...> ";
 
 static char *saved_buffer = NULL;
 static size_t saved_buffer_offset = 0;
@@ -23,10 +22,6 @@ static size_t saved_buffer_offset = 0;
 void setup_readline(void) {
 	// Disable tab completion.
 	rl_bind_key('\t', rl_insert);
-}
-
-static void print_error(const char *err_msg) {
-	fprintf(stderr, "%s%s\n", error_prefix, err_msg);
 }
 
 struct ParseResult read_sexpr(void) {

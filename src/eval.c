@@ -9,6 +9,50 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Evaluation error messages.
+static const char *const err_op_not_proc =
+	"operator is not a procedure";
+static const char *const err_arity =
+	"wrong number of arguments passed to procedure";
+static const char *const err_not_num =
+	"expected operand to be a number";
+static const char *const err_not_bool =
+	"expected operand to be a boolean";
+static const char *const err_not_proc =
+	"expected operand to be a procedure";
+static const char *const err_not_list =
+	"expected operand to be null or a pair";
+static const char *const err_not_pair =
+	"expected operand to be a pair";
+static const char *const err_unbound_var =
+	"use of unbound variable";
+static const char *const err_ill_list =
+	"ill-formed list";
+static const char *const err_ill_define =
+	"ill-formed special form: define";
+static const char *const err_ill_placed_define =
+	"ill-placed special form: define";
+static const char *const err_ill_quote =
+	"ill-formed special form: quote";
+static const char *const err_ill_if =
+	"ill-formed special form: if";
+static const char *const err_ill_cond =
+	"ill-formed special form: cond";
+static const char *const err_ill_lambda =
+	"ill-formed special form: lambda";
+static const char *const err_ill_let =
+	"ill-formed special form: let";
+static const char *const err_ill_begin =
+	"ill-formed special form: begin";
+static const char *const err_divide_zero =
+	"division by zero";
+static const char *const err_dup_param =
+	"duplicate parameter in parameter list";
+static const char *const err_special_var =
+	"special form can't be used as variable";
+static const char *const err_non_exhaustive =
+	"non-exhaustive cond";
+
 #define N_SPECIAL_FORMS 10
 
 // A special form is a form with special evaluation rules. The special forms
@@ -35,7 +79,7 @@ static const char *special_form_names[N_SPECIAL_FORMS] = {
 };
 
 // Intern identifiers of special forms.
-static InternID special_form_ids[N_SPECIAL_FORMS];
+static InternId special_form_ids[N_SPECIAL_FORMS];
 
 void setup_eval(void) {
 	// Intern all the special form names.
@@ -316,7 +360,7 @@ static struct EvalResult eval(
 	switch (expr.type) {
 	case E_PAIR:
 		if (expr.box->pair.car.type == E_SYMBOL) {
-			InternID id = expr.box->pair.car.symbol_id;
+			InternId id = expr.box->pair.car.symbol_id;
 			if (id == special_form_ids[F_DEFINE]) {
 				if (!allow_define) {
 					result.err_msg = err_ill_placed_define;
@@ -330,7 +374,7 @@ static struct EvalResult eval(
 					result.err_msg = err_ill_define;
 					break;
 				}
-				InternID name_id = expr.box->pair.cdr.box->pair.car.symbol_id;
+				InternId name_id = expr.box->pair.cdr.box->pair.car.symbol_id;
 				for (size_t i = 0; i < N_SPECIAL_FORMS; i++) {
 					if (name_id == special_form_ids[i]) {
 						result.err_msg = err_special_var;
@@ -382,7 +426,7 @@ static struct EvalResult eval(
 						retain_expression(expr.box->pair.cdr.box->pair.cdr)
 					);
 				}
-				InternID *param_ids = malloc(params.size * sizeof *param_ids);
+				InternId *param_ids = malloc(params.size * sizeof *param_ids);
 				for (size_t i = 0; i < params.size; i++) {
 					if (params.exprs[i].type != E_SYMBOL) {
 						result.err_msg = err_ill_lambda;

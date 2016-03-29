@@ -15,9 +15,9 @@
 #define isatty _isatty
 #endif
 
-static const char *err_open_file = "can't open file";
-static const char *err_read_file = "can't read file";
-static const char *err_no_expr = "expected expression after -e";
+static const char *const err_open_file = "can't open file";
+static const char *const err_read_file = "can't read file";
+static const char *const err_no_expr = "expected expression after -e";
 
 struct ReadResult {
 	char *buf;
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 		if (strcmp(argv[i], "-e") == 0) {
 			i++;
 			if (i == argc) {
-				fprintf(stderr, "%s%s\n", error_prefix, err_no_expr);
+				print_error(err_no_expr);
 				error = true;
 				break;
 			}
