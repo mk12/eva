@@ -9,7 +9,8 @@
 
 struct Environment;
 
-// LookupResult is used to return two values from the lookup function.
+// LookupResult is used to return two values from the lookup function. If
+// 'found' is true, then 'expr' will have a meaningful value.
 struct LookupResult {
 	bool found;
 	struct Expression expr;

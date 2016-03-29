@@ -5,17 +5,16 @@
 
 #include "expr.h"
 
+// ParseResult contains the result of parsing text. If 'err' is not NULL, then
+// 'expr' will have a meaningful value.
 struct ParseResult {
 	size_t chars_read;
 	struct Expression expr;
 	struct ParseError *err;
 };
 
-// Error message used when more input was expected.
-extern const char *const err_unexpected_eoi;
-
-// Parses a string as an s-expression that contains only pairs, symbols, and
-// numbers. If the string cannot be parsed, provides an error message.
+// Parses a string as an s-expression of pairs, symbols, and numbers. If the
+// string cannot be parsed, allocates and returns an error.
 struct ParseResult parse(const char *text);
 
 #endif
