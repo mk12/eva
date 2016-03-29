@@ -57,7 +57,7 @@ void print_parse_error(const struct ParseError *err) {
 	// Find the row (line number) and column.
 	size_t row = 1;
 	size_t col = err.position - start + 1;
-	for (size_t i = 0; i < start; i++) {
+	for (size_t i = 0; i < start - 1; i++) {
 		if (err.text[i] == '\n') {
 			row++;
 		}
@@ -72,6 +72,8 @@ void print_parse_error(const struct ParseError *err) {
 void print_eval_error(const struct EvalError *err) {
 	fputs(prefix, stderr);
 	const char *format = eval_error_messages[err.type];
+
+	// Print the error message.
 	switch (err.type) {
 	case ERR_DIV_ZERO:
 	case ERR_NON_EXHAUSTIVE:
@@ -104,6 +106,7 @@ void print_eval_error(const struct EvalError *err) {
 	}
 	putc('\n', stderr);
 
+	// Print more information, if applicable.
 	switch (err.type) {
 	case ERR_OPERAND:
 	case ERR_OPERATOR:

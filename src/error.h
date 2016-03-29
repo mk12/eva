@@ -3,7 +3,7 @@
 #ifndef ERROR_H
 #define ERROR_H
 
-// Error types for ParseError.
+// Error types for parse errors.
 enum ParseErrorType {
 	ERR_EXPECTED_RPAREN,
 	ERR_INVALID_DOT,
@@ -12,7 +12,7 @@ enum ParseErrorType {
 	ERR_UNEXPECTED_RPAREN
 };
 
-// Error types for EvalError.
+// Error types for evaluation errors..
 enum EvalErrorType {
 	ERR_ARITY,
 	ERR_DIV_ZERO,
@@ -59,13 +59,12 @@ void print_error(const char *err_msg);
 // Prints a file error to standard error.
 void print_file_error(const struct FileError *err);
 
-// Prints a parse error to standard error. This includes the file name, line
-// number, column, error message, and the problematic line of code with a caret
-// indicating where the error occurred.
+// Prints a parse error to standard error. Prints the file name, line number,
+// column, error message, and the problematic line of code.
 void print_parse_error(const struct ParseError *err);
 
-// Prints an evaluation error to standard error. This includes the error message
-// and, for certain error types, other information relevant to the error.
+// Prints an evaluation error to standard error. Prints the error message and,
+// for certain error types, other information relevant to the error.
 void print_eval_error(const struct EvalError *err);
 
 #endif
