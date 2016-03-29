@@ -11,8 +11,8 @@ typedef unsigned int InternId;
 // Interns the string and returns its unique identifier.
 InternId intern_string(const char *str);
 
-// Interns a string of n characters. Does not require a null terminator. If the
-// same string has previously been interned, returns the same identifier.
+// Interns a string of 'n' characters. Does not require a null terminator. If
+// the same string has previously been interned, returns the same identifier.
 InternId intern_string_n(const char *str, size_t n);
 
 // Looks up a string by identifier.

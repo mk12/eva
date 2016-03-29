@@ -5,16 +5,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Constants for the intern table.
 #define TABLE_SIZE_BITS 10
 #define TABLE_SIZE (1 << TABLE_SIZE_BITS)
-#define DEFAULT_BUCKET_SIZE 16
+#define DEFAULT_BUCKET_CAP 16
 
+// A bucket is a dynamic array of strings. It begins with a default capacity,
+// and it doubles its capacity every time the length would exceed it.
 struct Bucket {
 	size_t cap;
 	size_t len;
-	char **strings;
+	const char **strings;
 };
 
+// The intern table for the program is a static array of buckets. The number of
+// buckets is fixed so that the index into the bucket can be encoded into the
+// intern identifier. This means looking up a string is a single memory access.
+// The downside to this is that interning new strings slows down over time,
+// because we have to compare with more strings when checking if the string has
+// already been interned.
 static struct Bucket table[TABLE_SIZE];
 
 InternId intern_string(const char *str) {
@@ -32,15 +41,14 @@ InternId intern_string_n(const char *str, size_t n) {
 	// Look up the bucket. Initialize it if it is empty.
 	struct Bucket *bucket = table + h;
 	if (!bucket->strings) {
-		bucket->cap = DEFAULT_BUCKET_SIZE;
+		bucket->cap = DEFAULT_BUCKET_CAP;
 		bucket->len = 0;
-		bucket->strings = malloc(DEFAULT_BUCKET_SIZE * sizeof *bucket->strings);
+		bucket->strings = malloc(DEFAULT_BUCKET_CAP * sizeof *bucket->strings);
 	}
 
 	// Check if the same string has already been interned.
 	for (size_t i = 0; i < bucket->len; i++) {
 		if (strncmp(str, bucket->strings[i], n) == 0) {
-			// If so, return its intern ID.
 			return (InternId)(i << TABLE_SIZE_BITS) | h;
 		}
 	}
