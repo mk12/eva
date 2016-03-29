@@ -20,9 +20,10 @@ enum ExpressionType {
 	E_LAMBDA
 };
 
+// Number of special procedures.
 #define N_SPECIAL_PROCS 25
 
-// Special procedures (as distinct from special *forms*, which require special
+// Special procedures (as distinct from special FORMS, which require special
 // evaluation rules) are procedures implemented by the interpreter.
 enum SpecialType {
 	// Eval and apply:
@@ -59,7 +60,7 @@ struct Expression {
 
 // A box is a recursive structure that cannot be stored as an immediate value.
 // It contains either a cons pair or a lambda expression. The type tag (pair or
-// lambda) is stored in the expression that points to the box.
+// lambda) is stored in the expression pointing to the box, not in the box.
 struct Box {
 	int ref_count;
 	union {
@@ -68,6 +69,11 @@ struct Box {
 			struct Expression cdr;
 		} pair;
 		struct {
+			// Arity is represented as a signed integer N. If N >= 0, the lambda
+			// expression requires exactly N parameters. If N < 0, it accepts
+			// -(N+1) or more parameters, but not less. In that case, the last
+			// element of 'params' will be bound to the list of extra arguments
+			// beyond the -(N+1)th argument.
 			int arity;
 			InternID *params;
 			struct Expression body;
@@ -87,8 +93,8 @@ struct Expression new_boolean(bool b);
 struct Expression new_special(enum SpecialType type);
 
 // Constructors for boxed expressions. They set the reference count to 1 and
-// they treat subexpression arguments (car, cdr, body) as being "moved" into the
-// new object; that is, they take ownership without retaining them.
+// treat subexpression arguments ('car', 'cdr', and 'body') as being moved into
+// the new object; that is, they take ownership without retaining them.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
 struct Expression new_lambda(
 		int arity, InternID *params, struct Expression body);

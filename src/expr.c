@@ -8,10 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Change to 1 to enable reference count logging.
 #define REF_COUNT_LOGGING 0
 
-// Counters for the total number of allocated boxes and the total of all
-// reference counts, used for debugging.
+// Counters for the number of allocated boxes and the sum of all refernce
+// counts. Used for debugging memory bugs.
 #if REF_COUNT_LOGGING
 static int total_box_count = 0;
 static int total_ref_count = 0;
