@@ -31,6 +31,31 @@ static const char *eval_error_messages[] = {
 	[ERR_UNBOUND_VAR]    = "use of unbound variable '%s'"
 };
 
+struct EvalError *new_eval_error(enum EvalErrorType type) {
+	struct EvalError *err = malloc(sizeof *err);
+	err->type = type;
+	return err;
+}
+
+struct EvalError *new_eval_error_str(enum EvalErrorType type, const char *str) {
+	struct EvalError *err = new_eval_error(type);
+	err->str = str;
+	return err;
+}
+
+struct EvalError *new_eval_error_symbol(enum EvalErrorType type, InternId id) {
+	struct EvalError *err = new_eval_error(type);
+	err->symbol_id = id;
+	return err;
+}
+
+struct EvalError *new_eval_error_expr(
+		enum EvalErrorType type, struct Expression expr) {
+	struct EvalError *err = new_eval_error(type);
+	err->expr = expr;
+	return err;
+}
+
 void print_error(const char *err_msg) {
 	fputs(prefix, stderr);
 	fputs(err_msg, stderr);
@@ -43,8 +68,8 @@ void print_file_error(const struct FileError *err) {
 
 void print_parse_error(const struct ParseError *err) {
 	// Find the start and end of the line.
-	size_t start = err->position;
-	size_t end = err->position;
+	size_t start = err->index;
+	size_t end = err->index;
 	while (start > 0 && err->text[start-1] != '\n') {
 		start--;
 	}
@@ -54,7 +79,7 @@ void print_parse_error(const struct ParseError *err) {
 
 	// Find the row (line number) and column.
 	size_t row = 1;
-	size_t col = err->position - start + 1;
+	size_t col = err->index - start + 1;
 	for (size_t i = 0; i < start - 1; i++) {
 		if (err->text[i] == '\n') {
 			row++;
@@ -65,7 +90,7 @@ void print_parse_error(const struct ParseError *err) {
 	fprintf(stderr, "%s%s:%zu:%zu: %s\n%.*s\n%*s^\n",
 		prefix, err->filename, row, col, parse_error_messages[err->type],
 		(int)(end - start), err->text + start,
-		(int)(err->position - start), "");
+		(int)(err->index - start), "");
 }
 
 void print_eval_error(const struct EvalError *err) {
@@ -89,17 +114,13 @@ void print_eval_error(const struct EvalError *err) {
 		fprintf(stderr, format, find_string(err->symbol_id));
 		break;
 	case ERR_ARITY:
-		assert(err->arity.expected != 0);
-		if (err->arity.expected < 0) {
-			fprintf(stderr, "expected at least %d argument%s, got %zu",
-				-(err->arity.expected + 1),
-				err->arity.expected == -2 ? "" : "s",
-				err->arity.actual);
-		} else {
+		assert(err->arity != 0);
+		if (err->arity >= 0) {
 			fprintf(stderr, "expected %d argument%s, got %zu",
-				err->arity.expected,
-				err->arity.expected == 1 ? "" : "s",
-				err->arity.actual);
+				err->arity, err->arity == 1 ? "" : "s", err->n_args);
+		} else {
+			fprintf(stderr, "expected at least %d argument%s, got %zu",
+				-(err->arity + 1), err->arity == -2 ? "" : "s", err->n_args);
 		}
 		break;
 	}

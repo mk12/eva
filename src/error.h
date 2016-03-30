@@ -17,7 +17,7 @@ enum ParseErrorType {
 	ERR_UNEXPECTED_RPAREN
 };
 
-// Error types for evaluation errors..
+// Error types for evaluation errors.
 enum EvalErrorType {
 	ERR_ARITY,
 	ERR_DIV_ZERO,
@@ -39,24 +39,31 @@ struct FileError {
 // An error that causes the parse to fail.
 struct ParseError {
 	enum ParseErrorType type;
-	const char *filename; // filename or description of source
+	const char *filename; // name of input source
 	const char *text;     // full text being parsed
-	size_t position;      // index in text where the error occurred
+	size_t index;         // index in 'text' where the error occurred
 };
 
 // A runtime error that occurs during code evaluation.
 struct EvalError {
 	enum EvalErrorType type;
 	union {
-		const char *name;       // a name relevant to the error
-		struct Expression expr; // an expression relevant to the error
+		const char *str;        // a string relevant to the error
 		InternId symbol_id;     // a symbol relevant to the error
+		struct Expression expr; // an expression relevant to the error
 		struct {
-			size_t actual; // number of arguments provided
-			int expected;  // expected arity
-		} arity;
+			int arity;     // sign-encoded arity (see Expr.h)
+			size_t n_args; // number of arguments provided
+		};
 	};
 };
+
+// Constructors for evaluation errors. These allocate memory.
+struct EvalError *new_eval_error(enum EvalErrorType type);
+struct EvalError *new_eval_error_str(enum EvalErrorType type, const char *str);
+struct EvalError *new_eval_error_symbol(enum EvalErrorType type, InternId id);
+struct EvalError *new_eval_error_expr(
+	enum EvalErrorType type, struct Expression expr);
 
 // Prints a generic error message to standard error.
 void print_error(const char *err_msg);
