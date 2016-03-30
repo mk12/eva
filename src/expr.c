@@ -70,12 +70,12 @@ static void log_ref_count(const char *action, struct Expression expr) {
 			expr.box->ref_count);
 	if (pair) {
 		putc('(', stderr);
-		print_expression(expr.box->pair.car, stderr);
+		print_expression(expr.box->car, stderr);
 		fputs(" . ", stderr);
-		print_expression(expr.box->pair.cdr, stderr);
+		print_expression(expr.box->cdr, stderr);
 	} else {
 		fputs("(lambda (?) ", stderr);
-		print_expression(expr.box->lambda.body, stderr);
+		print_expression(expr.box->body, stderr);
 	}
 	fputs(")\n", stderr);
 }
@@ -84,8 +84,8 @@ static void log_ref_count(const char *action, struct Expression expr) {
 struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	struct Box *box = malloc(sizeof *box);
 	box->ref_count = 1;
-	box->pair.car = car;
-	box->pair.cdr = cdr;
+	box->car = car;
+	box->cdr = cdr;
 	struct Expression expr = { .type = E_PAIR, .box = box };
 #if REF_COUNT_LOGGING
 	total_box_count++;
@@ -99,9 +99,9 @@ struct Expression new_lambda(
 		int arity, InternId *params, struct Expression body) {
 	struct Box *box = malloc(sizeof *box);
 	box->ref_count = 1;
-	box->lambda.arity = arity;
-	box->lambda.params = params;
-	box->lambda.body = body;
+	box->arity = arity;
+	box->params = params;
+	box->body = body;
 	struct Expression expr = { .type = E_LAMBDA, .box = box };
 #if REF_COUNT_LOGGING
 	total_box_count++;
@@ -121,13 +121,13 @@ static void dealloc_expression(struct Expression expr) {
 	// Free the expression's box and release sub-boxes.
 	switch (expr.type) {
 	case E_PAIR:
-		release_expression(expr.box->pair.car);
-		release_expression(expr.box->pair.cdr);
+		release_expression(expr.box->car);
+		release_expression(expr.box->cdr);
 		free(expr.box);
 		break;
 	case E_LAMBDA:
-		free(expr.box->lambda.params);
-		release_expression(expr.box->lambda.body);
+		free(expr.box->params);
+		release_expression(expr.box->body);
 		free(expr.box);
 		break;
 	default:
@@ -177,18 +177,18 @@ static void print_pair(struct Box *box, bool first, FILE *stream) {
 	if (!first) {
 		putchar(' ');
 	}
-	print_expression(box->pair.car, stream);
-	switch (box->pair.cdr.type) {
+	print_expression(box->car, stream);
+	switch (box->cdr.type) {
 	case E_NULL:
 		putchar(')');
 		break;
 	case E_PAIR:
-		print_pair(box->pair.cdr.box, false, stream);
+		print_pair(box->cdr.box, false, stream);
 		break;
 	default:
 		// Print a dot before the last cdr if it is not null.
 		fputs(" . ", stdout);
-		print_expression(box->pair.cdr, stream);
+		print_expression(box->cdr, stream);
 		putchar(')');
 		break;
 	}

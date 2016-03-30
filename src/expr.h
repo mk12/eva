@@ -68,17 +68,17 @@ struct Box {
 		struct {
 			struct Expression car;
 			struct Expression cdr;
-		} pair;
+		};
 		struct {
-			// Arity is represented as a signed integer N. If N >= 0, the lambda
-			// expression requires exactly N parameters. If N < 0, it accepts
-			// -(N+1) or more parameters, but not less. In that case, the last
+			// Procedures use sign-encoded arity. If the arity is N >= 0, the
+			// procedure requires exactly N arguments. If N < 0, it accepts
+			// -(N+1) or more arguments, but not less. In that case, the last
 			// element of 'params' will be bound to the list of extra arguments
 			// beyond the -(N+1)th argument.
 			int arity;
 			InternId *params;
 			struct Expression body;
-		} lambda;
+		};
 	};
 };
 
