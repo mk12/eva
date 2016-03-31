@@ -19,15 +19,17 @@ enum ParseErrorType {
 
 // Error types for evaluation errors.
 enum EvalErrorType {
-	ERR_ARITY,
-	ERR_DIV_ZERO,
-	ERR_DUP_PARAM,
-	ERR_SYNTAX,
-	ERR_NON_EXHAUSTIVE,
-	ERR_OPERAND,
-	ERR_OPERATOR,
-	ERR_SPECIAL_VAR,
-	ERR_UNBOUND_VAR
+	                    // Fields of EvalErorr used:
+	ERR_ARITY,          // arity, n_args
+	ERR_DIV_ZERO,       // (none)
+	ERR_DUP_PARAM,      // symbol_id
+	ERR_INVALID_VAR,    // symbol_id
+	ERR_NON_EXHAUSTIVE, // (none)
+	ERR_OP_NOT_PROC,    // expr
+	ERR_PROC_CALL,      // (none)
+	ERR_SYNTAX,         // str
+	ERR_TYPE,           // expected, arg_pos, expr
+	ERR_UNBOUND_VAR     // symbol_id
 };
 
 // An error that occurs during file manipulation.
@@ -48,9 +50,13 @@ struct ParseError {
 struct EvalError {
 	enum EvalErrorType type;
 	union {
-		const char *str;        // a string relevant to the error
-		InternId symbol_id;     // a symbol relevant to the error
-		struct Expression expr; // an expression relevant to the error
+		const char *str;    // a string relevant to the error
+		InternId symbol_id; // a symbol relevant to the error
+		struct {
+			enum ExpressionType expected; // expected type
+			size_t arg_pos;               // argument position (zero-based)
+			struct Expression expr;       // provided expression
+		};
 		struct {
 			int arity;     // sign-encoded arity (see Expr.h)
 			size_t n_args; // number of arguments provided
@@ -60,10 +66,10 @@ struct EvalError {
 
 // Constructors for evaluation errors. These allocate memory.
 struct EvalError *new_eval_error(enum EvalErrorType type);
-struct EvalError *new_eval_error_str(enum EvalErrorType type, const char *str);
 struct EvalError *new_eval_error_symbol(enum EvalErrorType type, InternId id);
-struct EvalError *new_eval_error_expr(
-	enum EvalErrorType type, struct Expression expr);
+struct EvalError *new_syntax_error(const char *str);
+struct EvalError *new_type_error(
+	enum ExpressionType expected, size_t arg_pos, struct Expression expr);
 
 // Prints a generic error message to standard error.
 void print_error(const char *err_msg);

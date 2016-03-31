@@ -9,6 +9,17 @@
 // Prefix to use for all error messages.
 static const char *const prefix = "ERROR: ";
 
+// Expression type names used for type errors.
+static const char *expr_type_names[] = {
+	[E_NULL]    = "NULL",
+	[E_SYMBOL]  = "SYMBOL",
+	[E_NUMBER]  = "NUMBER",
+	[E_BOOLEAN] = "BOOLEAN",
+	[E_SPECIAL] = "SPECIAL",
+	[E_PAIR]    = "PAIR",
+	[E_LAMBDA   = "LAMBDA"
+};
+
 // Strings to use for parse error types.
 static const char *parse_error_messages[] = {
 	[ERR_EXPECTED_RPAREN]   = "expected character ')'",
@@ -23,11 +34,12 @@ static const char *eval_error_messages[] = {
 	[ERR_ARITY]          = "",
 	[ERR_DIV_ZERO]       = "division by zero",
 	[ERR_DUP_PARAM]      = "duplicate parameter '%s'",
-	[ERR_SYNTAX]         = "syntax error in '%s'",
-	[ERR_NON_EXHAUSTIVE] = "non-exhaustive cond",
-	[ERR_OPERAND]        = "expected operand to be a %s",
-	[ERR_OPERATOR]       = "operator is not a procedure",
-	[ERR_SPECIAL_VAR]    = "cannot use special form '%s' as a variable",
+	[ERR_INVALID_VAR]    = "cannot use special form '%s' as a variable",
+	[ERR_NON_EXHAUSTIVE] = "non-exhaustive cond expression",
+	[ERR_OP_NOT_PROC]    = "operator is not a procedure",
+	[ERR_PROC_CALL]      = "malformed procedure call",
+	[ERR_SYNTAX]         = "syntax error in special form '%s'",
+	[ERR_TYPE]           = "(argument %zu) %s expected",
 	[ERR_UNBOUND_VAR]    = "use of unbound variable '%s'"
 };
 
@@ -37,21 +49,23 @@ struct EvalError *new_eval_error(enum EvalErrorType type) {
 	return err;
 }
 
-struct EvalError *new_eval_error_str(enum EvalErrorType type, const char *str) {
-	struct EvalError *err = new_eval_error(type);
-	err->str = str;
-	return err;
-}
-
 struct EvalError *new_eval_error_symbol(enum EvalErrorType type, InternId id) {
 	struct EvalError *err = new_eval_error(type);
 	err->symbol_id = id;
 	return err;
 }
 
-struct EvalError *new_eval_error_expr(
-		enum EvalErrorType type, struct Expression expr) {
-	struct EvalError *err = new_eval_error(type);
+struct EvalError *new_syntax_error(const char *str) {
+	struct EvalError *err = new_eval_error(ERR_SYNTAX);
+	err->str = str;
+	return err;
+}
+
+struct EvalError *new_type_error(
+		enum ExpressionType expected, size_t arg_pos, struct Expression expr) {
+	struct EvalError *err = new_eval_error(ERR_TYPE);
+	err->expected = expected;
+	err->arg_pos = arg_pos;
 	err->expr = expr;
 	return err;
 }
@@ -101,17 +115,20 @@ void print_eval_error(const struct EvalError *err) {
 	switch (err->type) {
 	case ERR_DIV_ZERO:
 	case ERR_NON_EXHAUSTIVE:
-	case ERR_OPERATOR:
+	case ERR_OP_NOT_PROC:
 		fputs(format, stderr);
 		break;
 	case ERR_SYNTAX:
 		fprintf(stderr, format, err->name);
 		break;
 	case ERR_DUP_PARAM:
-	case ERR_OPERAND:
 	case ERR_SPECIAL_VAR:
 	case ERR_UNBOUND_VAR:
 		fprintf(stderr, format, find_string(err->symbol_id));
+		break;
+	case ERR_TYPE:
+		fprintf(stderr, format, err->position, err->arg_pos,
+			expr_type_names[err->expected]);
 		break;
 	case ERR_ARITY:
 		assert(err->arity != 0);
@@ -128,8 +145,8 @@ void print_eval_error(const struct EvalError *err) {
 
 	// Print more information, if applicable.
 	switch (err->type) {
-	case ERR_OPERAND:
-	case ERR_OPERATOR:
+	case ERR_OP_NOT_PROC:
+	case ERR_TYPE:
 		fputs("    ", stderr);
 		print_expression(err->expr, stderr);
 		putc('\n', stderr);
