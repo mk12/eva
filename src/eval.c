@@ -88,67 +88,6 @@ void setup_eval(void) {
 	}
 }
 
-struct ArrayResult {
-	size_t size;
-	bool dot;
-	struct Expression *exprs;
-	const char *err_msg;
-};
-
-// Converts a list to a flat array of expressions. Returns an error messge if
-// the expression is not a well-formed list. Copies elements of the list
-// directly to the new array, but does not alter reference counts.
-//
-// If dot is true, then lists such as (1 2 . 3) are also allowed, where the
-// final cdr is the final element of the array, not the null value. This also
-// means that a single non-list value will be returned as a singleton array
-// (instead of causing an error, which it will when dot is false).
-static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
-	struct ArrayResult result;
-	result.size = 0;
-	result.dot = false;
-	result.exprs = NULL;
-	result.err_msg = NULL;
-
-	// Count the number of elements in the list.
-	struct Expression expr = list;
-	while (expr.type != E_NULL) {
-		if (expr.type != E_PAIR) {
-			if (dot) {
-				result.dot = true;
-				result.size++;
-				break;
-			} else {
-				result.err_msg = err_ill_list;
-				return result;
-			}
-		}
-		expr = expr.box->pair.cdr;
-		result.size++;
-	}
-	// Skip allocating the array if the list is empty.
-	if (result.size == 0) {
-		return result;
-	}
-
-	// Allocate the array.
-	result.exprs = malloc(result.size * sizeof *result.exprs);
-	// Return to the beginning and copy the expressions to the array.
-	expr = list;
-	for (size_t i = 0; i < result.size; i++) {
-		if (result.dot && i == result.size - 1) {
-			// Special case: in a list such as (1 2 . 3), the final element 3 is
-			// not a car but rather the final cdr itself.
-			result.exprs[i] = expr;
-			break;
-		} else {
-			result.exprs[i] = expr.box->pair.car;
-		}
-		expr = expr.box->pair.cdr;
-	}
-	return result;
-}
-
 // Returns the expression resulting from applying a special procedure to
 // arguments. Assumes the arguments are correct in number and in types. Provides
 // an error message if the application fails (only possible for eval and apply).
@@ -385,9 +324,9 @@ static struct EvalResult eval(
 					break;
 				}
 				struct EvalResult val = eval(
-						expr.box->pair.cdr.box->pair.cdr.box->pair.car,
-						env,
-						false);
+					expr.box->pair.cdr.box->pair.cdr.box->pair.car,
+					env,
+					false);
 				if (val.err_msg) {
 					result.err_msg = val.err_msg;
 					break;
