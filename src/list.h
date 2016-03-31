@@ -5,26 +5,25 @@
 
 #include "expr.h"
 
-// ...
+// ArrayResult contains the result of converting an s-expression list to an
+// array of expressions. The 'expr' field may be NULL if the list was malformed.
 struct ArrayResult {
-	size_t size;
-	bool dot;
-	struct Expression *exprs;
-	const char *err_msg;
+	bool dot;                 // whether the list was dotted
+	size_t size;              // number of expressions in the array
+	struct Expression *exprs; // expression array or NULL
 };
 
-// Returns NULL if the expression is a well-formed list. Otherwise, allocates
-// and returns an evaluation error of type ERR_SYNTAX.
-bool check_list(struct Expression expr);
+// Returns true if the expression is a well-formed list.
+bool well_formed_list(struct Expression expr);
 
-// Converts a list to a flat array of expressions. Returns an error messge if
-// the expression is not a well-formed list. Copies elements of the list
-// directly to the new array, but does not alter reference counts.
+// Converts an s-expression list to a flat array of expressions. Copies elements
+// of the list directly to the new array, but does not alter reference counts.
+// Stores NULL in the 'exprs' field of the result if the list is malformed.
 //
-// If dot is true, then lists such as (1 2 . 3) are also allowed, where the
-// final cdr is the final element of the array, not the null value. This also
-// means that a single non-list value will be returned as a singleton array
-// (instead of causing an error, which it will when dot is false).
+// If dot is true, then "dotted" lists such as (1 2 . 3) are also allowed, where
+// the final cdr is considered the final element of the array. This also means
+// that a single non-list value will be returned as a singleton array, instead
+// of causing an error, which it will when dot is false.
 static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 
 #endif

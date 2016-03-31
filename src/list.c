@@ -2,23 +2,14 @@
 
 #include "list.h"
 
-// 'ill-formed-list' error in 3 places:
-//   1. (f a b . c) invalid
-//   2. (apply f '(a b . c)) invalid (if not handled, would reduce to #1 anyway)
-//   3. check_list used for the rest of a cond
-// perhaps check_list should return boolean?
-// we need separate error for invalid method invocation, then the cond one could
-// just be a syntax error (ill formed special form)
-// but it would be nice for the invalid list to also be a "syntax" erro since it
-// is syntax........
-const char *check_list(struct Expression expr) {
+bool check_list(struct Expression expr) {
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
-			return err_ill_list;
+			return false;
 		}
 		expr = expr.box->pair.cdr;
 	}
-	return NULL;
+	return true;
 }
 
 static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
@@ -26,7 +17,6 @@ static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 	result.size = 0;
 	result.dot = false;
 	result.exprs = NULL;
-	result.err_msg = NULL;
 
 	// Count the number of elements in the list.
 	struct Expression expr = list;
@@ -37,7 +27,7 @@ static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 				result.size++;
 				break;
 			} else {
-				result.err_msg = err_ill_list;
+				// Malformed list. Return NULL 'exprs'.
 				return result;
 			}
 		}
