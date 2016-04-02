@@ -8,6 +8,9 @@
 
 #include <stddef.h>
 
+// Filename to use when input is from standard input.
+extern const char *const stdin_filename;
+
 // Error types for parse errors.
 enum ParseErrorType {
 	ERR_EXPECTED_RPAREN,
@@ -79,7 +82,7 @@ void print_error(const char *err_msg);
 // Prints a file error to standard error based on the value of global 'errno'.
 void print_file_error(const char *filename);
 
-// Prints a parse error to standard error. Prints the file name, line number,
+// Prints a parse error to standard error. Prints the filename, line number,
 // column, error message, and the problematic line of code.
 void print_parse_error(const char *filename, const struct ParseError *err);
 

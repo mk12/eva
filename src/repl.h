@@ -3,11 +3,10 @@
 #ifndef REPL_H
 #define REPL_H
 
-#include "parse.h"
-
 #include <stdbool.h>
 
 struct Environment;
+struct ParseError;
 
 // This should be called once at the beginning of the program.
 void setup_readline(void);
@@ -16,12 +15,19 @@ void setup_readline(void);
 // (without prompts). If the parse is incomplete at the end of a line, waits for
 // another line to be entered. If there is leftover input, saves it and starts
 // reading from it on the next call.
-struct ParseResult read_sexpr(void);
+//
+// On success, stores the parsed expression in 'out' and returns NULL.
+// Otherwise, allocates and returns a parse error.
+struct ParseError *read_sexpr(struct Expression *out);
 
 // Executes the given program. Optionally prints the last expression evaluated.
 // Upon encountering an error, prints an error messge and returns false.
-// Otherwise, returns true.
-bool execute(const char *text, struct Environment *env, bool print);
+// Otherwise, returns true. The filename is only used for error messages.
+bool execute(
+	const char *filename,
+	const char *text,
+	struct Environment *env,
+	bool print);
 
 // Runs the Read-Eval-Print Loop. Each iteration has five steps:
 //

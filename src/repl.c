@@ -4,6 +4,7 @@
 
 #include "error.h"
 #include "eval.h"
+#include "parse.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -12,9 +13,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+// String constants for prompts.
 static const char *const primary_prompt = "eva> ";
 static const char *const secondary_prompt = "...> ";
 
+// Storage for buffers in between calls to 'read_sexpr'.
 static char *saved_buffer = NULL;
 static size_t saved_buffer_offset = 0;
 
@@ -23,11 +26,7 @@ void setup_readline(void) {
 	rl_bind_key('\t', rl_insert);
 }
 
-struct ParseResult read_sexpr(void) {
-	struct ParseResult result;
-	result.chars_read = 0;
-	result.err_msg = NULL;
-
+struct ParseError *read_sexpr(struct Expression *out) {
 	char *buf;
 	size_t buf_length;
 	struct ParseResult data;
@@ -43,12 +42,12 @@ struct ParseResult read_sexpr(void) {
 		// Otherwise, start with an empty string.
 		buf = strdup("");
 		buf_length = 0;
-		data.err_msg = err_unexpected_eoi;
+		data.err_type = ERR_UNEXPECTED_EOI;
 	}
 
 	// Read lines until the string is parsed successfully, or until a parse
 	// error is encountered that cannot be fixed by reading more input.
-	while (data.err_msg == err_unexpected_eoi) {
+	while (data.err_type == ERR_UNEXPECTED_EOI) {
 		char *line = readline("");
 		if (!line) {
 			// EOF: stop reading.
@@ -72,18 +71,28 @@ struct ParseResult read_sexpr(void) {
 		data = parse(buf);
 	}
 
-	// Save any leftover input.
-	if (!data.err_msg && data.chars_read > 0 && data.chars_read < buf_length) {
+	if (data.err_type != PARSE_SUCCESS) {
+		// Give ownership of the buffer to the parse erorr.
+		return new_parse_error(data.err_type, buf, data.chars_read, true);
+	}
+
+	// Save leftover input, if there is any.
+	if (data.chars_read > 0 && data.chars_read < buf_length) {
 		saved_buffer = buf;
 		saved_buffer_offset = data.chars_read;
 	} else {
 		free(buf);
 	}
-
-	return data;
+	// Store the expression in the output location.
+	*out = data.expr;
+	return NULL;
 }
 
-bool execute(const char *text, struct Environment *env, bool print) {
+bool execute(
+		const char *filename,
+		const char *text,
+		struct Environment *env,
+		bool print) {
 	size_t length = strlen(text);
 	size_t offset = 0;
 
@@ -91,14 +100,21 @@ bool execute(const char *text, struct Environment *env, bool print) {
 	while (offset < length) {
 		// Parse from the current offset.
 		struct ParseResult code = parse(text + offset);
-		if (code.err_msg) {
-			print_error(code.err_msg);
+		if (code.err_type != PARSE_SUCCESS) {
+			struct ParseError err = (struct ParseError){
+				.type = code.err_type,
+				.text = text,
+				.index = offset + code.chars_read,
+				.owns_text = false
+			};
+			print_parse_error(filename, &err);
 			return false;
 		}
 		// Evaluate the expression.
 		struct EvalResult result = eval_top(code.expr, env);
-		if (result.err_msg) {
-			print_error(result.err_msg);
+		if (result.err) {
+			print_eval_error(result.err);
+			free_eval_error(result.err);
 			release_expression(code.expr);
 			return false;
 		}
@@ -141,8 +157,8 @@ void repl(struct Environment *env, bool print) {
 		while (offset < buf_length) {
 			// Parse from the current offset.
 			struct ParseResult code = parse(buf + offset);
-			if (code.err_msg) {
-				if (code.err_msg == err_unexpected_eoi) {
+			if (code.err_type != PARSE_SUCCESS) {
+				if (code.err_type == ERR_UNEXPECTED_EOI) {
 					// Read another line of input.
 					char *line = readline(print ? secondary_prompt : "");
 					if (!line) {
@@ -170,14 +186,21 @@ void repl(struct Environment *env, bool print) {
 					buf_length += line_length + 1;
 					continue;
 				} else {
-					print_error(code.err_msg);
+					struct ParseError err = (struct ParseError){
+						.type = code.err_type,
+						.text = buf,
+						.index = offset + code.chars_read,
+						.owns_text = false
+					};
+					print_parse_error(stdin_filename, &err);
 					break;
 				}
 			} else {
 				// Evaluate the expression.
 				struct EvalResult result = eval_top(code.expr, env);
-				if (result.err_msg) {
-					print_error(result.err_msg);
+				if (result.err) {
+					print_eval_error(result.err);
+					free_eval_error(result.err);
 				} else {
 					if (print) {
 						print_expression(result.expr, stdout);

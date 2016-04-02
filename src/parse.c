@@ -2,6 +2,7 @@
 
 #include "parse.h"
 
+#include "error.h"
 #include "intern.h"
 
 #include <assert.h>

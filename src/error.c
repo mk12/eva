@@ -6,11 +6,11 @@
 #include <stdio.h>
 #include <string.h>
 
+// Extern constants.
+const char *const stdin_filename = "<stdin>";
+
 // Prefix to use for all error messages.
 static const char *const prefix = "ERROR: ";
-
-// Filename to use when input is from standard input.
-static const char *const stdin_filename = "<stdin>";
 
 // Expression type names used for type errors.
 static const char *expr_type_names[] = {
@@ -151,7 +151,7 @@ void print_eval_error(const struct EvalError *err) {
 	// Print the error message.
 	switch (err->type) {
 	case ERR_READ:
-		print_parse_error(stdin_filenmame, err->parse_err);
+		print_parse_error(stdin_filename, err->parse_err);
 		return;
 	case ERR_DIV_ZERO:
 	case ERR_NON_EXHAUSTIVE:
