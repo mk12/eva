@@ -44,6 +44,16 @@ static const char *eval_error_messages[] = {
 	[ERR_UNBOUND_VAR]    = "use of unbound variable '%s'"
 };
 
+struct ParseError *new_parse_error(
+		enum ParseError type, char *text, size_t index, bool owns_text) {
+	struct ParseError *err = malloc(sizeof *err);
+	err->type = type;
+	err->text = text;
+	err->index = index;
+	err->owns_text = owns_text;
+	return err;
+}
+
 struct EvalError *new_eval_error(enum EvalErrorType type) {
 	struct EvalError *err = malloc(sizeof *err);
 	err->type = type;
@@ -104,7 +114,7 @@ void print_file_error(const char *filename) {
 	fprintf(stderr, "%s%s: %s\n", prefix, filename, strerror(errno));
 }
 
-void print_parse_error(const struct ParseError *err) {
+void print_parse_error(const char *filename, const struct ParseError *err) {
 	// Find the start and end of the line.
 	size_t start = err->index;
 	size_t end = err->index;
@@ -126,7 +136,7 @@ void print_parse_error(const struct ParseError *err) {
 
 	// Print the file information, error message, and the line of code.
 	fprintf(stderr, "%s%s:%zu:%zu: %s\n%.*s\n%*s^\n",
-		prefix, err->filename, row, col, parse_error_messages[err->type],
+		prefix, filename, row, col, parse_error_messages[err->type],
 		(int)(end - start), err->text + start,
 		(int)(err->index - start), "");
 }

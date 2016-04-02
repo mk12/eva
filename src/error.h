@@ -36,10 +36,9 @@ enum EvalErrorType {
 // An error that causes the parse to fail.
 struct ParseError {
 	enum ParseErrorType type;
-	const char *filename; // name of input source
-	const char *text;     // full text being parsed
-	size_t index;         // index in 'text' where the error occurred
-	bool owns_text;       // whether the error owns the memory of 'text'
+	char *text;     // full text being parsed
+	size_t index;   // index in 'text' where the error occurred
+	bool owns_text; // whether the error owns the memory of 'text'
 };
 
 // A runtime error that occurs during code evaluation.
@@ -61,7 +60,9 @@ struct EvalError {
 	};
 };
 
-// Constructors for evaluation errors. These allocate memory.
+// Constructors for parse errors and evaluation errors.
+struct ParseError *new_parse_error(
+	enum ParseError type, char *text, size_t index, bool owns_text);
 struct EvalError *new_eval_error(enum EvalErrorType type);
 struct EvalError *new_eval_error_symbol(enum EvalErrorType type, InternId id);
 struct EvalError *new_syntax_error(const char *str);
@@ -80,7 +81,7 @@ void print_file_error(const char *filename);
 
 // Prints a parse error to standard error. Prints the file name, line number,
 // column, error message, and the problematic line of code.
-void print_parse_error(const struct ParseError *err);
+void print_parse_error(const char *filename, const struct ParseError *err);
 
 // Prints an evaluation error to standard error. Prints the error message and,
 // for certain error types, other information relevant to the error.
