@@ -27,15 +27,10 @@ enum EvalErrorType {
 	ERR_NON_EXHAUSTIVE, // (none)
 	ERR_OP_NOT_PROC,    // expr
 	ERR_PROC_CALL,      // (none)
+	ERR_READ,           // parse_err
 	ERR_SYNTAX,         // str
-	ERR_TYPE,           // expected, arg_pos, expr
+	ERR_TYPE,           // expected_type, arg_pos, expr
 	ERR_UNBOUND_VAR     // symbol_id
-};
-
-// An error that occurs during file manipulation.
-struct FileError {
-	int errno;             // errno value set by the IO function
-	const char *filename;  // name of the file being manipulated
 };
 
 // An error that causes the parse to fail.
@@ -44,6 +39,7 @@ struct ParseError {
 	const char *filename; // name of input source
 	const char *text;     // full text being parsed
 	size_t index;         // index in 'text' where the error occurred
+	bool owns_text;       // whether the error owns the memory of 'text'
 };
 
 // A runtime error that occurs during code evaluation.
@@ -53,14 +49,15 @@ struct EvalError {
 		const char *str;    // a string relevant to the error
 		InternId symbol_id; // a symbol relevant to the error
 		struct {
-			enum ExpressionType expected; // expected type
-			size_t arg_pos;               // argument position (zero-based)
-			struct Expression expr;       // provided expression
+			enum ExpressionType expected_type; // expected type
+			size_t arg_pos;                    // argument position (zero-based)
+			struct Expression expr;            // provided expression
 		};
 		struct {
 			int arity;     // sign-encoded arity (see Expr.h)
 			size_t n_args; // number of arguments provided
 		};
+		struct ParseError *parse_err; // parse error while reading user input
 	};
 };
 
@@ -69,13 +66,17 @@ struct EvalError *new_eval_error(enum EvalErrorType type);
 struct EvalError *new_eval_error_symbol(enum EvalErrorType type, InternId id);
 struct EvalError *new_syntax_error(const char *str);
 struct EvalError *new_type_error(
-	enum ExpressionType expected, size_t arg_pos, struct Expression expr);
+	enum ExpressionType expected_type, size_t arg_pos, struct Expression expr);
+
+// Destructors for parse errors and evaluation errors.
+void free_parse_error(struct ParseError *err);
+void free_eval_error(struct EvalError *err);
 
 // Prints a generic error message to standard error.
 void print_error(const char *err_msg);
 
-// Prints a file error to standard error.
-void print_file_error(const struct FileError *err);
+// Prints a file error to standard error based on the value of global 'errno'.
+void print_file_error(const char *filename);
 
 // Prints a parse error to standard error. Prints the file name, line number,
 // column, error message, and the problematic line of code.

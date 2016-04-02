@@ -17,7 +17,7 @@ static const char *expr_type_names[] = {
 	[E_BOOLEAN] = "BOOLEAN",
 	[E_SPECIAL] = "SPECIAL",
 	[E_PAIR]    = "PAIR",
-	[E_LAMBDA   = "LAMBDA"
+	[E_LAMBDA]  = "LAMBDA"
 };
 
 // Strings to use for parse error types.
@@ -38,6 +38,7 @@ static const char *eval_error_messages[] = {
 	[ERR_NON_EXHAUSTIVE] = "non-exhaustive cond expression",
 	[ERR_OP_NOT_PROC]    = "operator is not a procedure",
 	[ERR_PROC_CALL]      = "malformed procedure call",
+	[ERR_READ]           = "",
 	[ERR_SYNTAX]         = "syntax error in special form '%s'",
 	[ERR_TYPE]           = "(argument %zu) %s expected",
 	[ERR_UNBOUND_VAR]    = "use of unbound variable '%s'"
@@ -62,12 +63,35 @@ struct EvalError *new_syntax_error(const char *str) {
 }
 
 struct EvalError *new_type_error(
-		enum ExpressionType expected, size_t arg_pos, struct Expression expr) {
+		enum ExpressionType expected_type,
+		size_t arg_pos,
+		struct Expression expr) {
 	struct EvalError *err = new_eval_error(ERR_TYPE);
-	err->expected = expected;
+	err->expected_type = expected_type;
 	err->arg_pos = arg_pos;
-	err->expr = expr;
+	err->expr = retain_expression(expr);
 	return err;
+}
+
+void free_parse_error(struct ParseError *err) {
+	if (err->owns_text) {
+		free(err->text);
+	}
+	free(err);
+}
+
+void free_eval_error(struct EvalError *err) {
+	switch (err->type) {
+	case ERR_OP_NOT_PROC:
+	case ERR_TYPE:
+		release_expression(err->expr);
+		break;
+	case ERR_READ:
+		free_parse_error(err->parse_err);
+	default:
+		break;
+	}
+	free(err);
 }
 
 void print_error(const char *err_msg) {
@@ -76,8 +100,8 @@ void print_error(const char *err_msg) {
 	putc('\n', stderr);
 }
 
-void print_file_error(const struct FileError *err) {
-	fprintf(stderr, "%s%s: %s\n", prefix, err->filename, strerror(err->errno));
+void print_file_error(const char *filename) {
+	fprintf(stderr, "%s%s: %s\n", prefix, filename, strerror(errno));
 }
 
 void print_parse_error(const struct ParseError *err) {
@@ -113,6 +137,9 @@ void print_eval_error(const struct EvalError *err) {
 
 	// Print the error message.
 	switch (err->type) {
+	case ERR_READ:
+		print_parse_error(err->parse_err);
+		return;
 	case ERR_DIV_ZERO:
 	case ERR_NON_EXHAUSTIVE:
 	case ERR_OP_NOT_PROC:
@@ -128,7 +155,7 @@ void print_eval_error(const struct EvalError *err) {
 		break;
 	case ERR_TYPE:
 		fprintf(stderr, format, err->position, err->arg_pos,
-			expr_type_names[err->expected]);
+			expr_type_names[err->type_wanted]);
 		break;
 	case ERR_ARITY:
 		assert(err->arity != 0);
