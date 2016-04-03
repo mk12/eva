@@ -107,6 +107,12 @@ struct Expression retain_expression(struct Expression expr);
 // Also deallocates the expression if the reference count reaches zero.
 void release_expression(struct Expression expr);
 
+// Returns true if expressions 'lhs' and 'rhs' are identical, in the sense of
+// the Scheme predicate "eq?". Immediate expressions (of the same type) are
+// identical if they represent the same value. Boxed expressions (of the same
+// type) are identical if they point to the same box in memory.
+bool expression_eq(struct Expression lhs, struct Expression rhs);
+
 // Prints the expression to 'stream' (not followed by a newline).
 void print_expression(struct Expression expr, FILE *stream);
 

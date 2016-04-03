@@ -210,6 +210,27 @@ static void print_pair(struct Box *box, bool first, FILE *stream) {
 	}
 }
 
+bool expression_eq(struct Expression lhs, struct Expression rhs) {
+	if (lhs.type != rhs.type) {
+		return false;
+	}
+	switch (lhs.type) {
+	case E_NULL:
+		return true;
+	case E_SYMBOL:
+		return lhs.symbol_id == rhs.symbol_id;
+	case E_NUMBER:
+		return lhs.number == rhs.number;
+	case E_BOOLEAN:
+		return lhs.boolean == rhs.boolean;
+	case E_SPECIAL:
+		return lhs.special_type == rhs.special_type;
+	case E_PAIR:
+	case E_LAMBDA:
+		return lhs.box == rhs.box;
+	}
+}
+
 void print_expression(struct Expression expr, FILE *stream) {
 	switch (expr.type) {
 	case E_NULL:

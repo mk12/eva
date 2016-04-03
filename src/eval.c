@@ -98,34 +98,9 @@ static struct EvalResult apply_special(
 		enum ExpressionType t = args[0].type;
 		result.expr = new_boolean(t == E_LAMBDA || t == E_SPECIAL);
 		break;
-	case S_EQ:;
-		if (args[0].type != args[1].type) {
-			result.expr = new_boolean(false);
-			break;
-		}
-		switch (args[0].type) {
-			case E_NULL:
-				result.expr = new_boolean(true);
-				break;
-			case E_SYMBOL:
-				result.expr = new_boolean(
-						args[0].symbol_id == args[1].symbol_id);
-				break;
-			case E_NUMBER:
-				result.expr = new_boolean(args[0].number == args[1].number);
-				break;
-			case E_BOOLEAN:
-				result.expr = new_boolean(args[0].boolean == args[1].boolean);
-				break;
-			case E_SPECIAL:
-				result.expr = new_boolean(
-						args[0].special_type == args[1].special_type);
-				break;
-			case E_PAIR:
-			case E_LAMBDA:
-				result.expr = new_boolean(args[0].box == args[1].box);
-				break;
-		}
+	case S_EQ:
+		result.expr = new_boolean(expression_eq(args[0], args[1]));
+		break;
 	case S_NUM_EQ:
 		result.expr = new_boolean(args[0].number == args[1].number);
 		break;
