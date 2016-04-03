@@ -20,16 +20,32 @@ static int total_ref_count = 0;
 static const struct {
 	const char *name;
 	int arity;
-} special_procs[N_SPECIAL_PROCS] = {
-	{"eval", 1}, {"apply", 2},
-	{"null?", 1}, {"symbol?", 1}, {"number?", 1}, {"boolean?", 1},
-	{"pair?", 1}, {"procedure?", 1},
-	{"eq?", 2},
-	{"=", 2}, {"<", 2}, {">", 2}, {"<=", 2}, {">=", 2},
-	{"cons", 2}, {"car", 1}, {"cdr", 1},
-	{"+", -1}, {"-", -2}, {"*", -1}, {"/", -2}, {"remainder", 2},
-	{"not", 1},
-	{"read", 0}, {"write", 1}
+} special_procs[N_SPECIAL_TYPES] = {
+	[S_EVAL]      = {"eval", 1},
+	[S_APPLY]     = {"apply", 2},
+	[S_NULL]      = {"null?", 1},
+	[S_SYMBOL]    = {"symbol?", 1},
+	[S_NUMBER]    = {"number?", 1},
+	[S_BOOLEAN]   = {"boolean?", 1},
+	[S_PAIR]      = {"pair?", 1},
+	[S_PROCEDURE] = {"procedure?", 1},
+	[S_EQ]        = {"eq?", 2},
+	[S_NUM_EQ]    = {"=", 2},
+	[S_LT]        = {"<", 2},
+	[S_GT]        = {">", 2},
+	[S_LE]        = {"<=", 2},
+	[S_GE]        = {">=", 2},
+	[S_CONS]      = {"cons", 2},
+	[S_CAR]       = {"car", 1},
+	[S_CDR]       = {"cdr", 1},
+	[S_ADD]       = {"+", -1},
+	[S_SUB]       = {"-", -2},
+	[S_MUL]       = {"*", -1},
+	[S_DIV]       = {"/", -2},
+	[S_REM]       = {"remainder", 2},
+	[S_NOT]       = {"not", 1},
+	[S_READ]      = {"read", 0},
+	[S_WRITE]     = {"write", 1}
 };
 
 int special_arity(enum SpecialType type) {
