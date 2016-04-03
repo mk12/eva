@@ -55,9 +55,10 @@ void setup_eval(void) {
 	}
 }
 
-// Applies a special procedure to arguments. Assumes the application has already
-// been type-checked. On success, returns the resulting expression. Otherwise,
-// allocates and returns an error (can only happen with S_EVAL and S_APPLY).
+// Applies a special procedure to 'args' (an array of 'n' arguments). Assumes
+// the application has already been type-checked. On success, returns the
+// resulting expression. Otherwise, allocates and returns an evauation error
+// (can only happen with S_EVAL and S_APPLY).
 static struct EvalResult apply_special(
 		enum SpecialType type,
 		struct Expression *args,
@@ -210,7 +211,9 @@ static struct EvalResult apply_special(
 	return result;
 }
 
-// Applies a procedure to 'n' arguments. Assumes 'proc' is a procedure.
+// Applies 'proc' to 'args' (an array of 'n' arguments). On success, returns the
+// resulting expression. If type-checking or evaluation fails, allocates and
+// returns an evaluation error.
 static struct EvalResult apply(
 		struct Expression proc,
 		struct Expression *args,
