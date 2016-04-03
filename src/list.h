@@ -24,6 +24,6 @@ bool well_formed_list(struct Expression expr);
 // where the final cdr is considered the final element of the array. This also
 // means that a single non-list value will be returned as a singleton array,
 // instead of causing an error, which it will when 'dot' is false.
-static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
+static struct ArrayResult sexpr_array(struct Expression list, bool dot);
 
 #endif

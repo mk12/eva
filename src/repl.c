@@ -101,7 +101,7 @@ bool execute(
 		// Parse from the current offset.
 		struct ParseResult code = parse(text + offset);
 		if (code.err_type != PARSE_SUCCESS) {
-			struct ParseError err = (struct ParseError){
+			struct ParseError err = {
 				.type = code.err_type,
 				.text = text,
 				.index = offset + code.chars_read,
@@ -186,7 +186,7 @@ void repl(struct Environment *env, bool print) {
 					buf_length += line_length + 1;
 					continue;
 				} else {
-					struct ParseError err = (struct ParseError){
+					struct ParseError err = {
 						.type = code.err_type,
 						.text = buf,
 						.index = offset + code.chars_read,

@@ -87,14 +87,14 @@ static struct ParseResult parse_pair(const char *text) {
 	if (*s == ')') {
 		s++;
 		result.expr = new_null();
-		goto END;
+		goto chars_read;
 	}
 
 	struct ParseResult first = parse(s);
 	s += first.chars_read;
 	if (first.err_type != -1) {
 		result.err_type = first.err_type;
-		goto END;
+		goto chars_read;
 	}
 
 	if (*s == '.') {
@@ -104,12 +104,12 @@ static struct ParseResult parse_pair(const char *text) {
 		if (second.err_type != -1) {
 			result.err_type = second.err_type;
 			release_expression(first.expr);
-			goto END;
+			goto chars_read;
 		}
 		if (*s != ')') {
 			result.err_type = *s ? ERR_EXPECTED_RPAREN : ERR_UNEXPECTED_EOI;
 			release_expression(first.expr);
-			goto END;
+			goto chars_read;
 		}
 		s++;
 		result.expr = new_pair(first.expr, second.expr);
@@ -119,12 +119,12 @@ static struct ParseResult parse_pair(const char *text) {
 		if (rest.err_type) {
 			result.err_type = rest.err_type;
 			release_expression(first.expr);
-			goto END;
+			goto chars_read;
 		}
 		result.expr = new_pair(first.expr, rest.expr);
 	}
 
-END:
+chars_read:
 	result.chars_read = (size_t)(s - text);
 	return result;
 }

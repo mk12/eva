@@ -24,6 +24,9 @@ struct ReadResult {
 	const char *err_msg;
 };
 
+// TODO: just return errno
+// in general, if the caller can construct the error, let them do it
+// (then pass & address to printing function)
 // Reads the entire contents of a file into a buffer.
 static struct ReadResult read_file(const char *filename) {
 	struct ReadResult result;
@@ -105,7 +108,7 @@ int main(int argc, char **argv) {
 		struct ReadResult result = read_file(argv[i]);
 		if (result.err_msg) {
 			fprintf(stderr, "%s%s '%s'\n",
-				error_prefix, result.err_msg, argv[i]);
+					error_prefix, result.err_msg, argv[i]);
 			error = true;
 			break;
 		}

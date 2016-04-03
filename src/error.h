@@ -67,12 +67,14 @@ struct EvalError {
 
 // Constructors for parse errors and evaluation errors.
 struct ParseError *new_parse_error(
-	enum ParseError type, char *text, size_t index, bool owns_text);
+		enum ParseError type, char *text, size_t index, bool owns_text);
 struct EvalError *new_eval_error(enum EvalErrorType type);
 struct EvalError *new_eval_error_symbol(enum EvalErrorType type, InternId id);
 struct EvalError *new_syntax_error(const char *str);
 struct EvalError *new_type_error(
-	enum ExpressionType expected_type, size_t arg_pos, struct Expression expr);
+		enum ExpressionType expected_type,
+		size_t arg_pos,
+		struct Expression expr);
 
 // Destructors for parse errors and evaluation errors.
 void free_parse_error(struct ParseError *err);

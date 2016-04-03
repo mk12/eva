@@ -46,7 +46,7 @@ static InternId special_form_ids[N_SPECIAL_FORMS];
 
 // Function prototypes.
 static struct EvalResult eval(
-	struct Expression expr, struct Environment *env, bool allow_define);
+		struct Expression expr, struct Environment *env, bool allow_define);
 
 void setup_eval(void) {
 	// Intern all the special form names.
@@ -71,12 +71,10 @@ static struct EvalResult apply_special(
 		break;
 	case S_APPLY:;
 		struct Expression app = new_pair(
-			new_pair(
-				new_symbol(special_form_ids[F_QUOTE]),
-				new_pair(retain_expression(args[0]), new_null())
-			),
-			retain_expression(args[1])
-		);
+				new_pair(
+					new_symbol(special_form_ids[F_QUOTE]),
+					new_pair(retain_expression(args[0]), new_null())),
+				retain_expression(args[1]));
 		result = eval(app, env, false);
 		release_expression(app);
 		break;
@@ -109,7 +107,8 @@ static struct EvalResult apply_special(
 				result.expr = new_boolean(true);
 				break;
 			case E_SYMBOL:
-				result.expr = new_boolean(args[0].symbol_id == args[1].symbol_id);
+				result.expr = new_boolean(
+						args[0].symbol_id == args[1].symbol_id);
 				break;
 			case E_NUMBER:
 				result.expr = new_boolean(args[0].number == args[1].number);
@@ -143,9 +142,8 @@ static struct EvalResult apply_special(
 		break;
 	case S_CONS:
 		result.expr = new_pair(
-			retain_expression(args[0]),
-			retain_expression(args[1])
-		);
+				retain_expression(args[0]),
+				retain_expression(args[1]));
 		break;
 	case S_CAR:
 		result.expr = retain_expression(args[0].box->car);

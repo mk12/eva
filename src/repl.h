@@ -24,10 +24,10 @@ struct ParseError *read_sexpr(struct Expression *out);
 // Upon encountering an error, prints an error messge and returns false.
 // Otherwise, returns true. The filename is only used for error messages.
 bool execute(
-	const char *filename,
-	const char *text,
-	struct Environment *env,
-	bool print);
+		const char *filename,
+		const char *text,
+		struct Environment *env,
+		bool print);
 
 // Runs the Read-Eval-Print Loop. Each iteration has five steps:
 //

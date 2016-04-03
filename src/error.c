@@ -139,9 +139,9 @@ void print_parse_error(const char *filename, const struct ParseError *err) {
 
 	// Print the file information, error message, and the line of code.
 	fprintf(stderr, "%s%s:%zu:%zu: %s\n%.*s\n%*s^\n",
-		prefix, filename, row, col, parse_error_messages[err->type],
-		(int)(end - start), err->text + start,
-		(int)(err->index - start), "");
+			prefix, filename, row, col, parse_error_messages[err->type],
+			(int)(end - start), err->text + start,
+			(int)(err->index - start), "");
 }
 
 void print_eval_error(const struct EvalError *err) {
@@ -168,16 +168,20 @@ void print_eval_error(const struct EvalError *err) {
 		break;
 	case ERR_TYPE:
 		fprintf(stderr, format, err->position, err->arg_pos,
-			expr_type_names[err->type_wanted]);
+				expr_type_names[err->type_wanted]);
 		break;
 	case ERR_ARITY:
 		assert(err->arity != 0);
 		if (err->arity >= 0) {
 			fprintf(stderr, "expected %d argument%s, got %zu",
-				err->arity, err->arity == 1 ? "" : "s", err->n_args);
+					err->arity,
+					err->arity == 1 ? "" : "s",
+					err->n_args);
 		} else {
 			fprintf(stderr, "expected at least %d argument%s, got %zu",
-				-(err->arity + 1), err->arity == -2 ? "" : "s", err->n_args);
+					-(err->arity + 1),
+					err->arity == -2 ? "" : "s",
+					err->n_args);
 		}
 		break;
 	}

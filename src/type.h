@@ -12,6 +12,6 @@ struct EvalError;
 // not a procedure, if 'n' does not match the arity of 'proc', or if the
 // arguments are not all of the correct types.
 struct EvalError *type_check(
-	struct Expression proc, struct Expression *args, size_t n);
+		struct Expression proc, struct Expression *args, size_t n);
 
 #endif

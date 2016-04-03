@@ -56,8 +56,8 @@ InternId intern_string_n(const char *str, size_t n) {
 	// Double the array's capacity if necessary.
 	if (bucket->len >= bucket->cap) {
 		bucket->cap *= 2;
-		bucket->strings = realloc(
-				bucket->strings, bucket->cap * sizeof *bucket->strings);
+		bucket->strings = realloc(bucket->strings,
+				bucket->cap * sizeof *bucket->strings);
 	}
 
 	// Copy the string and add a null terminator.

@@ -79,8 +79,8 @@ static void bind_unchecked(
 	} else if (bucket->len >= bucket->cap) {
 		// Grow the array if necessary.
 		bucket->cap *= 2;
-		bucket->entries = realloc(
-				bucket->entries, bucket->cap * sizeof *bucket->entries);
+		bucket->entries = realloc(bucket->entries,
+				bucket->cap * sizeof *bucket->entries);
 	}
 	// Add an entry to the end to bind the expression.
 	bucket->entries[bucket->len].key = key;
