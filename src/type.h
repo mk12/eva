@@ -7,7 +7,7 @@
 
 struct EvalError;
 
-// Type checks the application of 'proc' to 'args' (an array of 'n' arguments).
+// Type-checks the application of 'proc' to 'args' (an array of 'n' arguments).
 // Returns NULL if it is valid. Allocates and returns a type error if 'proc' is
 // not a procedure, if 'n' does not match the arity of 'proc', or if the
 // arguments are not all of the correct types.

@@ -3,83 +3,50 @@
 #include "eval.h"
 
 #include "env.h"
+#include "error.h"
 #include "repl.h"
+#include "type.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-// Evaluation error messages.
-static const char *const err_op_not_proc =
-	"operator is not a procedure";
-static const char *const err_arity =
-	"wrong number of arguments passed to procedure";
-static const char *const err_not_num =
-	"expected operand to be a number";
-static const char *const err_not_bool =
-	"expected operand to be a boolean";
-static const char *const err_not_proc =
-	"expected operand to be a procedure";
-static const char *const err_not_list =
-	"expected operand to be null or a pair";
-static const char *const err_not_pair =
-	"expected operand to be a pair";
-static const char *const err_unbound_var =
-	"use of unbound variable";
-static const char *const err_ill_list =
-	"ill-formed list";
-static const char *const err_ill_define =
-	"ill-formed special form: define";
-static const char *const err_ill_placed_define =
-	"ill-placed special form: define";
-static const char *const err_ill_quote =
-	"ill-formed special form: quote";
-static const char *const err_ill_if =
-	"ill-formed special form: if";
-static const char *const err_ill_cond =
-	"ill-formed special form: cond";
-static const char *const err_ill_lambda =
-	"ill-formed special form: lambda";
-static const char *const err_ill_let =
-	"ill-formed special form: let";
-static const char *const err_ill_begin =
-	"ill-formed special form: begin";
-static const char *const err_divide_zero =
-	"division by zero";
-static const char *const err_dup_param =
-	"duplicate parameter in parameter list";
-static const char *const err_special_var =
-	"special form can't be used as variable";
-static const char *const err_non_exhaustive =
-	"non-exhaustive cond";
-
 #define N_SPECIAL_FORMS 10
 
-// A special form is a form with special evaluation rules. The special forms
-// implement the core of the Eva language.
+// Special forms are the core of the Eva language.
 enum SpecialForms {
-	F_DEFINE,
-	F_LAMBDA,
-	F_QUOTE,
+	F_AND,
 	F_BEGIN,
 	F_COND,
+	F_DEFINE,
 	F_IF,
+	F_LAMBDA,
 	F_LET,
 	F_LET_STAR,
-	F_AND,
 	F_OR
+	F_QUOTE,
 };
-
-static struct EvalResult eval(
-		struct Expression expr, struct Environment *env, bool allow_define);
 
 // Names of special forms.
 static const char *special_form_names[N_SPECIAL_FORMS] = {
-	"define", "lambda", "quote", "begin", "cond", "if", "let", "let*", "and", "or"
+	[F_AND]      = "and",
+	[F_BEGIN]    = "begin",
+	[F_COND]     = "cond",
+	[F_DEFINE]   = "define",
+	[F_IF]       = "if",
+	[F_LAMBDA]   = "lambda",
+	[F_LET]      = "let",
+	[F_LET_STAR] = "let*",
+	[F_OR]       = "or",
+	[F_QUOTE]    = "quote"
 };
 
-// Intern identifiers of special forms.
+// Intern identifiers of special form names.
 static InternId special_form_ids[N_SPECIAL_FORMS];
+
+// Function prototypes.
+static struct EvalResult eval(
+	struct Expression expr, struct Environment *env, bool allow_define);
 
 void setup_eval(void) {
 	// Intern all the special form names.
@@ -88,16 +55,16 @@ void setup_eval(void) {
 	}
 }
 
-// Returns the expression resulting from applying a special procedure to
-// arguments. Assumes the arguments are correct in number and in types. Provides
-// an error message if the application fails (only possible for eval and apply).
+// Applies a special procedure to arguments. Assumes the application has already
+// been type-checked. On success, returns the resulting expression. Otherwise,
+// allocates and returns an error (can only happen with S_EVAL and S_APPLY).
 static struct EvalResult apply_special(
 		enum SpecialType type,
 		struct Expression *args,
 		size_t n,
 		struct Environment *env) {
 	struct EvalResult result;
-	result.err_msg = NULL;
+	result.err = NULL;
 	switch (type) {
 	case S_EVAL:
 		result = eval(args[0], env, false);
@@ -181,10 +148,10 @@ static struct EvalResult apply_special(
 		);
 		break;
 	case S_CAR:
-		result.expr = retain_expression(args[0].box->pair.car);
+		result.expr = retain_expression(args[0].box->car);
 		break;
 	case S_CDR:
-		result.expr = retain_expression(args[0].box->pair.cdr);
+		result.expr = retain_expression(args[0].box->cdr);
 		break;
 	case S_ADD:;
 		long sum = 0;
@@ -230,11 +197,10 @@ static struct EvalResult apply_special(
 		result.expr = new_boolean(!args[0].boolean);
 		break;
 	case S_READ:;
-		struct ParseResult data = read_sexpr();
-		if (data.err_msg) {
-			result.err_msg = data.err_msg;
-		} else {
-			result.expr = data.expr;
+		struct ParseError *parse_err = read_sexpr(&result.expr);
+		if (err) {
+			result.err = new_eval_error(ERR_READ);
+			result.err->parse_err = parse_err;
 		}
 		break;
 	case S_WRITE:
@@ -246,7 +212,7 @@ static struct EvalResult apply_special(
 	return result;
 }
 
-// Applies a procedure to arguments. Assumes proc is a procedure.
+// Applies a procedure to 'n' arguments. Assumes 'proc' is a procedure.
 static struct EvalResult apply(
 		struct Expression proc,
 		struct Expression *args,
@@ -254,8 +220,8 @@ static struct EvalResult apply(
 		struct Environment *env) {
 	struct EvalResult result;
 	// Check the number of arguments and their types.
-	result.err_msg = check_application(proc, args, n);
-	if (result.err_msg) {
+	result.err = type_check(proc, args, n);
+	if (result.err) {
 		return result;
 	}
 
@@ -263,12 +229,12 @@ static struct EvalResult apply(
 		result = apply_special(proc.special_type, args, n, env);
 	} else {
 		assert(proc.type == E_LAMBDA);
-		int arity = proc.box->lambda.arity;
+		int arity = proc.box->arity;
 		size_t limit = arity < 0 ? (size_t)(-(arity + 1)) : n;
 		size_t n_passed = arity < 0 ? limit + 1 : limit;
 		// Bind each argument to its corresponding formal parameter.
 		for (size_t i = 0; i < limit; i++) {
-			bind(env, proc.box->lambda.params[i], args[i]);
+			bind(env, proc.box->params[i], args[i]);
 		}
 		// If a variable number of arguments is allowed, collect them in a list
 		// and pass it as the final parameter.
@@ -277,43 +243,47 @@ static struct EvalResult apply(
 			for (size_t i = 1; i <= n - limit; i++) {
 				list = new_pair(retain_expression(args[n-i]), list);
 			}
-			bind(env, proc.box->lambda.params[limit], list);
+			bind(env, proc.box->params[limit], list);
 			release_expression(list);
 		}
 		// Evaluate the body of the procedure.
-		result = eval(proc.box->lambda.body, env, false);
+		result = eval(proc.box->body, env, false);
 		// Unbind all the arguments.
 		for (size_t i = 1; i <= n_passed; i++) {
-			unbind_last(env, proc.box->lambda.params[n_passed-i]);
+			unbind_last(env, proc.box->params[n_passed-i]);
 		}
 	}
 	return result;
+}
+
+struct EvalResult eval_top(struct Expression expr, struct Environment *env) {
+	return eval(expr, env, true);
 }
 
 // Evaluates a single expression.
 static struct EvalResult eval(
 		struct Expression expr, struct Environment *env, bool allow_define) {
 	struct EvalResult result;
-	result.err_msg = NULL;
+	result.err = NULL;
 
 	switch (expr.type) {
 	case E_PAIR:
-		if (expr.box->pair.car.type == E_SYMBOL) {
-			InternId id = expr.box->pair.car.symbol_id;
+		if (expr.box->car.type == E_SYMBOL) {
+			InternId id = expr.box->car.symbol_id;
 			if (id == special_form_ids[F_DEFINE]) {
 				if (!allow_define) {
 					result.err_msg = err_ill_placed_define;
 					break;
 				}
-				if (expr.box->pair.cdr.type != E_PAIR
-						|| expr.box->pair.cdr.box->pair.car.type != E_SYMBOL
-						|| expr.box->pair.cdr.box->pair.cdr.type != E_PAIR
-						|| expr.box->pair.cdr.box->pair.cdr.box->pair.cdr.type
+				if (expr.box->cdr.type != E_PAIR
+						|| expr.box->cdr.box->car.type != E_SYMBOL
+						|| expr.box->cdr.box->cdr.type != E_PAIR
+						|| expr.box->cdr.box->cdr.box->cdr.type
 						!= E_NULL) {
 					result.err_msg = err_ill_define;
 					break;
 				}
-				InternId name_id = expr.box->pair.cdr.box->pair.car.symbol_id;
+				InternId name_id = expr.box->cdr.box->car.symbol_id;
 				for (size_t i = 0; i < N_SPECIAL_FORMS; i++) {
 					if (name_id == special_form_ids[i]) {
 						result.err_msg = err_special_var;
@@ -324,7 +294,7 @@ static struct EvalResult eval(
 					break;
 				}
 				struct EvalResult val = eval(
-					expr.box->pair.cdr.box->pair.cdr.box->pair.car,
+					expr.box->cdr.box->cdr.box->car,
 					env,
 					false);
 				if (val.err_msg) {
@@ -335,7 +305,7 @@ static struct EvalResult eval(
 				bind(env, name_id, val.expr);
 				break;
 			} else if (id == special_form_ids[F_LAMBDA]) {
-				struct ArrayResult parts = sexpr_array(expr.box->pair.cdr, false);
+				struct ArrayResult parts = sexpr_array(expr.box->cdr, false);
 				if (parts.err_msg) {
 					result.err_msg = parts.err_msg;
 					break;
@@ -362,7 +332,7 @@ static struct EvalResult eval(
 				} else {
 					body = new_pair(
 						new_symbol(special_form_ids[F_BEGIN]),
-						retain_expression(expr.box->pair.cdr.box->pair.cdr)
+						retain_expression(expr.box->cdr.box->cdr)
 					);
 				}
 				InternId *param_ids = malloc(params.size * sizeof *param_ids);
@@ -394,16 +364,16 @@ static struct EvalResult eval(
 				free(parts.exprs);
 				break;
 			} else if (id == special_form_ids[F_QUOTE]) {
-				if (expr.box->pair.cdr.type != E_PAIR
-						|| expr.box->pair.cdr.box->pair.cdr.type != E_NULL) {
+				if (expr.box->cdr.type != E_PAIR
+						|| expr.box->cdr.box->cdr.type != E_NULL) {
 					result.err_msg = err_ill_quote;
 					break;
 				}
 				result.expr = retain_expression(
-						expr.box->pair.cdr.box->pair.car);
+						expr.box->cdr.box->car);
 				break;
 			} else if (id == special_form_ids[F_BEGIN]) {
-				struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
+				struct ArrayResult args = sexpr_array(expr.box->cdr, false);
 				if (args.err_msg) {
 					result.err_msg = args.err_msg;
 					break;
@@ -432,15 +402,15 @@ static struct EvalResult eval(
 				for (size_t i = 2; i <= args.size; i++) {
 					struct Expression arg = args.exprs[args.size-i];
 					if (arg.type == E_PAIR
-							&& arg.box->pair.car.type == E_SYMBOL
-							&& arg.box->pair.car.symbol_id == special_form_ids[F_DEFINE]) {
-						unbind_last(env, arg.box->pair.cdr.box->pair.car.symbol_id);
+							&& arg.box->car.type == E_SYMBOL
+							&& arg.box->car.symbol_id == special_form_ids[F_DEFINE]) {
+						unbind_last(env, arg.box->cdr.box->car.symbol_id);
 					}
 				}
 				free(args.exprs);
 				break;
 			} else if (id == special_form_ids[F_COND]) {
-				struct ArrayResult parts = sexpr_array(expr.box->pair.cdr, false);
+				struct ArrayResult parts = sexpr_array(expr.box->cdr, false);
 				if (parts.err_msg) {
 					result.err_msg = parts.err_msg;
 					break;
@@ -476,7 +446,7 @@ static struct EvalResult eval(
 						} else {
 							struct Expression block = new_pair(
 								new_symbol(special_form_ids[F_BEGIN]),
-								retain_expression(parts.exprs[i].box->pair.cdr)
+								retain_expression(parts.exprs[i].box->cdr)
 							);
 							result = eval(block, env, false);
 							release_expression(block);
@@ -503,7 +473,7 @@ static struct EvalResult eval(
 				free(parts.exprs);
 				break;
 			} else if (id == special_form_ids[F_IF]) {
-				struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
+				struct ArrayResult args = sexpr_array(expr.box->cdr, false);
 				if (args.err_msg) {
 					result.err_msg = args.err_msg;
 					break;
@@ -530,7 +500,7 @@ static struct EvalResult eval(
 				result.expr = branch.expr;
 				break;
 			} else if (id == special_form_ids[F_LET]) {
-				struct ArrayResult parts = sexpr_array(expr.box->pair.cdr, false);
+				struct ArrayResult parts = sexpr_array(expr.box->cdr, false);
 				if (parts.err_msg) {
 					result.err_msg = parts.err_msg;
 					break;
@@ -556,13 +526,13 @@ static struct EvalResult eval(
 				for (i = 0; i < bindings.size; i++) {
 					struct Expression b = bindings.exprs[i];
 					if (b.type != E_PAIR
-							|| b.box->pair.car.type != E_SYMBOL
-							|| b.box->pair.cdr.type != E_PAIR
-							|| b.box->pair.cdr.box->pair.cdr.type != E_NULL) {
+							|| b.box->car.type != E_SYMBOL
+							|| b.box->cdr.type != E_PAIR
+							|| b.box->cdr.box->cdr.type != E_NULL) {
 						result.err_msg = err_ill_let;
 						break;
 					}
-					struct EvalResult val = eval(b.box->pair.cdr.box->pair.car, env, false);
+					struct EvalResult val = eval(b.box->cdr.box->car, env, false);
 					if (val.err_msg) {
 						result.err_msg = val.err_msg;
 						break;
@@ -578,7 +548,7 @@ static struct EvalResult eval(
 					break;
 				}
 				for (i = 0; i < bindings.size; i++) {
-					bind(env, bindings.exprs[i].box->pair.car.symbol_id, vals[i]);
+					bind(env, bindings.exprs[i].box->car.symbol_id, vals[i]);
 					release_expression(vals[i]);
 				}
 				struct Expression body;
@@ -587,13 +557,13 @@ static struct EvalResult eval(
 				} else {
 					body = new_pair(
 						new_symbol(special_form_ids[F_BEGIN]),
-						retain_expression(expr.box->pair.cdr.box->pair.cdr)
+						retain_expression(expr.box->cdr.box->cdr)
 					);
 				}
 				result = eval(body, env, true);
 				release_expression(body);
 				for (i = 1; i <= bindings.size; i++) {
-					unbind_last(env, bindings.exprs[bindings.size-i].box->pair.car.symbol_id);
+					unbind_last(env, bindings.exprs[bindings.size-i].box->car.symbol_id);
 				}
 				free(bindings.exprs);
 				free(parts.exprs);
@@ -601,7 +571,7 @@ static struct EvalResult eval(
 			} else if (id == special_form_ids[F_LET_STAR]) {
 				break;
 			} else if (id == special_form_ids[F_AND]) {
-				struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
+				struct ArrayResult args = sexpr_array(expr.box->cdr, false);
 				if (args.err_msg) {
 					result.err_msg = args.err_msg;
 					break;
@@ -622,7 +592,7 @@ static struct EvalResult eval(
 				free(args.exprs);
 				break;
 			} else if (id == special_form_ids[F_OR]) {
-				struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
+				struct ArrayResult args = sexpr_array(expr.box->cdr, false);
 				if (args.err_msg) {
 					result.err_msg = args.err_msg;
 					break;
@@ -644,12 +614,12 @@ static struct EvalResult eval(
 				break;
 			}
 		}
-		struct EvalResult proc = eval(expr.box->pair.car, env, false);
+		struct EvalResult proc = eval(expr.box->car, env, false);
 		if (proc.err_msg) {
 			result.err_msg = proc.err_msg;
 			break;
 		}
-		struct ArrayResult args = sexpr_array(expr.box->pair.cdr, false);
+		struct ArrayResult args = sexpr_array(expr.box->cdr, false);
 		if (args.err_msg) {
 			result.err_msg = args.err_msg;
 			break;
@@ -703,8 +673,4 @@ static struct EvalResult eval(
 	}
 
 	return result;
-}
-
-struct EvalResult eval_top(struct Expression expr, struct Environment *env) {
-	return eval(expr, env, true);
 }

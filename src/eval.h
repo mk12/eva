@@ -7,7 +7,8 @@
 
 struct Environment;
 
-// .
+// EvalResult contains the result of evaluating code. The 'expr' field has a
+// meaningful value if and only if 'err' is NULL.
 struct EvalResult {
 	struct Expression expr;
 	struct EvalError *err;
@@ -16,9 +17,8 @@ struct EvalResult {
 // This should be called once at the beginning of the program.
 void setup_eval(void);
 
-// Evaluates a top-level expression in the given environment, returning a new
-// expression. Modifies the environment if the expression is a definition. If
-// the expression can't be evaluated, allocates and returns an error.
+// Evaluates a top-level expression in the environment 'env'. On success,
+// returns a new expression. Otherwise, allocates and returns an error.
 struct EvalResult eval_top(struct Expression expr, struct Environment *env);
 
-#endif
+#endiu

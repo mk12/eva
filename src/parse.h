@@ -8,7 +8,7 @@
 #define PARSE_SUCCESS (-1)
 
 // ParseResult contains the result of parsing text. The 'expr' field has a
-// meaningful value if and only if 'err_type' is -1.
+// meaningful value if and only if 'err_type' is PARSE_SUCCESS.
 struct ParseResult {
 	size_t chars_read;      // number of characters read
 	struct Expression expr; // parsed expression
