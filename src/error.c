@@ -13,7 +13,7 @@ const char *const stdin_filename = "<stdin>";
 static const char *const prefix = "ERROR: ";
 
 // Expression type names used for type errors.
-static const char *expr_type_names[] = {
+static const char *expr_type_names[N_EXPR_TYPES] = {
 	[E_NULL]    = "NULL",
 	[E_SYMBOL]  = "SYMBOL",
 	[E_NUMBER]  = "NUMBER",
@@ -24,7 +24,7 @@ static const char *expr_type_names[] = {
 };
 
 // Strings to use for parse error types.
-static const char *parse_error_messages[] = {
+static const char *parse_error_messages[N_PARSE_ERR_TYPES] = {
 	[ERR_EXPECTED_RPAREN]   = "expected character ')'",
 	[ERR_INVALID_DOT]       = "improperly placed dot",
 	[ERR_INVALID_LITERAL]   = "invalid hash literal",
@@ -33,7 +33,7 @@ static const char *parse_error_messages[] = {
 };
 
 // Strings to use for evaluation error types.
-static const char *eval_error_messages[] = {
+static const char *eval_error_messages[N_EVAL_ERR_TYPES] = {
 	[ERR_ARITY]          = "",
 	[ERR_DIV_ZERO]       = "division by zero",
 	[ERR_DUP_PARAM]      = "duplicate parameter '%s'",

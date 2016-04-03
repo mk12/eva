@@ -42,7 +42,7 @@ struct Environment *empty_environment(void) {
 struct Environment *default_environment(void) {
 	struct Environment *env = empty_environment();
 	// Bind all special procedure names to their expressions.
-	for (int i = 0; i < N_SPECIAL_PROCS; i++) {
+	for (int i = 0; i < N_SPECIAL_TYPES; i++) {
 		enum SpecialType type = (enum SpecialType)i;
 		bind(env, intern_string(special_name(type)), new_special(type));
 	}

@@ -12,6 +12,7 @@
 extern const char *const stdin_filename;
 
 // Error types for parse errors.
+#define N_PARSE_ERR_TYPES 5
 enum ParseErrorType {
 	ERR_EXPECTED_RPAREN,
 	ERR_INVALID_DOT,
@@ -21,6 +22,7 @@ enum ParseErrorType {
 };
 
 // Error types for evaluation errors.
+#define N_EVAL_ERR_TYPES 11
 enum EvalErrorType {
 	                    // Fields of EvalErorr used:
 	ERR_ARITY,          // arity, n_args

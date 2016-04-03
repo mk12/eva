@@ -8,7 +8,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-// There are 7 types of expressions.
+// Types of expressions.
+#define N_EXPR_TYPES 7
 enum ExpressionType {
 	// Immediate expressions:
 	E_NULL,
@@ -21,11 +22,9 @@ enum ExpressionType {
 	E_LAMBDA
 };
 
-// Number of special procedures.
-#define N_SPECIAL_PROCS 25
-
 // Special procedures (as distinct from special FORMS, which require special
 // evaluation rules) are procedures implemented by the interpreter.
+#define N_SPECIAL_TYPES 25
 enum SpecialType {
 	// Eval and apply:
 	S_EVAL, S_APPLY,
@@ -45,7 +44,7 @@ enum SpecialType {
 	S_READ, S_WRITE
 };
 
-// Expression is the algebraic data type used for all values in Scheme. Code and
+// Expression is the algebraic data type used for all values in Eva. Code and
 // data are both represented as expressions. Five types of expressions fit in
 // immediate values; the other two are stored in boxes.
 struct Expression {

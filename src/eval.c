@@ -11,9 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Special forms are the core of the Eva language. They are the syntactical
+// forms that require special evaluation rules.
 #define N_SPECIAL_FORMS 10
-
-// Special forms are the core of the Eva language.
 enum SpecialForms {
 	F_AND,
 	F_BEGIN,
@@ -23,8 +23,8 @@ enum SpecialForms {
 	F_LAMBDA,
 	F_LET,
 	F_LET_STAR,
-	F_OR
-	F_QUOTE,
+	F_OR,
+	F_QUOTE
 };
 
 // Names of special forms.
