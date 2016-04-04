@@ -63,15 +63,10 @@ struct EvalError *new_eval_error(enum EvalErrorType type) {
 	return err;
 }
 
-struct EvalError *new_eval_error_symbol(enum EvalErrorType type, InternId id) {
+struct EvalError *new_eval_error_symbol(
+		enum EvalErrorType type, InternId symbol id) {
 	struct EvalError *err = new_eval_error(type);
-	err->symbol_id = id;
-	return err;
-}
-
-struct EvalError *new_syntax_error(const char *str) {
-	struct EvalError *err = new_eval_error(ERR_SYNTAX);
-	err->str = str;
+	err->symbol_id = symbol_id;
 	return err;
 }
 
@@ -158,11 +153,9 @@ void print_eval_error(const struct EvalError *err) {
 	case ERR_OP_NOT_PROC:
 		fputs(format, stderr);
 		break;
-	case ERR_SYNTAX:
-		fprintf(stderr, format, err->name);
-		break;
 	case ERR_DUP_PARAM:
 	case ERR_SPECIAL_VAR:
+	case ERR_SYNTAX:
 	case ERR_UNBOUND_VAR:
 		fprintf(stderr, format, find_string(err->symbol_id));
 		break;
