@@ -13,18 +13,18 @@ const char *const stdin_filename = "<stdin>";
 static const char *const prefix = "ERROR: ";
 
 // Expression type names used for type errors.
-static const char *expr_type_names[N_EXPR_TYPES] = {
+static const char *expr_type_names[N_EXPRESSION_TYPES] = {
 	[E_NULL]    = "NULL",
 	[E_SYMBOL]  = "SYMBOL",
 	[E_NUMBER]  = "NUMBER",
 	[E_BOOLEAN] = "BOOLEAN",
-	[E_SPECIAL] = "SPECIAL",
+	[E_STDPROC] = "PROCEDURE",
 	[E_PAIR]    = "PAIR",
-	[E_LAMBDA]  = "LAMBDA"
+	[E_LAMBDA]  = "PROCEDURE"
 };
 
 // Strings to use for parse error types.
-static const char *parse_error_messages[N_PARSE_ERR_TYPES] = {
+static const char *parse_error_messages[N_PARSE_ERROR_TYPES] = {
 	[ERR_EXPECTED_RPAREN]   = "expected character ')'",
 	[ERR_INVALID_DOT]       = "improperly placed dot",
 	[ERR_INVALID_LITERAL]   = "invalid hash literal",
@@ -33,7 +33,7 @@ static const char *parse_error_messages[N_PARSE_ERR_TYPES] = {
 };
 
 // Strings to use for evaluation error types.
-static const char *eval_error_messages[N_EVAL_ERR_TYPES] = {
+static const char *eval_error_messages[N_EVAL_ERROR_TYPES] = {
 	[ERR_ARITY]          = "",
 	[ERR_DIV_ZERO]       = "division by zero",
 	[ERR_DUP_PARAM]      = "duplicate parameter '%s'",
@@ -154,7 +154,7 @@ void print_eval_error(const struct EvalError *err) {
 		fputs(format, stderr);
 		break;
 	case ERR_DUP_PARAM:
-	case ERR_SPECIAL_VAR:
+	case ERR_INVALID_VAR:
 	case ERR_SYNTAX:
 	case ERR_UNBOUND_VAR:
 		fprintf(stderr, format, find_string(err->symbol_id));

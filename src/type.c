@@ -7,8 +7,8 @@
 static struct EvalError *check_arg_count(struct Expression proc, size_t n) {
 	// Get the arity of the procedure.
 	int arity;
-	if (proc.type == E_SPECIAL) {
-		arity = special_arity(proc.special_type);
+	if (proc.type == E_STDPROC) {
+		arity = stdproc_arity(proc.stdproc);
 	} else {
 		assert(proc.type == E_LAMBDA);
 		arity = proc.box->lambda.arity;
@@ -28,10 +28,10 @@ static struct EvalError *check_arg_count(struct Expression proc, size_t n) {
 }
 
 static struct EvalError *check_arg_types(
-		enum SpecialType type, struct Expression *args, size_t n) {
-	switch (type) {
+		enum StandardProc stdproc, struct Expression *args, size_t n) {
+	switch (stdproc) {
 	case S_APPLY:
-		if (args[0].type != E_SPECIAL && args[0].type != E_LAMBDA) {
+		if (args[0].type != E_STDPROC && args[0].type != E_LAMBDA) {
 			struct EvalError *err = new_eval_error(ERR_NOT_PROC);
 			err->expr = args[0];
 			return err;
@@ -89,9 +89,9 @@ static struct EvalError *check_arg_types(
 struct EvalError *type_check(
 		struct Expression proc, struct Expression *args, size_t n) {
 	// Check the type of the procedure.
-	bool special = proc.type == E_SPECIAL;
+	bool standard = proc.type == E_STDPROC;
 	bool lambda = proc.type == E_LAMBDA;
-	if (!special && !lambda) {
+	if (!standard && !lambda) {
 		struct EvalError *err = new_eval_error(ERR_NOT_PROC);
 		err->expr = proc;
 		return err;
@@ -102,8 +102,8 @@ struct EvalError *type_check(
 		return err;
 	}
 	// Check the type of the arguments.
-	if (special) {
-		err = check_arg_types(proc.special_type, args, n);
+	if (standard) {
+		err = check_arg_types(proc.stdproc, args, n);
 	}
 	return err;
 }

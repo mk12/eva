@@ -41,10 +41,10 @@ struct Environment *empty_environment(void) {
 
 struct Environment *default_environment(void) {
 	struct Environment *env = empty_environment();
-	// Bind all special procedure names to their expressions.
-	for (int i = 0; i < N_SPECIAL_TYPES; i++) {
-		enum SpecialType type = (enum SpecialType)i;
-		bind(env, intern_string(special_name(type)), new_special(type));
+	// Bind all standard procedure names to their expressions.
+	for (int i = 0; i < N_STANDARD_PROCS; i++) {
+		enum StandardProc sp = (enum StandardProc)i;
+		bind(env, intern_string(stdproc_name(sp)), new_stdproc(sp));
 	}
 	// Bind the symbol "else" to true (used in the cond special form).
 	bind(env, intern_string("else"), new_boolean(true));

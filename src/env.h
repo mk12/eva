@@ -19,7 +19,7 @@ struct LookupResult {
 // Returns a new, empty environment.
 struct Environment *empty_environment(void);
 
-// Returns an environment containing mappings for special procedures.
+// Returns an environment containing mappings for standard procedures.
 struct Environment *default_environment(void);
 
 // Looks up an expression in the environment by its key.

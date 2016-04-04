@@ -8,13 +8,14 @@
 #include "type.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 // Special forms are the core of the Eva language. They are the syntactical
 // forms that require special evaluation rules.
 #define N_SPECIAL_FORMS 10
-enum SpecialForms {
+enum SpecialForm {
 	F_AND,
 	F_BEGIN,
 	F_COND,
@@ -59,14 +60,14 @@ void setup_eval(void) {
 // the application has already been type-checked. On success, returns the
 // resulting expression. Otherwise, allocates and returns an evauation error
 // (can only happen with S_EVAL and S_APPLY).
-static struct EvalResult apply_special(
-		enum SpecialType type,
+static struct EvalResult apply_stdproc(
+		enum StandardProc stdproc,
 		struct Expression *args,
 		size_t n,
 		struct Environment *env) {
 	struct EvalResult result;
 	result.err = NULL;
-	switch (type) {
+	switch (stdproc) {
 	case S_EVAL:
 		result = eval(args[0], env, false);
 		break;
@@ -96,7 +97,7 @@ static struct EvalResult apply_special(
 		break;
 	case S_PROCEDURE:;
 		enum ExpressionType t = args[0].type;
-		result.expr = new_boolean(t == E_LAMBDA || t == E_SPECIAL);
+		result.expr = new_boolean(t == E_LAMBDA || t == E_STDPROC);
 		break;
 	case S_EQ:
 		result.expr = new_boolean(expression_eq(args[0], args[1]));
@@ -201,8 +202,8 @@ static struct EvalResult apply(
 		return result;
 	}
 
-	if (proc.type == E_SPECIAL) {
-		result = apply_special(proc.special_type, args, n, env);
+	if (proc.type == E_STDPROC) {
+		result = apply_stdproc(proc.stdproc, args, n, env);
 	} else {
 		assert(proc.type == E_LAMBDA);
 		int arity = proc.box->arity;

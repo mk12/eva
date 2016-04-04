@@ -9,23 +9,22 @@
 #include <stdio.h>
 
 // Types of expressions.
-#define N_EXPR_TYPES 7
+#define N_EXPRESSION_TYPES 7
 enum ExpressionType {
 	// Immediate expressions:
 	E_NULL,
 	E_SYMBOL,
 	E_NUMBER,
 	E_BOOLEAN,
-	E_SPECIAL,
+	E_STDPROC,
 	// Boxed expressions:
 	E_PAIR,
 	E_LAMBDA
 };
 
-// Special procedures (as distinct from special FORMS, which require special
-// evaluation rules) are procedures implemented by the interpreter.
-#define N_SPECIAL_TYPES 25
-enum SpecialType {
+// Standard procedures are procedures implemented by the interpreter.
+#define N_STANDARD_PROCS 25
+enum StandardProc {
 	// Eval and apply:
 	S_EVAL, S_APPLY,
 	// Type predicates:
@@ -38,7 +37,7 @@ enum SpecialType {
 	S_CONS, S_CAR, S_CDR,
 	// Numeric operations:
 	S_ADD, S_SUB, S_MUL, S_DIV, S_REM,
-	// Boolean negation (and/or are special forms):
+	// Boolean negation (and/or are special forms for short-circuiting):
 	S_NOT,
 	// Reading and writing:
 	S_READ, S_WRITE
@@ -53,7 +52,7 @@ struct Expression {
 		InternId symbol_id;
 		long number;
 		bool boolean;
-		enum SpecialType special_type;
+		enum StandardProc stdproc;
 		struct Box *box;
 	};
 };
@@ -72,8 +71,8 @@ struct Box {
 			// Procedures use sign-encoded arity. If the arity is N >= 0, the
 			// procedure requires exactly N arguments. If N < 0, it accepts
 			// -(N+1) or more arguments, but not less. In that case, the last
-			// element of 'params' will be bound to the list of extra arguments
-			// beyond the -(N+1)th argument.
+			// element of 'params' will be bound to a list containing arguments
+			// in positions -(N+1)+1, -(N+1)+2, and so on.
 			int arity;
 			InternId *params;
 			struct Expression body;
@@ -81,16 +80,16 @@ struct Box {
 	};
 };
 
-// Returns the arity or name of a special procedure.
-int special_arity(enum SpecialType type);
-const char *special_name(enum SpecialType type);
+// Arity and name accessors for standard procedures.
+int stdproc_arity(enum StandardProc stdproc);
+const char *stdproc_name(enum StandardProc stdproc);
 
 // Constructors for immediate expressions.
 struct Expression new_null(void);
-struct Expression new_symbol(InternId id);
-struct Expression new_number(long n);
-struct Expression new_boolean(bool b);
-struct Expression new_special(enum SpecialType type);
+struct Expression new_symbol(InternId symbol_id);
+struct Expression new_number(long number);
+struct Expression new_boolean(bool boolean);
+struct Expression new_stdproc(enum StandardProc stdproc);
 
 // Constructors for boxed expressions. They set the reference count to 1 and
 // treat subexpression arguments ('car', 'cdr', and 'body') as being moved into

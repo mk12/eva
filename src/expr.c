@@ -16,11 +16,11 @@ static int total_box_count = 0;
 static int total_ref_count = 0;
 #endif
 
-// Names and arities of special procedures.
+// Names and arities of standard procedures.
 static const struct {
 	const char *name;
 	int arity;
-} special_procs[N_SPECIAL_TYPES] = {
+} stdproc_names_arities[N_STANDARD_PROCS] = {
 	[S_EVAL]      = {"eval", 1},
 	[S_APPLY]     = {"apply", 2},
 	[S_NULL]      = {"null?", 1},
@@ -48,32 +48,32 @@ static const struct {
 	[S_WRITE]     = {"write", 1}
 };
 
-int special_arity(enum SpecialType type) {
-	return special_procs[type].arity;
+int stdproc_arity(enum StandardProc stdproc) {
+	return stdproc_names_arities[stdproc].arity;
 }
 
-const char *special_name(enum SpecialType type) {
-	return special_procs[type].name;
+const char *stdproc_name(enum StandardProc stdproc) {
+	return stdproc_names_arities[stdproc].name;
 }
 
 struct Expression new_null(void) {
 	return (struct Expression){ .type = E_NULL };
 }
 
-struct Expression new_symbol(InternId id) {
-	return (struct Expression){ .type = E_SYMBOL, .symbol_id = id };
+struct Expression new_symbol(InternId symbol_id) {
+	return (struct Expression){ .type = E_SYMBOL, .symbol_id = symbol_id };
 }
 
-struct Expression new_number(long n) {
-	return (struct Expression){ .type = E_NUMBER, .number = n };
+struct Expression new_number(long number) {
+	return (struct Expression){ .type = E_NUMBER, .number = number };
 }
 
-struct Expression new_boolean(bool b) {
-	return (struct Expression){ .type = E_BOOLEAN, .boolean = b };
+struct Expression new_boolean(bool boolean) {
+	return (struct Expression){ .type = E_BOOLEAN, .boolean = boolean };
 }
 
-struct Expression new_special(enum SpecialType type) {
-	return (struct Expression){ .type = E_SPECIAL, .special_type = type };
+struct Expression new_stdproc(enum StandardProc stdproc) {
+	return (struct Expression){ .type = E_STDPROC, .stdproc = stdproc };
 }
 
 // Logs information about reference counts to standard error.
@@ -82,7 +82,10 @@ static void log_ref_count(const char *action, struct Expression expr) {
 	bool pair = expr.type == E_PAIR;
 	assert(pair || expr.type == E_LAMBDA);
 	fprintf(stderr, "[%d/%d] %7s %6s [%d] ",
-			total_ref_count, total_box_count, action, pair ? "pair" : "lambda",
+			total_ref_count,
+			total_box_count,
+			action,
+			pair ? "pair" : "lambda",
 			expr.box->ref_count);
 	if (pair) {
 		putc('(', stderr);
@@ -223,8 +226,8 @@ bool expression_eq(struct Expression lhs, struct Expression rhs) {
 		return lhs.number == rhs.number;
 	case E_BOOLEAN:
 		return lhs.boolean == rhs.boolean;
-	case E_SPECIAL:
-		return lhs.special_type == rhs.special_type;
+	case E_STDPROC:
+		return lhs.stdproc == rhs.stdproc;
 	case E_PAIR:
 	case E_LAMBDA:
 		return lhs.box == rhs.box;
@@ -252,8 +255,8 @@ void print_expression(struct Expression expr, FILE *stream) {
 	case E_LAMBDA:
 		fprintf(stream, "#<%p>", (void *)expr.box);
 		break;
-	case E_SPECIAL:
-		fprintf(stream, "#<%s>", special_name(expr.special_type));
+	case E_STDPROC:
+		fprintf(stream, "#<%s>", stdproc_name(expr.stdproc));
 		break;
 	}
 }
