@@ -63,10 +63,10 @@ struct EvalError *new_eval_error(enum EvalErrorType type) {
 	return err;
 }
 
-struct EvalError *new_eval_error_symbol(
-		enum EvalErrorType type, InternId symbol id) {
+struct EvalError *new_eval_error_id(
+		enum EvalErrorType type, InternId intern_id) {
 	struct EvalError *err = new_eval_error(type);
-	err->symbol_id = symbol_id;
+	err->intern_id = intern_id;
 	return err;
 }
 
@@ -157,7 +157,7 @@ void print_eval_error(const struct EvalError *err) {
 	case ERR_INVALID_VAR:
 	case ERR_SYNTAX:
 	case ERR_UNBOUND_VAR:
-		fprintf(stderr, format, find_string(err->symbol_id));
+		fprintf(stderr, format, find_string(err->intern_id));
 		break;
 	case ERR_TYPE:
 		fprintf(stderr, format, err->position, err->arg_pos,

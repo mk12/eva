@@ -24,7 +24,8 @@ struct Bucket {
 	struct Entry *entries;
 };
 
-// An environment is a dynamic hash table mapping symbols to expressions.
+// An environment is a collection of variable bindings. It is implemented as a
+// dynamic hash table that maps keys (interned strings) to expressions.
 struct Environment {
 	size_t size;
 	size_t total_entries;
@@ -46,7 +47,7 @@ struct Environment *default_environment(void) {
 		enum StandardProc sp = (enum StandardProc)i;
 		bind(env, intern_string(stdproc_name(sp)), new_stdproc(sp));
 	}
-	// Bind the symbol "else" to true (used in the cond special form).
+	// Bind the variable "else" to true (used in the cond special form).
 	bind(env, intern_string("else"), new_boolean(true));
 	return env;
 }

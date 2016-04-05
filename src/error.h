@@ -27,15 +27,15 @@ enum EvalErrorType {
 	                    // Fields of EvalErorr used:
 	ERR_ARITY,          // arity, n_args
 	ERR_DIV_ZERO,       // (none)
-	ERR_DUP_PARAM,      // symbol_id
-	ERR_INVALID_VAR,    // symbol_id
+	ERR_DUP_PARAM,      // intern_id
+	ERR_INVALID_VAR,    // intern_id
 	ERR_NON_EXHAUSTIVE, // (none)
 	ERR_OP_NOT_PROC,    // expr
 	ERR_PROC_CALL,      // (none)
 	ERR_READ,           // parse_err
-	ERR_SYNTAX,         // symbol_id
+	ERR_SYNTAX,         // intern_id
 	ERR_TYPE,           // expected_type, arg_pos, expr
-	ERR_UNBOUND_VAR     // symbol_id
+	ERR_UNBOUND_VAR     // intern_id
 };
 
 // An error that causes the parse to fail.
@@ -50,7 +50,7 @@ struct ParseError {
 struct EvalError {
 	enum EvalErrorType type;
 	union {
-		InternId symbol_id;           // a symbol relevant to the error
+		InternId intern_id;           // a relevant interned string
 		struct ParseError *parse_err; // parse error while reading user input
 		struct {
 			enum ExpressionType expected_type; // expected type
@@ -68,8 +68,8 @@ struct EvalError {
 struct ParseError *new_parse_error(
 		enum ParseError type, char *text, size_t index, bool owns_text);
 struct EvalError *new_eval_error(enum EvalErrorType type);
-struct EvalError *new_eval_error_symbol(
-		enum EvalErrorType type, InternId symbol_id);
+struct EvalError *new_eval_error_id(
+		enum EvalErrorType type, InternId intern_id);
 struct EvalError *new_type_error(
 		enum ExpressionType expected_type,
 		size_t arg_pos,
