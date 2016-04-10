@@ -7,7 +7,7 @@ bool check_list(struct Expression expr) {
 		if (expr.type != E_PAIR) {
 			return false;
 		}
-		expr = expr.box->pair.cdr;
+		expr = expr.box->cdr;
 	}
 	return true;
 }
@@ -31,7 +31,7 @@ static struct ArrayResult sexpr_array(struct Expression list, bool improper) {
 				return result;
 			}
 		}
-		expr = expr.box->pair.cdr;
+		expr = expr.box->cdr;
 		result.size++;
 	}
 	// Skip allocating the array if the list is empty.
@@ -50,9 +50,9 @@ static struct ArrayResult sexpr_array(struct Expression list, bool improper) {
 			result.exprs[i] = expr;
 			break;
 		} else {
-			result.exprs[i] = expr.box->pair.car;
+			result.exprs[i] = expr.box->car;
 		}
-		expr = expr.box->pair.cdr;
+		expr = expr.box->cdr;
 	}
 	return result;
 }
