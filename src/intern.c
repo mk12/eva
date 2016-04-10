@@ -10,12 +10,14 @@
 #define TABLE_SIZE (1 << TABLE_SIZE_BITS)
 #define DEFAULT_BUCKET_CAP 16
 
-// A bucket is a dynamic array of strings. It begins with a default capacity,
-// and it doubles its capacity every time the length would exceed it.
+// A bucket contains two dynamic arrays that grow together: one for strings, and
+// one for metadata bytes. It doubles the capacity of each array whenever the
+// length is about to exceed the capacity.
 struct Bucket {
 	size_t cap;
 	size_t len;
 	const char **strings;
+	uint8_t *meta;
 };
 
 // The intern table for the program is a static array of buckets. The number of
@@ -44,6 +46,7 @@ InternId intern_string_n(const char *str, size_t n) {
 		bucket->cap = DEFAULT_BUCKET_CAP;
 		bucket->len = 0;
 		bucket->strings = malloc(DEFAULT_BUCKET_CAP * sizeof *bucket->strings);
+		bucket->meta = malloc(DEFAULT_BUCKET_CAP * sizeof *bucket->meta);
 	}
 
 	// Check if the same string has already been interned.
@@ -53,21 +56,23 @@ InternId intern_string_n(const char *str, size_t n) {
 		}
 	}
 	
-	// Double the array's capacity if necessary.
+	// Double the capacity of each array if necessary.
 	if (bucket->len >= bucket->cap) {
 		bucket->cap *= 2;
 		bucket->strings = realloc(bucket->strings,
 				bucket->cap * sizeof *bucket->strings);
+		bucket->meta = realloc(bucket->meta,
+				bucket->cap * sizeof *bucket->meta);
 	}
 
 	// Copy the string and add a null terminator.
 	char *new_str = malloc(n + 1);
 	strncpy(new_str, str, n);
 	new_str[n] = '\0';
-	// Add the string to the bucket.
+	// Add the string and default metadata to the bucket.
 	size_t pos = bucket->len;
 	bucket->strings[pos] = new_str;
-	// Update the count.
+	bucket->meta[pos] = 0;
 	bucket->len++;
 
 	// Create an intern ID by combining the position bits and hash bits.
@@ -75,9 +80,19 @@ InternId intern_string_n(const char *str, size_t n) {
 }
 
 const char *find_string(InternId id) {
-	// Decode the hash value and the position.
 	size_t h = id & (TABLE_SIZE - 1);
 	size_t pos = id >> TABLE_SIZE_BITS;
-	// Look up the interned string.
 	return table[h].strings[pos];
+}
+
+void set_metadata(InternId id, uint8_t metadata) {
+	size_t h = id & (TABLE_SIZE - 1);
+	size_t pos = id >> TABLE_SIZE_BITS;
+	table[h].meta[pos] = metadata;
+}
+
+uint8_t find_metadata(InternId id) {
+	size_t h = id & (TABLE_SIZE - 1);
+	size_t pos = id >> TABLE_SIZE_BITS;
+	return table[h].meta[pos];
 }
