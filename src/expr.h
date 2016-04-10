@@ -100,12 +100,12 @@ typedef int Arity;
 struct Box {
 	int ref_count;
 	union {
-		// Used by E_PAIR.
+		// Used by E_PAIR:
 		struct {
 			struct Expression car;
 			struct Expression cdr;
 		};
-		// Used by E_MACRO and E_PROCEDURE.
+		// Used by E_MACRO and E_PROCEDURE:
 		struct {
 			Arity arity;
 			InternId *params;
@@ -153,7 +153,11 @@ void release_expression(struct Expression expr);
 // type) are identical if they point to the same box in memory.
 bool expression_eq(struct Expression lhs, struct Expression rhs);
 
-// Returns true if 'expr' is a macro or procedure and it accepts 'n' arguments.
+// Returns true if the expression is callable. Expressions of types E_STDMACRO,
+// E_STDPROCEDURE, E_MACRO, and E_PROCEDURE are callable.
+bool expression_callable(struct Expression expr);
+
+// Returns true if the expression is callable and accepts 'n' arguments.
 bool accepts_n_arguments(struct Expression expr, size_t n);
 
 // Prints the expression to 'stream' (not followed by a newline).

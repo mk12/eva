@@ -278,6 +278,18 @@ bool expression_eq(struct Expression lhs, struct Expression rhs) {
 	}
 }
 
+bool expression_callable(struct Expression expr) {
+	switch (expr.type) {
+	case E_STDMACRO:
+	case E_STDPROCEDURE:
+	case E_MACRO:
+	case E_PROCEDURE:
+		return true;
+	default:
+		return false;
+	}
+}
+
 bool accepts_n_arguments(struct Expression expr, size_t n) {
 	// Get the sign-encoded arity.
 	Arity arity;
