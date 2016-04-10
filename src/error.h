@@ -22,7 +22,7 @@ enum ParseErrorType {
 };
 
 // Error types for evaluation errors.
-#define N_EVAL_ERROR_TYPES 10
+#define N_EVAL_ERROR_TYPES 11
 enum EvalErrorType {
 	                    // Fields of EvalErorr used:
 	ERR_ARITY,          // code, arity, n_args
@@ -30,10 +30,11 @@ enum EvalErrorType {
 	ERR_DIV_ZERO,       // code
 	ERR_DUP_PARAM,      // code, intern_id
 	ERR_NON_EXHAUSTIVE, // code
-	ERR_NOT_CALLABLE,   // code, expr
 	ERR_READ,           // parse_err
 	ERR_SYNTAX,         // code
-	ERR_TYPE,           // code, expected_type, position, expr
+	ERR_TYPE_OPERAND,   // code, expected_type, position, expr
+	ERR_TYPE_OPERATOR,  // code, expr
+	ERR_TYPE_OTHER,     // code, expected_type, expr
 	ERR_UNBOUND_VAR     // code, intern_id
 };
 
@@ -59,10 +60,10 @@ struct EvalError {
 			Arity arity;
 			size_t n_args;
 		};
-		// Used by ERR_NOT_CALLABLE and ERR_TYPE:
+		// Used by ERR_TYPE_*:
 		struct {
 			enum ExpressionType expected_type;
-			int position; // 1-based argument index or zero (not an argument)
+			int arg_pos;
 			struct Expression expr;
 		};
 	};
@@ -74,8 +75,8 @@ struct ParseError *new_parse_error(
 struct EvalError *new_eval_error(enum EvalErrorType type);
 struct EvalError *new_type_error(
 		enum ExpressionType expected_type,
-		size_t position,
-		struct Expression expr);
+		const struct Expression *args,
+		size_t arg_pos);
 
 // Destructors for parse errors and evaluation errors.
 void free_parse_error(struct ParseError *err);
