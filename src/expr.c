@@ -16,44 +16,82 @@ static int total_box_count = 0;
 static int total_ref_count = 0;
 #endif
 
-// Names and arities of standard procedures.
-static const struct {
+// A pair containing the name and arity of a macro or procedure.
+struct NameArity {
 	const char *name;
-	int arity;
-} stdproc_names_arities[N_STANDARD_PROCS] = {
-	[S_EVAL]      = {"eval", 1},
-	[S_APPLY]     = {"apply", 2},
-	[S_NULL]      = {"null?", 1},
-	[S_SYMBOL]    = {"symbol?", 1},
-	[S_NUMBER]    = {"number?", 1},
-	[S_BOOLEAN]   = {"boolean?", 1},
-	[S_PAIR]      = {"pair?", 1},
-	[S_PROCEDURE] = {"procedure?", 1},
-	[S_EQ]        = {"eq?", 2},
-	[S_NUM_EQ]    = {"=", 2},
-	[S_LT]        = {"<", 2},
-	[S_GT]        = {">", 2},
-	[S_LE]        = {"<=", 2},
-	[S_GE]        = {">=", 2},
-	[S_CONS]      = {"cons", 2},
-	[S_CAR]       = {"car", 1},
-	[S_CDR]       = {"cdr", 1},
-	[S_ADD]       = {"+", -1},
-	[S_SUB]       = {"-", -2},
-	[S_MUL]       = {"*", -1},
-	[S_DIV]       = {"/", -2},
-	[S_REM]       = {"remainder", 2},
-	[S_NOT]       = {"not", 1},
-	[S_READ]      = {"read", 0},
-	[S_WRITE]     = {"write", 1}
+	Arity arity;
 };
 
-int stdproc_arity(enum StandardProc stdproc) {
-	return stdproc_names_arities[stdproc].arity;
+// User-facing expression type names.
+static const char *const expr_type_names[N_EXPRESSION_TYPES] = {
+	[E_NULL]         = "NULL",
+	[E_SYMBOL]       = "SYMBOL",
+	[E_NUMBER]       = "NUMBER",
+	[E_BOOLEAN]      = "BOOLEAN",
+	[E_STDMACRO]     = "MACRO",
+	[E_STDPROCEDURE] = "PROCEDURE",
+	[E_PAIR]         = "PAIR",
+	[E_MACRO]        = "MACRO",
+	[E_PROCEDURE]    = "PROCEDURE"
+};
+
+// Names and arities of standard macros.
+const struct NameArity stdmacro_name_arity[N_STANDARD_MACROS] = {
+	[F_DEFINE]           = {"define", 2},
+	[F_SET_BANG]         = {"set!", 2},
+	[F_LAMBDA]           = {"lambda", ATLEAST(2)},
+	[F_BEGIN]            = {"begin", ATLEAST(1)},
+	[F_QUOTE]            = {"quote", 1},
+	[F_QUASIQUOTE]       = {"quasiquote", 1},
+	[F_UNQUOTE]          = {"unquote", 1},
+	[F_UNQUOTE_SPLICING] = {"unquote-splicing", 1},
+	[F_IF]               = {"if", 3},
+	[F_COND]             = {"cond", ATLEAST(1)},
+	[F_LET]              = {"let", ATLEAST(2)},
+	[F_LET_STAR]         = {"let*", ATLEAST(2)},
+	[F_LET_REC]          = {"letrec", ATLEAST(2)},
+	[F_AND]              = {"and", ATLEAST(0)},
+	[F_OR]               = {"or", ATLEAST(0)}
+};
+
+// Names and arities of standard procedures.
+const struct NameArity stdproc_name_arity[N_STANDARD_PROCS] = {
+	[S_EVAL]       = {"eval", 1},
+	[S_APPLY]      = {"apply", ATLEAST(2)},
+	[S_MACRO]      = {"macro", 1},
+	[S_NULLP]      = {"null?", 1},
+	[S_SYMBOLP]    = {"symbol?", 1},
+	[S_NUMBERP]    = {"number?", 1},
+	[S_BOOLEANP]   = {"boolean?", 1},
+	[S_PAIRP]      = {"pair?", 1},
+	[S_MACROP]     = {"macro?", 1},
+	[S_PROCEDUREP] = {"procedure?", 1},
+	[S_EQ]         = {"eq?", 2},
+	[S_NUM_EQ]     = {"=", 2},
+	[S_NUM_LT]     = {"<", 2},
+	[S_NUM_GT]     = {">", 2},
+	[S_NUM_LE]     = {"<=", 2},
+	[S_NUM_GE]     = {">=", 2},
+	[S_CONS]       = {"cons", 2},
+	[S_CAR]        = {"car", 1},
+	[S_CDR]        = {"cdr", 1},
+	[S_ADD]        = {"+", ATLEAST(0)},
+	[S_SUB]        = {"-", ATLEAST(1)},
+	[S_MUL]        = {"*", ATLEAST(0)},
+	[S_DIV]        = {"/", ATLEAST(1)},
+	[S_REM]        = {"remainder", 2},
+	[S_NOT]        = {"not", 1},
+	[S_READ]       = {"read", 0},
+	[S_WRITE]      = {"write", 1}
+};
+
+const char *expression_type_name(enum ExpressionType type) {
+	return expr_type_names[type];
 }
 
-const char *stdproc_name(enum StandardProc stdproc) {
-	return stdproc_names_arities[stdproc].name;
+struct Environment *standard_environment(void) {
+	// TODO
+	return NULL;
 }
 
 struct Expression new_null(void) {
@@ -72,29 +110,43 @@ struct Expression new_boolean(bool boolean) {
 	return (struct Expression){ .type = E_BOOLEAN, .boolean = boolean };
 }
 
-struct Expression new_stdproc(enum StandardProc stdproc) {
-	return (struct Expression){ .type = E_STDPROC, .stdproc = stdproc };
+struct Expression new_stdmacro(enum StandardMacro stdmacro) {
+	return (struct Expression){ .type = E_STDMACRO, .stdmacro = stdmaro };
+}
+
+struct Expression new_stdprocedure(enum StandardProcedure stdproc) {
+	return (struct Expression){ .type = E_STDPROCEDURE, .stdproc = stdproc };
 }
 
 // Logs information about reference counts to standard error.
 #if REF_COUNT_LOGGING
 static void log_ref_count(const char *action, struct Expression expr) {
-	bool pair = expr.type == E_PAIR;
-	assert(pair || expr.type == E_LAMBDA);
 	fprintf(stderr, "[%d/%d] %7s %6s [%d] ",
 			total_ref_count,
 			total_box_count,
 			action,
-			pair ? "pair" : "lambda",
+			expression_type_name(expr.type),
 			expr.box->ref_count);
-	if (pair) {
+	switch (expr.type) {
+	case E_PAIR:
 		putc('(', stderr);
 		print_expression(expr.box->car, stderr);
 		fputs(" . ", stderr);
 		print_expression(expr.box->cdr, stderr);
-	} else {
+		break;
+	case E_MACRO:
+		fputs("(macro ", stderr);
+		// fall through
+	case E_PROCEDURE:
 		fputs("(lambda (?) ", stderr);
 		print_expression(expr.box->body, stderr);
+		break;
+	default:
+		assert(false);
+		break;
+	}
+	if (expr.type == E_MACRO) {
+		putc(')', stderr);
 	}
 	fputs(")\n", stderr);
 }
@@ -114,14 +166,14 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	return expr;
 }
 
-struct Expression new_lambda(
-		int arity, InternId *params, struct Expression body) {
+struct Expression new_procedure(
+		Arity arity, InternId *params, struct Expression body) {
 	struct Box *box = malloc(sizeof *box);
 	box->ref_count = 1;
 	box->arity = arity;
 	box->params = params;
 	box->body = body;
-	struct Expression expr = { .type = E_LAMBDA, .box = box };
+	struct Expression expr = { .type = E_PROCEDURE, .box = box };
 #if REF_COUNT_LOGGING
 	total_box_count++;
 	total_ref_count++;
@@ -132,11 +184,18 @@ struct Expression new_lambda(
 
 static void dealloc_expression(struct Expression expr) {
 #if REF_COUNT_LOGGING
-	if (expr.type == E_PAIR || expr.type == E_LAMBDA) {
+	switch (expr.type) {
+	case E_PAIR:
+	case E_MACRO:
+	case E_PROCEDURE:
 		total_box_count--;
 		log_ref_count("dealloc", expr);
+		break;
+	default:
+		break;
 	}
 #endif
+
 	// Free the expression's box and release sub-boxes.
 	switch (expr.type) {
 	case E_PAIR:
@@ -144,7 +203,8 @@ static void dealloc_expression(struct Expression expr) {
 		release_expression(expr.box->cdr);
 		free(expr.box);
 		break;
-	case E_LAMBDA:
+	case E_MACRO:
+	case E_PROCEDURE:
 		free(expr.box->params);
 		release_expression(expr.box->body);
 		free(expr.box);
@@ -158,7 +218,8 @@ struct Expression retain_expression(struct Expression expr) {
 	// Increase the reference count of the box.
 	switch (expr.type) {
 	case E_PAIR:
-	case E_LAMBDA:
+	case E_MACRO:
+	case E_PROCEDURE:
 		expr.box->ref_count++;
 #if REF_COUNT_LOGGING
 		total_ref_count++;
@@ -175,7 +236,8 @@ void release_expression(struct Expression expr) {
 	// Decrease the reference count of the box, and deallocate if it reaches 0.
 	switch (expr.type) {
 	case E_PAIR:
-	case E_LAMBDA:
+	case E_MACRO:
+	case E_PROCEDURE:
 		expr.box->ref_count--;
 #if REF_COUNT_LOGGING
 		total_ref_count--;
@@ -226,22 +288,41 @@ bool expression_eq(struct Expression lhs, struct Expression rhs) {
 		return lhs.number == rhs.number;
 	case E_BOOLEAN:
 		return lhs.boolean == rhs.boolean;
+	case E_STDMACRO:
+		return lhs.stdmacro == rhs.stdmacro;
 	case E_STDPROC:
 		return lhs.stdproc == rhs.stdproc;
 	case E_PAIR:
-	case E_LAMBDA:
+	case E_MACRO:
+	case E_PROCEDURE:
 		return lhs.box == rhs.box;
 	}
+}
+
+bool accepts_n_arguments(struct Expression expr, size_t n) {
+	Arity arity;
+	switch (expr.type) {
+	case E_STDMACRO:
+		arity = stdmacro_name_arity[expr.stdmacro].arity;
+		break;
+	case E_STDPROCEDURE:
+		arity = stdproc_name_arity[expr.stdproc].arity;
+		break;
+	case E_MACRO:
+	case E_PROCEDURE:
+		arity = expr.box->arity;
+		break;
+	default:
+		return false;
+	}
+
+	return arity >= 0 ? n == arity : n >= ATLEAST(arity);
 }
 
 void print_expression(struct Expression expr, FILE *stream) {
 	switch (expr.type) {
 	case E_NULL:
 		fputs("()", stream);
-		break;
-	case E_PAIR:
-		putc('(', stream);
-		print_pair(expr.box, true, stream);
 		break;
 	case E_SYMBOL:
 		fputs(find_string(expr.symbol_id), stream);
@@ -252,11 +333,21 @@ void print_expression(struct Expression expr, FILE *stream) {
 	case E_BOOLEAN:
 		fprintf(stream, "#%c", expr.boolean ? 't' : 'f');
 		break;
-	case E_LAMBDA:
-		fprintf(stream, "#<%p>", (void *)expr.box);
+	case E_STDMACRO:
+		fprintf(stream, "#<macro %s>", stdproc_name(expr.stdproc));
 		break;
 	case E_STDPROC:
-		fprintf(stream, "#<%s>", stdproc_name(expr.stdproc));
+		fprintf(stream, "#<proc %s>", stdproc_name(expr.stdproc));
+		break;
+	case E_PAIR:
+		putc('(', stream);
+		print_pair(expr.box, true, stream);
+		break;
+	case E_MACRO:
+		fprintf(stream, "#<macro %s>", (void *)expr.box);
+		break;
+	case E_PROCEDURE:
+		fprintf(stream, "#<procedure %p>", (void *)expr.box);
 		break;
 	}
 }
