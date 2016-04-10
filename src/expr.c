@@ -252,6 +252,54 @@ void release_expression(struct Expression expr) {
 	}
 }
 
+bool expression_eq(struct Expression lhs, struct Expression rhs) {
+	// Check if they have the same type.
+	if (lhs.type != rhs.type) {
+		return false;
+	}
+	// Compare the contents of the expressions.
+	switch (lhs.type) {
+	case E_NULL:
+		return true;
+	case E_SYMBOL:
+		return lhs.symbol_id == rhs.symbol_id;
+	case E_NUMBER:
+		return lhs.number == rhs.number;
+	case E_BOOLEAN:
+		return lhs.boolean == rhs.boolean;
+	case E_STDMACRO:
+		return lhs.stdmacro == rhs.stdmacro;
+	case E_STDPROC:
+		return lhs.stdproc == rhs.stdproc;
+	case E_PAIR:
+	case E_MACRO:
+	case E_PROCEDURE:
+		return lhs.box == rhs.box;
+	}
+}
+
+bool accepts_n_arguments(struct Expression expr, size_t n) {
+	// Get the sign-encoded arity.
+	Arity arity;
+	switch (expr.type) {
+	case E_STDMACRO:
+		arity = stdmacro_name_arity[expr.stdmacro].arity;
+		break;
+	case E_STDPROCEDURE:
+		arity = stdproc_name_arity[expr.stdproc].arity;
+		break;
+	case E_MACRO:
+	case E_PROCEDURE:
+		arity = expr.box->arity;
+		break;
+	default:
+		return false;
+	}
+
+	// Compare the number of arguments with the arity.
+	return arity >= 0 ? n == arity : n >= ATLEAST(arity);
+}
+
 // Prints a pair to the 'stream', assuming the left parenthesis has already been
 // printed. Uses standard Lisp s-expression notation.
 static void print_pair(struct Box *box, bool first, FILE *stream) {
@@ -275,50 +323,6 @@ static void print_pair(struct Box *box, bool first, FILE *stream) {
 	}
 }
 
-bool expression_eq(struct Expression lhs, struct Expression rhs) {
-	if (lhs.type != rhs.type) {
-		return false;
-	}
-	switch (lhs.type) {
-	case E_NULL:
-		return true;
-	case E_SYMBOL:
-		return lhs.symbol_id == rhs.symbol_id;
-	case E_NUMBER:
-		return lhs.number == rhs.number;
-	case E_BOOLEAN:
-		return lhs.boolean == rhs.boolean;
-	case E_STDMACRO:
-		return lhs.stdmacro == rhs.stdmacro;
-	case E_STDPROC:
-		return lhs.stdproc == rhs.stdproc;
-	case E_PAIR:
-	case E_MACRO:
-	case E_PROCEDURE:
-		return lhs.box == rhs.box;
-	}
-}
-
-bool accepts_n_arguments(struct Expression expr, size_t n) {
-	Arity arity;
-	switch (expr.type) {
-	case E_STDMACRO:
-		arity = stdmacro_name_arity[expr.stdmacro].arity;
-		break;
-	case E_STDPROCEDURE:
-		arity = stdproc_name_arity[expr.stdproc].arity;
-		break;
-	case E_MACRO:
-	case E_PROCEDURE:
-		arity = expr.box->arity;
-		break;
-	default:
-		return false;
-	}
-
-	return arity >= 0 ? n == arity : n >= ATLEAST(arity);
-}
-
 void print_expression(struct Expression expr, FILE *stream) {
 	switch (expr.type) {
 	case E_NULL:
@@ -337,7 +341,7 @@ void print_expression(struct Expression expr, FILE *stream) {
 		fprintf(stream, "#<macro %s>", stdproc_name(expr.stdproc));
 		break;
 	case E_STDPROC:
-		fprintf(stream, "#<proc %s>", stdproc_name(expr.stdproc));
+		fprintf(stream, "#<procedure %s>", stdproc_name(expr.stdproc));
 		break;
 	case E_PAIR:
 		putc('(', stream);
