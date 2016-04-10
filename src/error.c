@@ -12,19 +12,8 @@ const char *const stdin_filename = "<stdin>";
 // Prefix to use for all error messages.
 static const char *const prefix = "ERROR: ";
 
-// Expression type names used for type errors.
-static const char *expr_type_names[N_EXPRESSION_TYPES] = {
-	[E_NULL]    = "NULL",
-	[E_SYMBOL]  = "SYMBOL",
-	[E_NUMBER]  = "NUMBER",
-	[E_BOOLEAN] = "BOOLEAN",
-	[E_STDPROC] = "PROCEDURE",
-	[E_PAIR]    = "PAIR",
-	[E_LAMBDA]  = "PROCEDURE"
-};
-
 // Strings to use for parse error types.
-static const char *parse_error_messages[N_PARSE_ERROR_TYPES] = {
+static const char *const parse_error_messages[N_PARSE_ERROR_TYPES] = {
 	[ERR_EXPECTED_RPAREN]   = "expected character ')'",
 	[ERR_INVALID_DOT]       = "improperly placed dot",
 	[ERR_INVALID_LITERAL]   = "invalid hash literal",
@@ -33,17 +22,16 @@ static const char *parse_error_messages[N_PARSE_ERROR_TYPES] = {
 };
 
 // Strings to use for evaluation error types.
-static const char *eval_error_messages[N_EVAL_ERROR_TYPES] = {
+static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
 	[ERR_ARITY]          = "",
+	[ERR_DEFINE]         = "invalid use of 'define'",
 	[ERR_DIV_ZERO]       = "division by zero",
 	[ERR_DUP_PARAM]      = "duplicate parameter '%s'",
-	[ERR_INVALID_VAR]    = "cannot use special form '%s' as a variable",
-	[ERR_NON_EXHAUSTIVE] = "non-exhaustive cond expression",
-	[ERR_OP_NOT_PROC]    = "operator is not a procedure",
-	[ERR_PROC_CALL]      = "malformed procedure call",
+	[ERR_NON_EXHAUSTIVE] = "non-exhaustive 'cond'",
+	[ERR_NOT_CALLABLE]   = "expected PROCEDURE or MACRO, got %s",
 	[ERR_READ]           = "",
-	[ERR_SYNTAX]         = "syntax error in special form '%s'",
-	[ERR_TYPE]           = "(argument %zu) %s expected",
+	[ERR_SYNTAX]         = "invalid syntax",
+	[ERR_TYPE]           = "",
 	[ERR_UNBOUND_VAR]    = "use of unbound variable '%s'"
 };
 
@@ -63,20 +51,13 @@ struct EvalError *new_eval_error(enum EvalErrorType type) {
 	return err;
 }
 
-struct EvalError *new_eval_error_id(
-		enum EvalErrorType type, InternId intern_id) {
-	struct EvalError *err = new_eval_error(type);
-	err->intern_id = intern_id;
-	return err;
-}
-
 struct EvalError *new_type_error(
 		enum ExpressionType expected_type,
-		size_t arg_pos,
+		size_t position,
 		struct Expression expr) {
 	struct EvalError *err = new_eval_error(ERR_TYPE);
 	err->expected_type = expected_type;
-	err->arg_pos = arg_pos;
+	err->position = position;
 	err->expr = retain_expression(expr);
 	return err;
 }
@@ -90,13 +71,15 @@ void free_parse_error(struct ParseError *err) {
 
 void free_eval_error(struct EvalError *err) {
 	switch (err->type) {
-	case ERR_OP_NOT_PROC:
-	case ERR_TYPE:
-		release_expression(err->expr);
-		break;
 	case ERR_READ:
 		free_parse_error(err->parse_err);
+		break;
+	case ERR_NOT_CALLABLE:
+	case ERR_TYPE:
+		release_expression(err->expr);
+		// fall through
 	default:
+		release_expression(err->code);
 		break;
 	}
 	free(err);
@@ -148,20 +131,30 @@ void print_eval_error(const struct EvalError *err) {
 	case ERR_READ:
 		print_parse_error(stdin_filename, err->parse_err);
 		return;
+	case ERR_DEFINE:
 	case ERR_DIV_ZERO:
 	case ERR_NON_EXHAUSTIVE:
-	case ERR_OP_NOT_PROC:
+	case ERR_SYNTAX:
 		fputs(format, stderr);
 		break;
 	case ERR_DUP_PARAM:
-	case ERR_INVALID_VAR:
-	case ERR_SYNTAX:
 	case ERR_UNBOUND_VAR:
 		fprintf(stderr, format, find_string(err->intern_id));
 		break;
+	case ERR_NOT_CALLABLE:
+		fprintf(stderr, format, expression_type_name(err->expr.type));
+		break;
 	case ERR_TYPE:
-		fprintf(stderr, format, err->position, err->arg_pos,
-				expr_type_names[err->type_wanted]);
+		if (err->position == 0) {
+			fprintf(stderr, "expected %s, got %s",
+					expression_type_name(err->expected_type),
+					expression_type_name(err->expr.type));
+		} else {
+			fprintf(stderr, "(argument %zu) expected %s, got %s",
+					err->position,
+					expression_type_name(err->expected_type),
+					expression_type_name(err->expr.type));
+		}
 		break;
 	case ERR_ARITY:
 		assert(err->arity != 0);
@@ -172,7 +165,7 @@ void print_eval_error(const struct EvalError *err) {
 					err->n_args);
 		} else {
 			fprintf(stderr, "expected at least %d argument%s, got %zu",
-					-(err->arity + 1),
+					ATLEAST(err->arity),
 					err->arity == -2 ? "" : "s",
 					err->n_args);
 		}
@@ -180,14 +173,18 @@ void print_eval_error(const struct EvalError *err) {
 	}
 	putc('\n', stderr);
 
-	// Print more information, if applicable.
+	// Print the context of the error.
 	switch (err->type) {
-	case ERR_OP_NOT_PROC:
+	case ERR_NOT_CALLABLE:
 	case ERR_TYPE:
 		fputs("    ", stderr);
 		print_expression(err->expr, stderr);
 		putc('\n', stderr);
+		// fall through
 	default:
+		fputs("  in expression:", stderr);
+		print_expression(err->code, stderr);
+		putc('\n', stderr);
 		break;
 	}
 }

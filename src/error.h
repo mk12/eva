@@ -22,20 +22,19 @@ enum ParseErrorType {
 };
 
 // Error types for evaluation errors.
-#define N_EVAL_ERROR_TYPES 11
+#define N_EVAL_ERROR_TYPES 10
 enum EvalErrorType {
 	                    // Fields of EvalErorr used:
-	ERR_ARITY,          // arity, n_args
-	ERR_DIV_ZERO,       // (none)
-	ERR_DUP_PARAM,      // intern_id
-	ERR_INVALID_VAR,    // intern_id
-	ERR_NON_EXHAUSTIVE, // (none)
-	ERR_OP_NOT_PROC,    // expr
-	ERR_PROC_CALL,      // (none)
+	ERR_ARITY,          // code, arity, n_args
+	ERR_DEFINE,         // code
+	ERR_DIV_ZERO,       // code
+	ERR_DUP_PARAM,      // code, intern_id
+	ERR_NON_EXHAUSTIVE, // code
+	ERR_NOT_CALLABLE,   // code, expr
 	ERR_READ,           // parse_err
-	ERR_SYNTAX,         // intern_id
-	ERR_TYPE,           // expected_type, arg_pos, expr
-	ERR_UNBOUND_VAR     // intern_id
+	ERR_SYNTAX,         // code
+	ERR_TYPE,           // code, expected_type, position, expr
+	ERR_UNBOUND_VAR     // code, intern_id
 };
 
 // An error that causes the parse to fail.
@@ -49,17 +48,22 @@ struct ParseError {
 // A runtime error that occurs during code evaluation.
 struct EvalError {
 	enum EvalErrorType type;
+	struct Expression code; // context of the error
 	union {
-		InternId intern_id;           // a relevant interned string
-		struct ParseError *parse_err; // parse error while reading user input
+		// Used by ERR_DUP_PARAM and ERR_UNBOUND_VAR:
+		InternId intern_id;
+		// Used by ERR_READ:
+		struct ParseError *parse_err;
+		// Used by ERR_ARITY:
 		struct {
-			enum ExpressionType expected_type; // expected type
-			size_t arg_pos;                    // argument position (zero-based)
-			struct Expression expr;            // provided expression
+			Arity arity;
+			size_t n_args;
 		};
+		// Used by ERR_NOT_CALLABLE and ERR_TYPE:
 		struct {
-			int arity;     // sign-encoded arity (see Expr.h)
-			size_t n_args; // number of arguments provided
+			enum ExpressionType expected_type;
+			int position; // 1-based argument index or zero (not an argument)
+			struct Expression expr;
 		};
 	};
 };
@@ -68,11 +72,9 @@ struct EvalError {
 struct ParseError *new_parse_error(
 		enum ParseError type, char *text, size_t index, bool owns_text);
 struct EvalError *new_eval_error(enum EvalErrorType type);
-struct EvalError *new_eval_error_id(
-		enum EvalErrorType type, InternId intern_id);
 struct EvalError *new_type_error(
 		enum ExpressionType expected_type,
-		size_t arg_pos,
+		size_t position,
 		struct Expression expr);
 
 // Destructors for parse errors and evaluation errors.
