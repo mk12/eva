@@ -12,18 +12,18 @@ bool check_list(struct Expression expr) {
 	return true;
 }
 
-static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
+static struct ArrayResult sexpr_array(struct Expression list, bool improper) {
 	struct ArrayResult result;
 	result.size = 0;
-	result.dot = false;
+	result.improper = false;
 	result.exprs = NULL;
 
 	// Count the number of elements in the list.
 	struct Expression expr = list;
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
-			if (dot) {
-				result.dot = true;
+			if (improper) {
+				result.improper = true;
 				result.size++;
 				break;
 			} else {
@@ -44,9 +44,9 @@ static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 	// Return to the beginning and copy the expressions to the array.
 	expr = list;
 	for (size_t i = 0; i < result.size; i++) {
-		if (result.dot && i == result.size - 1) {
-			// Special case: in a list such as (1 2 . 3), the final element 3 is
-			// not a car but rather the final cdr itself.
+		if (result.improper && i == result.size - 1) {
+			// Special case: in an improper list such as (1 2 . 3), the final
+			// element 3 is not a car but rather the final cdr itself.
 			result.exprs[i] = expr;
 			break;
 		} else {
@@ -56,4 +56,3 @@ static struct ArrayResult sexpr_array(struct Expression list, bool dot) {
 	}
 	return result;
 }
-

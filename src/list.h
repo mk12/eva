@@ -8,7 +8,7 @@
 // ArrayResult contains the result of converting an s-expression list to an
 // array of expressions. The 'exprs' field is NULL if the list was malformed.
 struct ArrayResult {
-	bool dot;                 // whether the list was dotted
+	bool improper;            // whether the list was improper
 	size_t size;              // number of expressions in the array
 	struct Expression *exprs; // expression array or NULL
 };
@@ -20,10 +20,10 @@ bool well_formed_list(struct Expression expr);
 // of the list directly to the new array, but does not alter reference counts.
 // Stores NULL in the 'exprs' field of the result if the list is malformed.
 //
-// If 'dot' is true, then "dotted" lists such as (1 2 . 3) are also allowed,
+// If 'dot' is true, then improper lists such as (1 2 . 3) are also allowed,
 // where the final cdr is considered the final element of the array. This also
 // means that a single non-list value will be returned as a singleton array,
 // instead of causing an error, which it will when 'dot' is false.
-static struct ArrayResult sexpr_array(struct Expression list, bool dot);
+static struct ArrayResult sexpr_array(struct Expression list, bool improper);
 
 #endif
