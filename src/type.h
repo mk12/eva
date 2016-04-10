@@ -7,11 +7,12 @@
 
 struct EvalError;
 
-// Type-checks the application of 'proc' to 'args' (an array of 'n' arguments).
-// Returns NULL if it is valid. Allocates and returns a type error if 'proc' is
-// not a procedure, if 'n' does not match the arity of 'proc', or if the
-// arguments are not all of the correct types.
+// Type-checks the application of 'expr' to 'args' (an array of 'n' arguments).
+// Assumes 'expr' is callable and accepts 'n' arguments. Returns NULL if all
+// arguments have the correct types. Allocates and returns a type error
+// otherwise. Note that the expressions in 'args' should be evaluated if 'expr'
+// is a procedure, but unevaluated if 'expr' is a macro.
 struct EvalError *type_check(
-		struct Expression proc, struct Expression *args, size_t n);
+		struct Expression expr, struct Expression *args, size_t n);
 
 #endif

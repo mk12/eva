@@ -4,35 +4,38 @@
 
 #include "error.h"
 
-static struct EvalError *check_arg_count(struct Expression proc, size_t n) {
-	// Get the arity of the procedure.
-	int arity;
-	if (proc.type == E_STDPROC) {
-		arity = stdproc_arity(proc.stdproc);
-	} else {
-		assert(proc.type == E_LAMBDA);
-		arity = proc.box->lambda.arity;
+static struct EvalError *check_stdproc(
+		enum StandardMacro stdmacro, struct Expression *args, size_t n) {
+	switch (stdmacro) {
+	case F_DEFINE:
+	case F_SET_BANG:
+		if (args[0].type != E_SYMBOL) {
+			return new_type_error(E_SYMBOL, 0, args[0]);
+		}
+		break;
+	case F_LAMBDA:
+	case F_BEGIN:
+	case F_QUOTE:
+	case F_QUASIQUOTE:
+	case F_UNQUOTE:
+	case F_UNQUOTE_SPLICING:
+	case F_IF:
+	case F_COND:
+	case F_LET:
+	case F_LET_STAR:
+	case F_LET_REC:
+	case F_AND:
+	case F_OR:
+		break;
 	}
-
-	// Check if the arguments match the sign-encoded arity.
-	if ((arity >= 0 && n == (size_t)arity)
-			|| (arity < 0 && n >= (size_t)(-(arity+1)))) {
-		return NULL;
-	}
-
-	// Allocate and return an error.
-	struct EvalError *err = new_eval_error(ERR_ARITY);
-	err->arity = arity;
-	err->n_args= n;
-	return err;
 }
 
-static struct EvalError *check_arg_types(
+static struct EvalError *check_stdproc(
 		enum StandardProc stdproc, struct Expression *args, size_t n) {
 	switch (stdproc) {
 	case S_APPLY:
-		if (args[0].type != E_STDPROC && args[0].type != E_LAMBDA) {
-			struct EvalError *err = new_eval_error(ERR_NOT_PROC);
+		if (!expression_callable(args[0])) {
+			struct EvalError *err = new_eval_error(ERR_OPERAND);
 			err->expr = args[0];
 			return err;
 		}
@@ -42,11 +45,16 @@ static struct EvalError *check_arg_types(
 			return new_eval_error(ERR_PROC_CALL);
 		}
 		break;
+	case S_MACRO:
+		if (args[0].type != E_STDPROCEDURE && args[0].type != E_PROCEDURE) {
+			return new_type_error(E_PROCEDURE, 0, args[0]);
+		}
+		break;
 	case S_NUM_EQ:
-	case S_LT:
-	case S_GT:
-	case S_LE:
-	case S_GE:
+	case S_NUM_LT:
+	case S_NUM_GT:
+	case S_NUM_LE:
+	case S_NUM_GE:
 	case S_ADD:
 	case S_SUB:
 	case S_MUL:
@@ -72,12 +80,12 @@ static struct EvalError *check_arg_types(
 	case S_CAR:
 	case S_CDR:
 		if (args[0].type != E_PAIR) {
-			return new_type_error(E_PAIR, i, args[i]);
+			return new_type_error(E_PAIR, 0, args[0]);
 		}
 		break;
 	case S_NOT:
 		if (args[0].type != E_BOOLEAN) {
-			return new_type_error(E_BOOLEAN, i, args[i]);
+			return new_type_error(E_BOOLEAN, 0, args[0]);
 		}
 		break;
 	default:
@@ -87,23 +95,17 @@ static struct EvalError *check_arg_types(
 }
 
 struct EvalError *type_check(
-		struct Expression proc, struct Expression *args, size_t n) {
-	// Check the type of the procedure.
-	bool standard = proc.type == E_STDPROC;
-	bool lambda = proc.type == E_LAMBDA;
-	if (!standard && !lambda) {
-		struct EvalError *err = new_eval_error(ERR_NOT_PROC);
-		err->expr = proc;
-		return err;
+		struct Expression expr, struct Expression *args, size_t n) {
+	switch (expr.type) {
+	case E_STDMACRO:
+		return check_stdmacro(expr.stdmacro, args, n);
+	case E_STDPROCEDURE:
+		return check_stdproc(expr.stdproc, args, n);
+	case E_MACRO:
+	case E_PROCEDURE:
+		break;
+	default:
+		assert(false);
+		break;
 	}
-	// Check the number of arguments.
-	struct EvalError *err = check_arg_count(proc, n);
-	if (err) {
-		return err;
-	}
-	// Check the type of the arguments.
-	if (standard) {
-		err = check_arg_types(proc.stdproc, args, n);
-	}
-	return err;
 }
