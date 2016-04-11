@@ -28,14 +28,14 @@ enum EvalErrorType {
 	ERR_ARITY,          // code, arity, n_args
 	ERR_DEFINE,         // code
 	ERR_DIV_ZERO,       // code
-	ERR_DUP_PARAM,      // code, intern_id
+	ERR_DUP_PARAM,      // code, symbol_id
 	ERR_NON_EXHAUSTIVE, // code
 	ERR_READ,           // parse_err
 	ERR_SYNTAX,         // code
-	ERR_TYPE_OPERAND,   // code, expected_type, position, expr
+	ERR_TYPE,           // code, expected_type, expr
+	ERR_TYPE_OPERAND,   // code, expected_type, expr, arg_pos
 	ERR_TYPE_OPERATOR,  // code, expr
-	ERR_TYPE_OTHER,     // code, expected_type, expr
-	ERR_UNBOUND_VAR     // code, intern_id
+	ERR_UNBOUND_VAR     // code, symbol_id
 };
 
 // An error that causes the parse to fail.
@@ -52,7 +52,7 @@ struct EvalError {
 	struct Expression code; // context of the error
 	union {
 		// Used by ERR_DUP_PARAM and ERR_UNBOUND_VAR:
-		InternId intern_id;
+		InternId symbol_id;
 		// Used by ERR_READ:
 		struct ParseError *parse_err;
 		// Used by ERR_ARITY:
@@ -60,11 +60,11 @@ struct EvalError {
 			Arity arity;
 			size_t n_args;
 		};
-		// Used by ERR_TYPE_*:
+		// Used by ERR_TYPE, ERR_TYPE_OPERAND, and ERR_TYPE_OPERATOR:
 		struct {
 			enum ExpressionType expected_type;
-			int arg_pos;
 			struct Expression expr;
+			int arg_pos;
 		};
 	};
 };
@@ -73,10 +73,18 @@ struct EvalError {
 struct ParseError *new_parse_error(
 		enum ParseError type, char *text, size_t index, bool owns_text);
 struct EvalError *new_eval_error(enum EvalErrorType type);
+struct EvalError *new_eval_error_symbol(
+		enum EvalErrorType type, InternId symbol_id);
 struct EvalError *new_type_error(
+		enum ExpressionType expected_type, struct Expression expr);
+struct EvalError *new_type_error_operand(
 		enum ExpressionType expected_type,
 		const struct Expression *args,
 		size_t arg_pos);
+struct EvalError *new_type_error_operator(struct Expression expr);
+
+// Retains 'code' and stores it in the evaluation error for context.
+void attach_code(struct EvalError *err, struct Expression code);
 
 // Destructors for parse errors and evaluation errors.
 void free_parse_error(struct ParseError *err);
