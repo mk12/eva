@@ -144,7 +144,7 @@ struct Expression new_procedure(
 struct Expression retain_expression(struct Expression expr);
 
 // Decrements the reference count of the box. This is a no-op for immediates.
-// Also deallocates the expression if the reference count reaches zero.
+// Deallocates the expression if the reference count reaches zero.
 void release_expression(struct Expression expr);
 
 // Returns true if expressions 'lhs' and 'rhs' are identical in the sense of the
