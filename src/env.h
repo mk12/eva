@@ -16,27 +16,27 @@ struct LookupResult {
 	struct Expression expr;
 };
 
-// Returns a new, empty environment.
-struct Environment *empty_environment(void);
+// Creates a new evironment with the given parent environment (pass NULL to
+// create the initial environment). Retains the parent and sets the reference
+// count of the new environment to 1.
+struct Environment *new_environment(struct Environment *parent);
 
-// Returns an environment containing mappings for standard procedures.
-struct Environment *default_environment(void);
+// Increments the reference count of the environment. This is a no-op if 'env'
+// is NULL. Returns the environment for convenience.
+struct Environment *retain_environment(struct Environment *env);
 
-// Looks up an expression in the environment by its key.
+// Decrements the reference count of the environment. This is a no-op if 'env'
+// is NULL. Deallocates the environment (which includes releasing its parent and
+// all its bound expressions) if the reference count reaches zero.
+void release_environment(struct Environment *env);
+
+// Looks up the expression bound to 'key' in the environment. If it can't be
+// found, searches in its parent environment, then in the parent's parent, etc.
 struct LookupResult lookup(struct Environment *env, InternId key);
 
-// Binds a new variable in the environment, retaining the expression.
+// Binds 'key' to 'expr' in the environment, retaining 'expr'. If 'key' has
+// previously been bound in the environment (not including its parents), this
+// overwrites the old expression.
 void bind(struct Environment *env, InternId key, struct Expression expr);
-
-// Unbinds a variable in the environment, releasing the expression. If the key
-// is not found in the environment, this is a no-op.
-void unbind(struct Environment *env, InternId key);
-
-// Like unbind, but more efficient. Requires the key to correspond to the most
-// recently added variable.
-void unbind_last(struct Environment *env, InternId key);
-
-// Frees all memory used by the environment and releases bound expressions.
-void free_environment(struct Environment *env);
 
 #endif
