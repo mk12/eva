@@ -6,24 +6,25 @@
 #include "expr.h"
 
 // ArrayResult contains the result of converting an s-expression list to an
-// array of expressions. The 'exprs' field is NULL if the list was malformed.
+// array of expressions. The 'exprs' field is NULL if the list was improper and
+// improper lists were not desired.
 struct ArrayResult {
 	bool improper;            // whether the list was improper
 	size_t size;              // number of expressions in the array
 	struct Expression *exprs; // expression array or NULL
 };
 
-// Returns true if the expression is a well-formed list.
+// Returns true if 'expr' is a well-formed list.
 bool well_formed_list(struct Expression expr);
+
+// Counts the elements of the list 'expr'. If it is well-formed, returns true
+// and stores its length in 'out'. Otherwise, returns false.
+bool count_list(int *out, struct Expression expr);
 
 // Converts an s-expression list to a flat array of expressions. Copies elements
 // of the list directly to the new array, but does not alter reference counts.
-// Stores NULL in the 'exprs' field of the result if the list is malformed.
-//
-// If 'dot' is true, then improper lists such as (1 2 . 3) are also allowed,
-// where the final cdr is considered the final element of the array. This also
-// means that a single non-list value will be returned as a singleton array,
-// instead of causing an error, which it will when 'dot' is false.
-static struct ArrayResult sexpr_array(struct Expression list, bool improper);
+// If 'improper' is true, then improper lists (including single non-pair values)
+// are accepted. Otherwise, stores NULL in the 'exprs' field for improper lists.
+static struct ArrayResult list_to_array(struct Expression expr, bool improper);
 
 #endif

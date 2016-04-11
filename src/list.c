@@ -2,17 +2,31 @@
 
 #include "list.h"
 
-bool check_list(struct Expression expr) {
+bool well_formed_list(struct Expression expr) {
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
 			return false;
 		}
 		expr = expr.box->cdr;
+		count++;
 	}
 	return true;
 }
 
-static struct ArrayResult sexpr_array(struct Expression list, bool improper) {
+bool count_list(int *out, struct Expression expr) {
+	int count = 0;
+	while (expr.type != E_NULL) {
+		if (expr.type != E_PAIR) {
+			return false;
+		}
+		expr = expr.box->cdr;
+		count++;
+	}
+	*out = count;
+	return true;
+}
+
+static struct ArrayResult list_to_array(struct Expression expr, bool improper) {
 	struct ArrayResult result;
 	result.size = 0;
 	result.improper = false;
@@ -27,7 +41,7 @@ static struct ArrayResult sexpr_array(struct Expression list, bool improper) {
 				result.size++;
 				break;
 			} else {
-				// Malformed list. Return NULL 'exprs'.
+				// Improper list. Return NULL 'exprs'.
 				return result;
 			}
 		}
