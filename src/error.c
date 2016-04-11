@@ -30,9 +30,9 @@ static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
 	[ERR_NON_EXHAUSTIVE] = "non-exhaustive 'cond'",
 	[ERR_READ]           = "",
 	[ERR_SYNTAX]         = "invalid syntax",
-	[ERR_TYPE]           = "expected %s, got %s",
 	[ERR_TYPE_OPERAND]   = "(argument %zu) expected %s, got %s",
-	[ERR_TYPE_OPERATOR]  = "expected %s or %s, got %s",
+	[ERR_TYPE_OPERATOR]  = "(operator) expected %s or %s, got %s",
+	[ERR_TYPE_VAR]       = "(variable) expected %s, got %s",
 	[ERR_UNBOUND_VAR]    = "use of unbound variable '%s'"
 };
 
@@ -60,15 +60,14 @@ struct EvalError *new_eval_error_symbol(
 	return err;
 }
 
-struct EvalError *new_type_error(
-		enum ExpressionType expected_type, struct Expression expr) {
-	struct EvalError *err = new_eval_error(ERR_TYPE);
-	err->expected_type = expected_type;
+struct EvalError *new_eval_error_expr(
+		enum EvalErrorType type, struct Expression expr) {
+	struct EvalError *err = new_eval_error(type);
 	err->expr = retain_expression(expr);
 	return err;
 }
 
-struct EvalError *new_type_error_operand(
+struct EvalError *new_type_error(
 		enum ExpressionType expected_type,
 		const struct Expression *args,
 		size_t arg_pos) {
@@ -79,14 +78,9 @@ struct EvalError *new_type_error_operand(
 	return err;
 }
 
-struct EvalError *new_type_error_operator(struct Expression expr) {
-	struct EvalError *err = new_eval_error(ERR_TYPE_OPERATOR);
-	err->expr = retain_expression(expr);
-	return err;
-}
-
-void attach_code(struct EvalError *err, struct Expression code) {
+struct EvalError *attach_code(struct EvalError *err, struct Expression code) {
 	err->code = retain_expression(code);
+	return err;
 }
 
 void free_parse_error(struct ParseError *err) {
@@ -101,9 +95,9 @@ void free_eval_error(struct EvalError *err) {
 	case ERR_READ:
 		free_parse_error(err->parse_err);
 		break;
-	case ERR_TYPE:
 	case ERR_TYPE_OPERAND:
 	case ERR_TYPE_OPERATOR:
+	case ERR_TYPE_VAR:
 		release_expression(err->expr);
 		// fall through
 	default:
@@ -169,11 +163,6 @@ void print_eval_error(const struct EvalError *err) {
 	case ERR_UNBOUND_VAR:
 		fprintf(stderr, format, find_string(err->symbol_id));
 		break;
-	case ERR_TYPE:
-		fprintf(stderr, format,
-				expression_type_name(E_SYMBOL),
-				expression_type_name(err->expr.type));
-		break;
 	case ERR_TYPE_OPERAND:
 		fprintf(stderr, format,
 				err->arg_pos + 1,
@@ -184,6 +173,11 @@ void print_eval_error(const struct EvalError *err) {
 		fprintf(stderr, format,
 				expression_type_name(E_MACRO),
 				expression_type_name(E_PROCEDURE),
+				expression_type_name(err->expr.type));
+		break;
+	case ERR_TYPE_VAR:
+		fprintf(stderr, format,
+				expression_type_name(E_SYMBOL),
 				expression_type_name(err->expr.type));
 		break;
 	case ERR_ARITY:
@@ -205,9 +199,9 @@ void print_eval_error(const struct EvalError *err) {
 
 	// Print the context of the error.
 	switch (err->type) {
-	case ERR_TYPE:
 	case ERR_TYPE_OPERAND:
 	case ERR_TYPE_OPERATOR:
+	case ERR_TYPE_VAR:
 		fputs("    ", stderr);
 		print_expression(err->expr, stderr);
 		putc('\n', stderr);

@@ -32,9 +32,9 @@ enum EvalErrorType {
 	ERR_NON_EXHAUSTIVE, // code
 	ERR_READ,           // parse_err
 	ERR_SYNTAX,         // code
-	ERR_TYPE,           // code, expected_type, expr
 	ERR_TYPE_OPERAND,   // code, expected_type, expr, arg_pos
 	ERR_TYPE_OPERATOR,  // code, expr
+	ERR_TYPE_VAR,       // code, expr
 	ERR_UNBOUND_VAR     // code, symbol_id
 };
 
@@ -60,7 +60,7 @@ struct EvalError {
 			Arity arity;
 			size_t n_args;
 		};
-		// Used by ERR_TYPE, ERR_TYPE_OPERAND, and ERR_TYPE_OPERATOR:
+		// Used by ERR_TYPE_*:
 		struct {
 			enum ExpressionType expected_type;
 			struct Expression expr;
@@ -75,16 +75,15 @@ struct ParseError *new_parse_error(
 struct EvalError *new_eval_error(enum EvalErrorType type);
 struct EvalError *new_eval_error_symbol(
 		enum EvalErrorType type, InternId symbol_id);
+struct EvalError *new_eval_error_expr(
+		enum EvalErrorType type, struct Expression expr);
 struct EvalError *new_type_error(
-		enum ExpressionType expected_type, struct Expression expr);
-struct EvalError *new_type_error_operand(
 		enum ExpressionType expected_type,
 		const struct Expression *args,
 		size_t arg_pos);
-struct EvalError *new_type_error_operator(struct Expression expr);
 
-// Retains 'code' and stores it in the evaluation error for context.
-void attach_code(struct EvalError *err, struct Expression code);
+// Retains 'code' and stores it in 'err'. Returns 'err' for convenience.
+struct EvalError *attach_code(struct EvalError *err, struct Expression code);
 
 // Destructors for parse errors and evaluation errors.
 void free_parse_error(struct ParseError *err);
