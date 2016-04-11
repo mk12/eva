@@ -6,28 +6,66 @@
 
 static struct EvalError *check_stdproc(
 		enum StandardMacro stdmacro, struct Expression *args, size_t n) {
+	int length;
+	struct Expression expr;
+
 	switch (stdmacro) {
 	case F_DEFINE:
 	case F_SET_BANG:
 		if (args[0].type != E_SYMBOL) {
-			return new_type_error(E_SYMBOL, 0, args[0]);
+			return new_eval_error_expr(ERR_TYPE_VAR, args[0]);
 		}
 		break;
 	case F_LAMBDA:
-	case F_BEGIN:
-	case F_QUOTE:
-	case F_QUASIQUOTE:
-	case F_UNQUOTE:
-	case F_UNQUOTE_SPLICING:
-	case F_IF:
+		expr = args[0];
+		if (expr.type != E_NULL
+				&& expr.type != E_PAIR
+				&& expr.type != E_SYMBOL) {
+			return new_syntax_error(expr);
+		}
+		while (expr.type != E_NULL) {
+			if (expr.type == E_PAIR) {
+				if (expr.box->car.type != E_SYMBOL) {
+					return new_eval_error_expr(ERR_TYPE_VAR, expr.box->car);
+				}
+			} else if (expr.type == E_SYMBOL) {
+				break;
+			} else {
+				return new_eval_error_expr(ERR_TYPE_VAR, expr);
+			}
+			expr = expr.box->cdr;
+		}
+		break;
 	case F_COND:
+		for (size_t i = 0; i < n; i++) {
+			if (!count_list(&length, args[i]) || length < 2) {
+				return new_syntax_error(args[i]);
+			}
+		}
+		break;
 	case F_LET:
 	case F_LET_STAR:
 	case F_LET_REC:
-	case F_AND:
-	case F_OR:
+		expr = args[0];
+		while (expr.type != E_NULL) {
+			if (expr.type == E_PAIR) {
+				if (!count_list(&length, expr.box->car) || length != 2) {
+					return new_syntax_error(expr.box->car);
+				}
+				if (expr.box->car.box->car.type != E_SYMBOL) {
+					return new_eval_error_expr(
+							ERR_TYPE_VAR, expr.box->car.box->car);
+				}
+			} else {
+				return new_syntax_error(args[0]);
+			}
+			expr = expr.box->cdr;
+		}
+		break;
+	default:
 		break;
 	}
+	return NULL;
 }
 
 static struct EvalError *check_stdproc(
@@ -35,19 +73,15 @@ static struct EvalError *check_stdproc(
 	switch (stdproc) {
 	case S_APPLY:
 		if (!expression_callable(args[0])) {
-			struct EvalError *err = new_eval_error(ERR_OPERAND);
-			err->expr = args[0];
-			return err;
+			return new_eval_error_expr(ERR_TYPE_OPERATOR, args[0]);
 		}
-		// The second argument must be a well-formed list. The evaluator will
-		// catch it if it's not, though, so here we only check the basic type.
-		if (args[1].type != E_NULL && args[1].type != E_PAIR) {
-			return new_eval_error(ERR_PROC_CALL);
+		if (!well_formed_list(args[n-1])) {
+			return new_syntax_error(args[n-1]);
 		}
 		break;
 	case S_MACRO:
 		if (args[0].type != E_STDPROCEDURE && args[0].type != E_PROCEDURE) {
-			return new_type_error(E_PROCEDURE, 0, args[0]);
+			return new_type_error(E_PROCEDURE, args, 0);
 		}
 		break;
 	case S_NUM_EQ:
@@ -60,7 +94,7 @@ static struct EvalError *check_stdproc(
 	case S_MUL:
 		for (size_t i = 0; i < n; i++) {
 			if (args[i].type != E_NUMBER) {
-				return new_type_error(E_NUMBER, i, args[i]);
+				return new_type_error(E_NUMBER, args, i);
 			}
 		}
 		break;
@@ -68,7 +102,7 @@ static struct EvalError *check_stdproc(
 	case S_REM:
 		for (size_t i = 0; i < n; i++) {
 			if (args[i].type != E_NUMBER) {
-				return new_type_error(E_NUMBER, i, args[i]);
+				return new_type_error(E_NUMBER, args, i);
 			}
 			if (i > 0 && args[i].number == 0) {
 				// This is not technically a type error, but this is the
@@ -80,12 +114,12 @@ static struct EvalError *check_stdproc(
 	case S_CAR:
 	case S_CDR:
 		if (args[0].type != E_PAIR) {
-			return new_type_error(E_PAIR, 0, args[0]);
+			return new_type_error(E_PAIR, args, 0);
 		}
 		break;
 	case S_NOT:
 		if (args[0].type != E_BOOLEAN) {
-			return new_type_error(E_BOOLEAN, 0, args[0]);
+			return new_type_error(E_BOOLEAN, args, 0);
 		}
 		break;
 	default:
