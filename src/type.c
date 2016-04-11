@@ -3,10 +3,13 @@
 #include "type.h"
 
 #include "error.h"
+#include "list.h"
 
-static struct EvalError *check_stdproc(
+#include <assert.h>
+
+static struct EvalError *check_stdmacro(
 		enum StandardMacro stdmacro, struct Expression *args, size_t n) {
-	int length;
+	size_t length;
 	struct Expression expr;
 
 	switch (stdmacro) {
@@ -69,7 +72,7 @@ static struct EvalError *check_stdproc(
 }
 
 static struct EvalError *check_stdproc(
-		enum StandardProc stdproc, struct Expression *args, size_t n) {
+		enum StandardProcedure stdproc, struct Expression *args, size_t n) {
 	switch (stdproc) {
 	case S_APPLY:
 		if (!expression_callable(args[0])) {
@@ -107,7 +110,7 @@ static struct EvalError *check_stdproc(
 			if (i > 0 && args[i].number == 0) {
 				// This is not technically a type error, but this is the
 				// earliest and most convenient place to catch it.
-				return new_eval_error(ERROR_DIV_ZERO);
+				return new_eval_error(ERR_DIV_ZERO);
 			}
 		}
 		break;
@@ -142,4 +145,5 @@ struct EvalError *type_check(
 		assert(false);
 		break;
 	}
+	return NULL;
 }

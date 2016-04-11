@@ -73,7 +73,8 @@ struct ParseError *read_sexpr(struct Expression *out) {
 
 	if (data.err_type != PARSE_SUCCESS) {
 		// Give ownership of the buffer to the parse erorr.
-		return new_parse_error(data.err_type, buf, data.chars_read, true);
+		return new_parse_error((enum ParseErrorType)data.err_type,
+				buf, data.chars_read);
 	}
 
 	// Save leftover input, if there is any.
@@ -102,10 +103,9 @@ bool execute(
 		struct ParseResult code = parse(text + offset);
 		if (code.err_type != PARSE_SUCCESS) {
 			struct ParseError err = {
-				.type = code.err_type,
+				.type = (enum ParseErrorType)code.err_type,
 				.text = text,
-				.index = offset + code.chars_read,
-				.owns_text = false
+				.index = offset + code.chars_read
 			};
 			print_parse_error(filename, &err);
 			return false;
@@ -187,10 +187,9 @@ void repl(struct Environment *env, bool print) {
 					continue;
 				} else {
 					struct ParseError err = {
-						.type = code.err_type,
+						.type = (enum ParseErrorType)code.err_type,
 						.text = buf,
-						.index = offset + code.chars_read,
-						.owns_text = false
+						.index = offset + code.chars_read
 					};
 					print_parse_error(stdin_filename, &err);
 					break;

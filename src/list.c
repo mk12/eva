@@ -2,19 +2,20 @@
 
 #include "list.h"
 
+#include <stdlib.h>
+
 bool well_formed_list(struct Expression expr) {
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
 			return false;
 		}
 		expr = expr.box->cdr;
-		count++;
 	}
 	return true;
 }
 
-bool count_list(int *out, struct Expression expr) {
-	int count = 0;
+bool count_list(size_t *out, struct Expression expr) {
+	size_t count = 0;
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
 			return false;
@@ -26,7 +27,7 @@ bool count_list(int *out, struct Expression expr) {
 	return true;
 }
 
-static struct ArrayResult list_to_array(struct Expression expr, bool improper) {
+struct ArrayResult list_to_array(struct Expression list, bool improper) {
 	struct ArrayResult result;
 	result.size = 0;
 	result.improper = false;

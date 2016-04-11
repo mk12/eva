@@ -36,7 +36,7 @@ static const char *const expr_type_names[N_EXPRESSION_TYPES] = {
 };
 
 // Names and arities of standard macros.
-const struct NameArity stdmacro_name_arity[N_STANDARD_MACROS] = {
+static const struct NameArity stdmacro_name_arity[N_STANDARD_MACROS] = {
 	[F_DEFINE]           = {"define", 2},
 	[F_SET_BANG]         = {"set!", 2},
 	[F_LAMBDA]           = {"lambda", ATLEAST(2)},
@@ -55,7 +55,7 @@ const struct NameArity stdmacro_name_arity[N_STANDARD_MACROS] = {
 };
 
 // Names and arities of standard procedures.
-const struct NameArity stdproc_name_arity[N_STANDARD_PROCS] = {
+static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_EVAL]       = {"eval", 1},
 	[S_APPLY]      = {"apply", ATLEAST(2)},
 	[S_MACRO]      = {"macro", 1},
@@ -111,7 +111,7 @@ struct Expression new_boolean(bool boolean) {
 }
 
 struct Expression new_stdmacro(enum StandardMacro stdmacro) {
-	return (struct Expression){ .type = E_STDMACRO, .stdmacro = stdmaro };
+	return (struct Expression){ .type = E_STDMACRO, .stdmacro = stdmacro };
 }
 
 struct Expression new_stdprocedure(enum StandardProcedure stdproc) {
@@ -269,7 +269,7 @@ bool expression_eq(struct Expression lhs, struct Expression rhs) {
 		return lhs.boolean == rhs.boolean;
 	case E_STDMACRO:
 		return lhs.stdmacro == rhs.stdmacro;
-	case E_STDPROC:
+	case E_STDPROCEDURE:
 		return lhs.stdproc == rhs.stdproc;
 	case E_PAIR:
 	case E_MACRO:
@@ -309,7 +309,10 @@ bool accepts_n_arguments(struct Expression expr, size_t n) {
 	}
 
 	// Compare the number of arguments with the arity.
-	return arity >= 0 ? n == arity : n >= ATLEAST(arity);
+	if (arity < 0) {
+		return n >= (size_t)ATLEAST(arity);
+	}
+	return n == (size_t)arity;
 }
 
 // Prints a pair to the 'stream', assuming the left parenthesis has already been
@@ -350,10 +353,12 @@ void print_expression(struct Expression expr, FILE *stream) {
 		fprintf(stream, "#%c", expr.boolean ? 't' : 'f');
 		break;
 	case E_STDMACRO:
-		fprintf(stream, "#<macro %s>", stdproc_name(expr.stdproc));
+		fprintf(stream, "#<macro %s>",
+				stdproc_name_arity[expr.stdproc].name);
 		break;
-	case E_STDPROC:
-		fprintf(stream, "#<procedure %s>", stdproc_name(expr.stdproc));
+	case E_STDPROCEDURE:
+		fprintf(stream, "#<procedure %s>",
+				stdproc_name_arity[expr.stdproc].name);
 		break;
 	case E_PAIR:
 		putc('(', stream);

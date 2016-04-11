@@ -3,7 +3,9 @@
 #include "error.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 // Extern constants.
@@ -37,19 +39,18 @@ static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
 };
 
 struct ParseError *new_parse_error(
-		enum ParseError type, char *text, size_t index, bool owns_text) {
+		enum ParseErrorType type, char *owned_text, size_t index) {
 	struct ParseError *err = malloc(sizeof *err);
 	err->type = type;
-	err->text = text;
+	err->owned_text = owned_text;
 	err->index = index;
-	err->owns_text = owns_text;
 	return err;
 }
 
 struct EvalError *new_eval_error(enum EvalErrorType type) {
 	struct EvalError *err = malloc(sizeof *err);
 	err->type = type;
-	err->code = NULL;
+	err->has_code = false;
 	return err;
 }
 
@@ -67,7 +68,7 @@ struct EvalError *new_eval_error_expr(
 	return err;
 }
 
-struct EvalError *new_syntax_error(struct Expression *code) {
+struct EvalError *new_syntax_error(struct Expression code) {
 	return attach_code(new_eval_error(ERR_SYNTAX), code);
 }
 
@@ -83,14 +84,13 @@ struct EvalError *new_type_error(
 }
 
 struct EvalError *attach_code(struct EvalError *err, struct Expression code) {
+	err->has_code = true;
 	err->code = retain_expression(code);
 	return err;
 }
 
 void free_parse_error(struct ParseError *err) {
-	if (err->owns_text) {
-		free(err->text);
-	}
+	free(err->owned_text);
 	free(err);
 }
 

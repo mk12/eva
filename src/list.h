@@ -17,14 +17,14 @@ struct ArrayResult {
 // Returns true if 'expr' is a well-formed list.
 bool well_formed_list(struct Expression expr);
 
-// Counts the elements of the list 'expr'. If it is well-formed, returns true
-// and stores its length in 'out'. Otherwise, returns false.
-bool count_list(int *out, struct Expression expr);
+// Counts the elements of the list 'expr'. If it is a well-formed list, returns
+// true and stores its length in 'out'. Otherwise, returns false.
+bool count_list(size_t *out, struct Expression expr);
 
 // Converts an s-expression list to a flat array of expressions. Copies elements
 // of the list directly to the new array, but does not alter reference counts.
 // If 'improper' is true, then improper lists (including single non-pair values)
 // are accepted. Otherwise, stores NULL in the 'exprs' field for improper lists.
-static struct ArrayResult list_to_array(struct Expression expr, bool improper);
+struct ArrayResult list_to_array(struct Expression list, bool improper);
 
 #endif

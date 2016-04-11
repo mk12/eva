@@ -38,20 +38,25 @@ enum EvalErrorType {
 	ERR_UNBOUND_VAR     // code, symbol_id
 };
 
-// An error that causes the parse to fail.
+// An error that causes the parse to fail. Errors created on the stack usually
+// use the 'text' field. Errors allocated by 'new_parse_error' use 'owned_text',
+// which is freed upon calling 'free_parse_error'.
 struct ParseError {
 	enum ParseErrorType type;
-	char *text;     // full text being parsed
-	size_t index;   // index in 'text' where the error occurred
-	bool owns_text; // whether the error owns the memory of 'text'
+	union {
+		const char *text; // full text being parsed
+		char *owned_text; // same thing, but the error owns the memory
+	};
+	size_t index; // index in 'text' or 'owned_text' where the error occurred
 };
 
 // A runtime error that occurs during code evaluation. These are usually created
-// with 'code' set to NULL, and later (further up the call stack) the evaluator
-// attaches the offending code using 'attach_code' before printing the error.
-// Syntax errors are the exception: they usually have code attached immediately.
+// with 'has_code' set to false, and later (further up the call stack) the
+// evaluator attaches the offending code using 'attach_code' before printing the
+// error. Syntax errors are the exception: they usually attach code immediately.
 struct EvalError {
 	enum EvalErrorType type;
+	bool has_code;
 	struct Expression code; // context of the error
 	union {
 		// Used by ERR_DUP_PARAM and ERR_UNBOUND_VAR:
@@ -67,14 +72,14 @@ struct EvalError {
 		struct {
 			enum ExpressionType expected_type;
 			struct Expression expr;
-			int arg_pos;
+			size_t arg_pos;
 		};
 	};
 };
 
 // Constructors for parse errors and evaluation errors.
 struct ParseError *new_parse_error(
-		enum ParseError type, char *text, size_t index, bool owns_text);
+		enum ParseErrorType type, char *owned_text, size_t index);
 struct EvalError *new_eval_error(enum EvalErrorType type);
 struct EvalError *new_eval_error_symbol(
 		enum EvalErrorType type, InternId symbol_id);

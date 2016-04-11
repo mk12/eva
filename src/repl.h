@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 struct Environment;
+struct Expression;
 struct ParseError;
 
 // This should be called once at the beginning of the program.
