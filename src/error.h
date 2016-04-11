@@ -46,7 +46,10 @@ struct ParseError {
 	bool owns_text; // whether the error owns the memory of 'text'
 };
 
-// A runtime error that occurs during code evaluation.
+// A runtime error that occurs during code evaluation. These are usually created
+// with 'code' set to NULL, and later (further up the call stack) the evaluator
+// attaches the offending code using 'attach_code' before printing the error.
+// Syntax errors are the exception: they usually have code attached immediately.
 struct EvalError {
 	enum EvalErrorType type;
 	struct Expression code; // context of the error
@@ -77,6 +80,7 @@ struct EvalError *new_eval_error_symbol(
 		enum EvalErrorType type, InternId symbol_id);
 struct EvalError *new_eval_error_expr(
 		enum EvalErrorType type, struct Expression expr);
+struct EvalError *new_syntax_error(struct Expression code);
 struct EvalError *new_type_error(
 		enum ExpressionType expected_type,
 		const struct Expression *args,

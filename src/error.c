@@ -67,13 +67,17 @@ struct EvalError *new_eval_error_expr(
 	return err;
 }
 
+struct EvalError *new_syntax_error(struct Expression *code) {
+	return attach_code(new_eval_error(ERR_SYNTAX), code);
+}
+
 struct EvalError *new_type_error(
 		enum ExpressionType expected_type,
 		const struct Expression *args,
 		size_t arg_pos) {
-	struct EvalError *err = new_eval_error(ERR_TYPE_OPERAND);
+	struct EvalError *err = new_eval_error_expr(
+			ERR_TYPE_OPERAND, args[arg_pos]);
 	err->expected_type = expected_type;
-	err->expr = retain_expression(args[arg_pos]);
 	err->arg_pos = arg_pos;
 	return err;
 }
