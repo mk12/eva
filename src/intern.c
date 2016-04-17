@@ -9,6 +9,7 @@
 #define TABLE_SIZE_BITS 10
 #define TABLE_SIZE (1 << TABLE_SIZE_BITS)
 #define DEFAULT_BUCKET_CAP 16
+#define HASH_SEED 5381
 
 // A bucket is a dynamic array of strings. It begins with a default capacity,
 // and it doubles its capacity every time the length would exceed it.
@@ -32,9 +33,9 @@ InternId intern_string(const char *str) {
 
 InternId intern_string_n(const char *str, size_t n) {
 	// Calculate the hash value of the string.
-	InternId h = 5381;
+	InternId h = HASH_SEED;
 	for (size_t i = 0; i < n; i++) {
-		h = ((h << 5) + h) + (InternId)str[i];
+		h ^= (h << 5) + (h >> 2) + (InternId)str[i];
 	}
 	h %= TABLE_SIZE;
 
