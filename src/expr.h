@@ -134,10 +134,14 @@ struct Expression new_stdprocedure(enum StandardProcedure stdproc);
 
 // Constructors for boxed expressions. They set the reference count to 1 and
 // treat subexpression arguments ('car', 'cdr', and 'body') as being moved into
-// the new object; that is, they take ownership without retaining them.
+// the new object; that is, they take ownership without retaining them. The
+// environment 'env' is retained by 'new_procedure'.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
 struct Expression new_procedure(
-		Arity arity, InternId *params, struct Expression body);
+		Arity arity,
+		InternId *params,
+		struct Expression body,
+		struct Environment *env);
 
 // Increments the reference count of the box. This is a no-op for immediates.
 // Returns the expression for convenience.

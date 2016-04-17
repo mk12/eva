@@ -181,12 +181,16 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 }
 
 struct Expression new_procedure(
-		Arity arity, InternId *params, struct Expression body) {
+		Arity arity,
+		InternId *params,
+		struct Expression body,
+		struct Environment *env) {
 	struct Box *box = malloc(sizeof *box);
 	box->ref_count = 1;
 	box->arity = arity;
 	box->params = params;
 	box->body = body;
+	box->env = retain_environment(env);
 	struct Expression expr = { .type = E_PROCEDURE, .box = box };
 #if REF_COUNT_LOGGING
 	total_box_count++;
@@ -221,6 +225,7 @@ static void dealloc_expression(struct Expression expr) {
 	case E_PROCEDURE:
 		free(expr.box->params);
 		release_expression(expr.box->body);
+		release_environment(expr.box->env);
 		free(expr.box);
 		break;
 	default:
