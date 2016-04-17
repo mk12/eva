@@ -74,12 +74,21 @@ static struct EvalError *check_stdmacro(
 static struct EvalError *check_stdproc(
 		enum StandardProcedure stdproc, struct Expression *args, size_t n) {
 	switch (stdproc) {
-	case S_APPLY:
-		if (!expression_callable(args[0])) {
+	case S_APPLY:;
+		Arity arity;
+		if (!expression_arity(&arity, args[0])) {
 			return new_eval_error_expr(ERR_TYPE_OPERATOR, args[0]);
 		}
-		if (!well_formed_list(args[n-1])) {
+		size_t length;
+		if (!count_list(&length, args[n-1])) {
 			return new_syntax_error(args[n-1]);
+		}
+		size_t n_args = length + n - 2;
+		if (!matches_arity(n_args, arity)) {
+			struct EvalError *err = new_eval_error(ERR_ARITY);
+			err->arity = arity;
+			err->n_args = n_args;
+			return err;
 		}
 		break;
 	case S_MACRO:
