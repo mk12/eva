@@ -4,12 +4,14 @@
 
 #include "intern.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-// Constants for the environment table.
-#define DEFAULT_TABLE_SIZE 1024
-#define DEFAULT_BUCKET_SIZE 16
+// Constants for memory allocation.
+#define BASE_TABLE_SIZE 1024
+#define BASE_BUCKET_SIZE 8
+#define CHILD_BUCKET_SIZE 2
 
 // An entry maps an intern identifier to an expression.
 struct Entry {
@@ -27,61 +29,109 @@ struct Bucket {
 // An environment is a collection of variable bindings. It is implemented as a
 // dynamic hash table that maps keys (interned strings) to expressions.
 struct Environment {
+	int ref_count;
+	struct Environment *parent;
 	size_t size;
 	size_t total_entries;
 	struct Bucket *table;
 };
 
-struct Environment *empty_environment(void) {
+struct Environment *new_base_environment(void) {
 	struct Environment *env = malloc(sizeof *env);
-	env->size = DEFAULT_TABLE_SIZE;
+	env->ref_count = 1;
+	env->parent = NULL;
+	env->size = BASE_TABLE_SIZE;
 	env->total_entries = 0;
 	env->table = calloc(env->size, sizeof *env->table);
 	return env;
 }
 
-struct Environment *default_environment(void) {
-	struct Environment *env = empty_environment();
-	// Bind all standard procedure names to their expressions.
-	for (int i = 0; i < N_STANDARD_PROCS; i++) {
-		enum StandardProc sp = (enum StandardProc)i;
-		bind(env, intern_string(stdproc_name(sp)), new_stdproc(sp));
-	}
-	// Bind the variable "else" to true (used in the cond special form).
-	bind(env, intern_string("else"), new_boolean(true));
+struct Environment *new_environment(
+		struct Environment *parent, size_t size_estimate) {
+	struct Environment *env = malloc(sizeof *env);
+	env->ref_count = 1;
+	env->parent = retain_environment(parent);
+	env->size = size_estimate * 2;
+	env->total_entries = 0;
+	env->table = calloc(env->size, sizeof *env->table);
 	return env;
 }
 
-struct LookupResult lookup(struct Environment *env, InternId key) {
-	// Look up the bucket corresponding to the key.
-	size_t index = key % env->size;
-	size_t len = env->table[index].len;
-	// Check each entry in the bucket.
-	struct Entry *ents = env->table[index].entries;
-	for (size_t i = 1; i <= len; i++) {
-		if (ents[len-i].key == key) {
-			return (struct LookupResult){
-				.found = true,
-				.expr = ents[len-i].expr
-			};
+void dealloc_environment(struct Environment *env) {
+	for (size_t i = 0; i < env->size; i++) {
+		size_t len = env->table[i].len;
+		struct Entry *ents = env->table[i].entries;
+		for (size_t j = 0; j < len; j++) {
+			release_expression(ents[j].expr);
 		}
+		free(ents);
+	}
+	release_environment(env->parent);
+	free(env->table);
+	free(env);
+}
+
+struct Environment *retain_environment(struct Environment *env) {
+	if (env) {
+		env->ref_count++;
+	}
+	return env;
+}
+
+void release_environment(struct Environment *env) {
+	if (env) {
+		assert(env->ref_count > 0);
+		env->ref_count--;
+		if (env->ref_count == 0) {
+			dealloc_environment(env);
+		}
+	}
+}
+
+struct LookupResult lookup(const struct Environment *env, InternId key) {
+	while (env) {
+		// Look up the bucket corresponding to the key.
+		size_t index = key % env->size;
+		size_t len = env->table[index].len;
+		// Check each entry in the bucket.
+		struct Entry *ents = env->table[index].entries;
+		for (size_t i = 0; i < len; i++) {
+			if (ents[i].key == key) {
+				return (struct LookupResult){
+					.found = true,
+					.expr = ents[i].expr
+				};
+			}
+		}
+		// Check the parent environment next.
+		env = env->parent;
 	}
 	return (struct LookupResult){ .found = false };
 }
 
 static void bind_unchecked(
 		struct Environment *env, InternId key, struct Expression expr) {
-	// Look up the bucket corresponding to the key.
+	env->total_entries++;
 	struct Bucket *bucket = env->table + (key % env->size);
 	if (!bucket->entries) {
 		// Initialize the bucket if it is empty.
-		bucket->cap = DEFAULT_BUCKET_SIZE;
+		bucket->cap = env->parent ? CHILD_BUCKET_SIZE : BASE_BUCKET_SIZE;
 		bucket->entries = malloc(bucket->cap * sizeof *bucket->entries);
-	} else if (bucket->len >= bucket->cap) {
+	} else {
+		// Check if the variable is already bound.
+		for (int i = 0; i < bucket->len; i++) {
+			if (bucket->entries[i].key == key) {
+				release_expression(bucket->entries[i].expr);
+				bucket->entries[i].expr = retain_expression(expr);
+				return;
+			}
+		}
 		// Grow the array if necessary.
-		bucket->cap *= 2;
-		bucket->entries = realloc(bucket->entries,
-				bucket->cap * sizeof *bucket->entries);
+		if (bucket->len >= bucket->cap) {
+			bucket->cap *= 2;
+			bucket->entries = realloc(bucket->entries,
+					bucket->cap * sizeof *bucket->entries);
+		}
 	}
 	// Add an entry to the end to bind the expression.
 	bucket->entries[bucket->len].key = key;
@@ -113,52 +163,4 @@ void bind(struct Environment *env, InternId key, struct Expression expr) {
 	}
 	// Bind the new expression.
 	bind_unchecked(env, key, expr);
-}
-
-void unbind(struct Environment *env, InternId key) {
-	// Look up the bucket corresponding to the key.
-	size_t index = key % env->size;
-	size_t len = env->table[index].len;
-	// Check each entry in the bucket.
-	struct Entry *ents = env->table[index].entries;
-	bool shift = false;
-	for (size_t i = 0; i < len; i++) {
-		if (shift) {
-			ents[i-1].key = ents[i].key;
-			ents[i-1].expr = ents[i].expr;
-		} else {
-			if (ents[i].key == key) {
-				release_expression(ents[i].expr);
-				shift = true;
-			}
-		}
-	}
-	// Update the counts if an expression was unbound.
-	if (shift) {
-		env->table[index].len--;
-		env->total_entries--;
-	}
-}
-
-void unbind_last(struct Environment *env, InternId key) {
-	// Look up the bucket corresponding to the key.
-	size_t index = key % env->size;
-	size_t len = env->table[index].len;
-	// Unbind the most recently bound expression.
-	release_expression(env->table[index].entries[len-1].expr);
-	// Update the counts.
-	env->table[index].len--;
-	env->total_entries--;
-}
-
-void free_environment(struct Environment *env) {
-	for (size_t i = 0; i < env->size; i++) {
-		size_t len = env->table[i].len;
-		struct Entry *ents = env->table[i].entries;
-		for (size_t j = 0; j < len; j++) {
-			release_expression(ents[j].expr);
-		}
-		free(ents);
-	}
-	free(env);
 }
