@@ -132,23 +132,27 @@ struct Expression new_boolean(bool boolean);
 struct Expression new_stdmacro(enum StandardMacro stdmacro);
 struct Expression new_stdprocedure(enum StandardProcedure stdproc);
 
-// Constructors for boxed expressions. They set the reference count to 1 and
-// treat subexpression arguments ('car', 'cdr', and 'body') as being moved into
-// the new object; that is, they take ownership without retaining them. The
-// environment 'env' is retained by 'new_procedure'.
+// Creates a new pair. Sets the reference count of the box to 1. Takes owernship
+// of 'car' and 'cdr' without retaining.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
+
+// Creates a new macro based on an existing procedure. Retains the box.
+struct Expression new_macro(struct Expression *procedure);
+
+// Creates a new procedure. Sets the reference count of the box to 1. Takes
+// ownership of 'params' and 'body' without copying or retaining. Retains 'env'.
 struct Expression new_procedure(
 		Arity arity,
 		InternId *params,
 		struct Expression body,
 		struct Environment *env);
 
-// Increments the reference count of the box. This is a no-op for immediates.
-// Returns the expression for convenience.
+// Increments the reference count of the expression's box. This is a no-op for
+// immediates. Returns the expression for convenience.
 struct Expression retain_expression(struct Expression expr);
 
-// Decrements the reference count of the box. This is a no-op for immediates.
-// Deallocates the expression if the reference count reaches zero.
+// Decrements the reference count of the expression's box. This is a no-op for
+// immediates. Deallocates the expression if the reference count reaches zero.
 void release_expression(struct Expression expr);
 
 // Returns true if expressions 'lhs' and 'rhs' are identical in the sense of the
@@ -157,12 +161,13 @@ void release_expression(struct Expression expr);
 // type) are identical if they point to the same box in memory.
 bool expression_eq(struct Expression lhs, struct Expression rhs);
 
-// Returns true if the expression is callable. Expressions of types E_STDMACRO,
-// E_STDPROCEDURE, E_MACRO, and E_PROCEDURE are callable.
-bool expression_callable(struct Expression expr);
+// Returns true if the expression is callable, and stores its arity in 'out'.
+// Returns false otherwise. Expressions of types E_STDMACRO, E_STDPROCEDURE,
+// E_MACRO, and E_PROCEDURE are callable.
+bool expression_arity(Arity *out, struct Expression expr);
 
-// Returns true if the expression is callable and accepts 'n' arguments.
-bool accepts_n_arguments(struct Expression expr, size_t n);
+// Returns true if 'n_args' arguments are allowed for the given arity.
+bool matches_arity(size_t n_args, Arity arity);
 
 // Prints the expression to 'stream' (not followed by a newline).
 void print_expression(struct Expression expr, FILE *stream);

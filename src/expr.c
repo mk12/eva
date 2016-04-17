@@ -69,11 +69,11 @@ static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_MACROP]     = {"macro?", 1},
 	[S_PROCEDUREP] = {"procedure?", 1},
 	[S_EQ]         = {"eq?", 2},
-	[S_NUM_EQ]     = {"=", 2},
-	[S_NUM_LT]     = {"<", 2},
-	[S_NUM_GT]     = {">", 2},
-	[S_NUM_LE]     = {"<=", 2},
-	[S_NUM_GE]     = {">=", 2},
+	[S_NUM_EQ]     = {"=", ATLEAST(0)},
+	[S_NUM_LT]     = {"<", ATLEAST(0)},
+	[S_NUM_GT]     = {">", ATLEAST(0)},
+	[S_NUM_LE]     = {"<=", ATLEAST(0)},
+	[S_NUM_GE]     = {">=", ATLEAST(0)},
 	[S_CONS]       = {"cons", 2},
 	[S_CAR]        = {"car", 1},
 	[S_CDR]        = {"cdr", 1},
@@ -298,41 +298,28 @@ bool expression_eq(struct Expression lhs, struct Expression rhs) {
 	}
 }
 
-bool expression_callable(struct Expression expr) {
+bool expression_arity(Arity *out, struct Expression expr) {
 	switch (expr.type) {
 	case E_STDMACRO:
+		*out = stdmacro_name_arity[expr.stdmacro].arity;
+		return true;
 	case E_STDPROCEDURE:
+		*out = stdproc_name_arity[expr.stdproc].arity;
+		return true;
 	case E_MACRO:
 	case E_PROCEDURE:
+		*out = expr.box->arity;
 		return true;
 	default:
 		return false;
 	}
 }
 
-bool accepts_n_arguments(struct Expression expr, size_t n) {
-	// Get the sign-encoded arity.
-	Arity arity;
-	switch (expr.type) {
-	case E_STDMACRO:
-		arity = stdmacro_name_arity[expr.stdmacro].arity;
-		break;
-	case E_STDPROCEDURE:
-		arity = stdproc_name_arity[expr.stdproc].arity;
-		break;
-	case E_MACRO:
-	case E_PROCEDURE:
-		arity = expr.box->arity;
-		break;
-	default:
-		return false;
-	}
-
-	// Compare the number of arguments with the arity.
+bool matches_arity(size_t n_args, Arity arity) {
 	if (arity < 0) {
-		return n >= (size_t)ATLEAST(arity);
+		return n_args >= (size_t)ATLEAST(arity);
 	}
-	return n == (size_t)arity;
+	return n_args == (size_t)arity;
 }
 
 // Prints a pair to the 'stream', assuming the left parenthesis has already been
