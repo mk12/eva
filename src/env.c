@@ -57,7 +57,7 @@ struct Environment *new_environment(
 	return env;
 }
 
-void dealloc_environment(struct Environment *env) {
+static void dealloc_environment(struct Environment *env) {
 	for (size_t i = 0; i < env->size; i++) {
 		size_t len = env->table[i].len;
 		struct Entry *ents = env->table[i].entries;
@@ -119,7 +119,7 @@ static void bind_unchecked(
 		bucket->entries = malloc(bucket->cap * sizeof *bucket->entries);
 	} else {
 		// Check if the variable is already bound.
-		for (int i = 0; i < bucket->len; i++) {
+		for (size_t i = 0; i < bucket->len; i++) {
 			if (bucket->entries[i].key == key) {
 				release_expression(bucket->entries[i].expr);
 				bucket->entries[i].expr = retain_expression(expr);
