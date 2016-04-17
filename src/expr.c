@@ -2,6 +2,8 @@
 
 #include "expr.h"
 
+#include "env.h"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,9 +91,21 @@ const char *expression_type_name(enum ExpressionType type) {
 	return expr_type_names[type];
 }
 
-struct Environment *standard_environment(void) {
-	// TODO
-	return NULL;
+struct Environment *new_standard_environment(void) {
+	struct Environment *env = new_base_environment();
+	// Bind standard macros.
+	for (int i = 0; i < N_STANDARD_MACROS; i++) {
+		InternId id = intern_string(stdmacro_name_arity[i].name);
+		bind(env, id, new_stdmacro((enum StandardMacro)i));
+	}
+	// Bind standard procedures.
+	for (int i = 0; i < N_STANDARD_PROCEDURES; i++) {
+		InternId id = intern_string(stdproc_name_arity[i].name);
+		bind(env, id, new_stdprocedure((enum StandardProcedure)i));
+	}
+	// Bind "else" to true (used in 'cond').
+	bind(env, intern_string("else"), new_boolean(true));
+	return env;
 }
 
 struct Expression new_null(void) {
@@ -238,12 +252,13 @@ void release_expression(struct Expression expr) {
 	case E_PAIR:
 	case E_MACRO:
 	case E_PROCEDURE:
+		assert(expr.box->ref_count > 0);
 		expr.box->ref_count--;
 #if REF_COUNT_LOGGING
 		total_ref_count--;
 		log_ref_count("release", expr);
 #endif
-		if (expr.box->ref_count <= 0) {
+		if (expr.box->ref_count == 0) {
 			dealloc_expression(expr);
 		}
 		break;

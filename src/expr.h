@@ -120,9 +120,9 @@ struct Box {
 // will return the same names as E_MACRO and E_PROCDURE, respectively.
 const char *expression_type_name(enum ExpressionType type);
 
-// Returns a single-frame environment containing mappings for all standard
-// macros and standard procedures.
-struct Environment *standard_environment(void);
+// Returns a base environment containing mappings for all standard macros, all
+// standard procedures, and the symbol "else".
+struct Environment *new_standard_environment(void);
 
 // Constructors for immediate expressions.
 struct Expression new_null(void);
