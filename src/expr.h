@@ -28,10 +28,10 @@ enum ExpressionType {
 
 // Standard macros, also called special forms, are syntactical forms built into
 // the language that require special evaluation rules.
-#define N_STANDARD_MACROS 17
+#define N_STANDARD_MACROS 15
 enum StandardMacro {
 	// Definition and mutation
-	F_DEFINE, F_SET, F_SET_CAR, F_SET_CDR,
+	F_DEFINE, F_SET,
 	// Abstraction
 	F_LAMBDA, F_BEGIN,
 	// Quotation
@@ -45,7 +45,7 @@ enum StandardMacro {
 };
 
 // Standard procedures are procedures implemented by the interpreter.
-#define N_STANDARD_PROCEDURES 29
+#define N_STANDARD_PROCEDURES 31
 enum StandardProcedure {
 	// Eval and apply
 	S_EVAL, S_APPLY,
@@ -61,8 +61,8 @@ enum StandardProcedure {
 	S_ADD, S_SUB, S_MUL, S_DIV, S_REM, S_MOD, S_EXPT,
 	// Boolean negation
 	S_NOT,
-	// Pair constructor and accessors
-	S_CONS, S_CAR, S_CDR,
+	// Pair constructor, accessors, and mutators
+	S_CONS, S_CAR, S_CDR, S_SET_CAR, S_SET_CDR,
 	// Reading and writing
 	S_READ, S_WRITE
 };

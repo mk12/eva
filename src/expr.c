@@ -41,8 +41,6 @@ static const char *const expr_type_names[N_EXPRESSION_TYPES] = {
 static const struct NameArity stdmacro_name_arity[N_STANDARD_MACROS] = {
 	[F_DEFINE]           = {"define", 2},
 	[F_SET]              = {"set!", 2},
-	[F_SET_CAR]          = {"set-car!", 2},
-	[F_SET_CDR]          = {"set-cdr!", 2},
 	[F_LAMBDA]           = {"lambda", ATLEAST(2)},
 	[F_BEGIN]            = {"begin", ATLEAST(1)},
 	[F_QUOTE]            = {"quote", 1},
@@ -87,6 +85,8 @@ static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_CONS]       = {"cons", 2},
 	[S_CAR]        = {"car", 1},
 	[S_CDR]        = {"cdr", 1},
+	[F_SET_CAR]    = {"set-car!", 2},
+	[F_SET_CDR]    = {"set-cdr!", 2},
 	[S_READ]       = {"read", 0},
 	[S_WRITE]      = {"write", 1}
 };
