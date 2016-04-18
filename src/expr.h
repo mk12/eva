@@ -16,7 +16,7 @@ enum ExpressionType {
 	// Immediate expressions
 	E_NULL,         // empty list
 	E_SYMBOL,       // interned string
-	E_NUMBER,       // 64-bit signed integer
+	E_NUMBER,       // signed integer
 	E_BOOLEAN,      // #t and #f
 	E_STDMACRO,     // standard macro (special form)
 	E_STDPROCEDURE, // standard procedure
@@ -28,10 +28,10 @@ enum ExpressionType {
 
 // Standard macros, also called special forms, are syntactical forms built into
 // the language that require special evaluation rules.
-#define N_STANDARD_MACROS 15
+#define N_STANDARD_MACROS 17
 enum StandardMacro {
-	// Definitions
-	F_DEFINE, F_SET_BANG,
+	// Definition and mutation
+	F_DEFINE, F_SET, F_SET_CAR, F_SET_CDR,
 	// Abstraction
 	F_LAMBDA, F_BEGIN,
 	// Quotation
@@ -67,6 +67,9 @@ enum StandardProcedure {
 	S_READ, S_WRITE
 };
 
+// Number expressions are internally represented with long integers.
+typedef long Number;
+
 // Expression is the algebraic data type used for all values in Eva. Code and
 // data are both represented as expressions. Six types of expressions fit in
 // immediate values; the other three are stored in boxes.
@@ -74,7 +77,7 @@ struct Expression {
 	enum ExpressionType type;
 	union {
 		InternId symbol_id;
-		long number;
+		Number number;
 		bool boolean;
 		enum StandardMacro stdmacro;
 		enum StandardProcedure stdproc;
@@ -127,20 +130,21 @@ struct Environment *new_standard_environment(void);
 // Constructors for immediate expressions.
 struct Expression new_null(void);
 struct Expression new_symbol(InternId symbol_id);
-struct Expression new_number(long number);
+struct Expression new_number(Number number);
 struct Expression new_boolean(bool boolean);
 struct Expression new_stdmacro(enum StandardMacro stdmacro);
 struct Expression new_stdprocedure(enum StandardProcedure stdproc);
 
 // Creates a new pair. Sets the reference count of the box to 1. Takes owernship
-// of 'car' and 'cdr' without retaining.
+// of 'car' and 'cdr' without retaining them.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
 
 // Creates a new macro based on an existing procedure. Retains the box.
 struct Expression new_macro(struct Expression *procedure);
 
 // Creates a new procedure. Sets the reference count of the box to 1. Takes
-// ownership of 'params' and 'body' without copying or retaining. Retains 'env'.
+// ownership of 'params' and 'body' without copying or retaining them. Retains
+// the lexical environment 'env'.
 struct Expression new_procedure(
 		Arity arity,
 		InternId *params,

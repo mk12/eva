@@ -40,7 +40,9 @@ static const char *const expr_type_names[N_EXPRESSION_TYPES] = {
 // Names and arities of standard macros.
 static const struct NameArity stdmacro_name_arity[N_STANDARD_MACROS] = {
 	[F_DEFINE]           = {"define", 2},
-	[F_SET_BANG]         = {"set!", 2},
+	[F_SET]              = {"set!", 2},
+	[F_SET_CAR]          = {"set-car!", 2},
+	[F_SET_CDR]          = {"set-cdr!", 2},
 	[F_LAMBDA]           = {"lambda", ATLEAST(2)},
 	[F_BEGIN]            = {"begin", ATLEAST(1)},
 	[F_QUOTE]            = {"quote", 1},
@@ -118,7 +120,7 @@ struct Expression new_symbol(InternId symbol_id) {
 	return (struct Expression){ .type = E_SYMBOL, .symbol_id = symbol_id };
 }
 
-struct Expression new_number(long number) {
+struct Expression new_number(Number number) {
 	return (struct Expression){ .type = E_NUMBER, .number = number };
 }
 
