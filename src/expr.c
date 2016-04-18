@@ -184,6 +184,10 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	return expr;
 }
 
+struct Expression new_macro(struct Expression procedure) {
+	return (struct Expression){ .type = E_MACRO, .box = procedure.box };
+}
+
 struct Expression new_procedure(
 		Arity arity,
 		InternId *params,

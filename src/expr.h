@@ -139,8 +139,9 @@ struct Expression new_stdprocedure(enum StandardProcedure stdproc);
 // of 'car' and 'cdr' without retaining them.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
 
-// Creates a new macro based on an existing procedure. Retains the box.
-struct Expression new_macro(struct Expression *procedure);
+// Creates a new macro based on an existing procedure. Takes ownership of the
+// procedure without retaining it.
+struct Expression new_macro(struct Expression procedure);
 
 // Creates a new procedure. Sets the reference count of the box to 1. Takes
 // ownership of 'params' and 'body' without copying or retaining them. Retains
