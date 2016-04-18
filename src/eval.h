@@ -14,11 +14,8 @@ struct EvalResult {
 	struct EvalError *err;
 };
 
-// This should be called once at the beginning of the program.
-void setup_eval(void);
-
 // Evaluates a top-level expression in the environment 'env'. On success,
 // returns a new expression. Otherwise, allocates and returns an error.
 struct EvalResult eval_top(struct Expression expr, struct Environment *env);
 
-#endiu
+#endif
