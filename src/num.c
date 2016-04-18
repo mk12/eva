@@ -125,7 +125,7 @@ struct Expression num_mod(struct Expression *args, size_t n) {
 struct Expression num_expt(struct Expression *args, size_t n) {
 	(void)n;
 	Number base = args[0].number;
-	Number expt = agrs[1].number;
+	Number expt = args[1].number;
 	if (expt < 0) {
 		return new_number(0);
 	}
