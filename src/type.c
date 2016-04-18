@@ -85,11 +85,8 @@ static struct EvalError *check_stdproc(
 			return new_syntax_error(args[n-1]);
 		}
 		size_t n_args = length + n - 2;
-		if (!matches_arity(n_args, arity)) {
-			struct EvalError *err = new_eval_error(ERR_ARITY);
-			err->arity = arity;
-			err->n_args = n_args;
-			return err;
+		if (!arity_allows(arity, n_args)) {
+			return new_arity_error(arity, n_args);
 		}
 		break;
 	case S_MACRO:
