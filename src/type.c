@@ -14,7 +14,7 @@ static struct EvalError *check_stdmacro(
 
 	switch (stdmacro) {
 	case F_DEFINE:
-	case F_SET_BANG:
+	case F_SET:
 		if (args[0].type != E_SYMBOL) {
 			return new_eval_error_expr(ERR_TYPE_VAR, args[0]);
 		}
@@ -104,6 +104,7 @@ static struct EvalError *check_stdproc(
 	case S_ADD:
 	case S_SUB:
 	case S_MUL:
+	case S_EXPT:
 		for (size_t i = 0; i < n; i++) {
 			if (args[i].type != E_NUMBER) {
 				return new_type_error(E_NUMBER, args, i);
@@ -112,6 +113,7 @@ static struct EvalError *check_stdproc(
 		break;
 	case S_DIV:
 	case S_REM:
+	case S_MOD:
 		for (size_t i = 0; i < n; i++) {
 			if (args[i].type != E_NUMBER) {
 				return new_type_error(E_NUMBER, args, i);
@@ -123,15 +125,17 @@ static struct EvalError *check_stdproc(
 			}
 		}
 		break;
-	case S_CAR:
-	case S_CDR:
-		if (args[0].type != E_PAIR) {
-			return new_type_error(E_PAIR, args, 0);
-		}
-		break;
 	case S_NOT:
 		if (args[0].type != E_BOOLEAN) {
 			return new_type_error(E_BOOLEAN, args, 0);
+		}
+		break;
+	case S_CAR:
+	case S_CDR:
+	case S_SET_CAR:
+	case S_SET_CDR:
+		if (args[0].type != E_PAIR) {
+			return new_type_error(E_PAIR, args, 0);
 		}
 		break;
 	default:
