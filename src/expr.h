@@ -171,8 +171,8 @@ bool expression_eq(struct Expression lhs, struct Expression rhs);
 // E_MACRO, and E_PROCEDURE are callable.
 bool expression_arity(Arity *out, struct Expression expr);
 
-// Returns true if 'n_args' arguments are allowed for the given arity.
-bool matches_arity(size_t n_args, Arity arity);
+// Returns true if the given arity accepts 'n_args' arguments.
+bool arity_allows(Arity arity, size_t n_args);
 
 // Prints the expression to 'stream' (not followed by a newline).
 void print_expression(struct Expression expr, FILE *stream);

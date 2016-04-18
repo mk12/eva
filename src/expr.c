@@ -323,7 +323,7 @@ bool expression_arity(Arity *out, struct Expression expr) {
 	}
 }
 
-bool matches_arity(size_t n_args, Arity arity) {
+bool arity_allows(Arity arity, size_t n_args) {
 	if (arity < 0) {
 		return n_args >= (size_t)ATLEAST(arity);
 	}
