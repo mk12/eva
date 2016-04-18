@@ -17,6 +17,11 @@
 // Function prototypes.
 static struct EvalResult eval(
 		struct Expression expr, struct Environment *env, bool allow_define);
+static struct EvalResult apply(
+		struct Expression expr,
+		struct Expression *args,
+		size_t n,
+		struct Environment *env);
 
 struct EvalResult eval_top(struct Expression expr, struct Environment *env) {
 	return eval(expr, env, true);
@@ -53,9 +58,11 @@ static struct EvalResult apply_stdprocedure(
 	case S_EVAL:
 		result = eval(args[0], env, false);
 		break;
-	case S_APPLY:
-		// TODO: implement S_APPLY
-		result.expr = new_boolean(true);
+	case S_APPLY:;
+		struct ArrayResult more = list_to_array(args[n-1], false);
+		// TOOD: args[1], args[2] ... args[n-2] come before
+		assert(more.exprs != NULL);
+		result = apply(args[0], more.exprs, more.size, env);
 		break;
 	case S_READ:;
 		struct ParseError *parse_err = read_sexpr(&result.expr);
@@ -76,7 +83,6 @@ static struct EvalResult apply_stdprocedure(
 // returns an evaluation error.
 static struct EvalResult apply(
 		struct Expression expr,
-		Arity arity,
 		struct Expression *args,
 		size_t n,
 		struct Environment *env) {
@@ -95,6 +101,7 @@ static struct EvalResult apply(
 		break;
 	case E_MACRO:
 	case E_PROCEDURE:;
+		Arity arity = expr.box->arity;
 		struct Environment *aug =
 				new_environment(expr.box->env, (size_t)abs(arity));
 		size_t limit = arity < 0 ? (size_t)ATLEAST(arity) : (size_t)arity;
@@ -177,7 +184,7 @@ static struct EvalResult eval_application(
 		}
 		// fall through
 	case E_MACRO:
-		result = apply(operator.expr, arity, args, n, env);
+		result = apply(operator.expr, args, n, env);
 		if (result.err) {
 			break;
 		}
@@ -191,7 +198,7 @@ static struct EvalResult eval_application(
 		if (result.err) {
 			break;
 		}
-		result = apply(operator.expr, arity, args, n, env);
+		result = apply(operator.expr, args, n, env);
 		release_in_place(args, n);
 		break;
 	default:
