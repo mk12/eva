@@ -6,6 +6,7 @@
 #include "list.h"
 
 #include <assert.h>
+#include <stddef.h>
 
 static struct EvalError *check_stdmacro(
 		enum StandardMacro stdmacro, struct Expression *args, size_t n) {
