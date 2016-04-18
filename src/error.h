@@ -85,6 +85,7 @@ struct EvalError *new_eval_error_symbol(
 		enum EvalErrorType type, InternId symbol_id);
 struct EvalError *new_eval_error_expr(
 		enum EvalErrorType type, struct Expression expr);
+struct EvalError *new_arity_error(Arity arity, size_t n_args);
 struct EvalError *new_syntax_error(struct Expression code);
 struct EvalError *new_type_error(
 		enum ExpressionType expected_type,

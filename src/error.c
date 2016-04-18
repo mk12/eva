@@ -68,6 +68,13 @@ struct EvalError *new_eval_error_expr(
 	return err;
 }
 
+struct EvalError *new_arity_error(Arity arity, size_t n_args) {
+	struct EvalError *err = new_eval_error(ERR_ARITY);
+	err->arity = arity;
+	err->n_args = n_args;
+	return err;
+}
+
 struct EvalError *new_syntax_error(struct Expression code) {
 	return attach_code(new_eval_error(ERR_SYNTAX), code);
 }
