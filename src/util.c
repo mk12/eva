@@ -2,8 +2,6 @@
 
 #include "util.h"
 
-#include "error.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,7 +11,7 @@ static void die(void) {
 	exit(2);
 }
 
-void *safe_malloc(size_t size) {
+void *xmalloc(size_t size) {
 	void *ptr = malloc(size);
 	if (!ptr && size != 0) {
 		die();
@@ -21,15 +19,15 @@ void *safe_malloc(size_t size) {
 	return ptr;
 }
 
-void *safe_calloc(size_t size) {
-	void *ptr = calloc(1, size);
+void *xcalloc(size_t count, size_t size) {
+	void *ptr = calloc(count, size);
 	if (!ptr && size != 0) {
 		die();
 	}
 	return ptr;
 }
 
-void *safe_realloc(void *ptr, size_t size) {
+void *xrealloc(void *ptr, size_t size) {
 	ptr = realloc(ptr, size);
 	if (!ptr && size != 0) {
 		die();
@@ -55,7 +53,7 @@ char *read_file(const char *filename) {
 		fclose(file);
 		return NULL;
 	}
-	char *buf = malloc((size_t)bufsize + 1);
+	char *buf = xmalloc((size_t)bufsize + 1);
 	size_t length = fread(result.buf, 1, (size_t)bufsize, file);
 	fclose(file);
 	if (length == 0) {

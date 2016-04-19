@@ -3,6 +3,7 @@
 #include "env.h"
 
 #include "intern.h"
+#include "util.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -37,23 +38,23 @@ struct Environment {
 };
 
 struct Environment *new_base_environment(void) {
-	struct Environment *env = malloc(sizeof *env);
+	struct Environment *env = xmalloc(sizeof *env);
 	env->ref_count = 1;
 	env->parent = NULL;
 	env->size = BASE_TABLE_SIZE;
 	env->total_entries = 0;
-	env->table = calloc(env->size, sizeof *env->table);
+	env->table = xcalloc(env->size, sizeof *env->table);
 	return env;
 }
 
 struct Environment *new_environment(
 		struct Environment *parent, size_t size_estimate) {
-	struct Environment *env = malloc(sizeof *env);
+	struct Environment *env = xmalloc(sizeof *env);
 	env->ref_count = 1;
 	env->parent = retain_environment(parent);
 	env->size = size_estimate * 2;
 	env->total_entries = 0;
-	env->table = calloc(env->size, sizeof *env->table);
+	env->table = xcalloc(env->size, sizeof *env->table);
 	return env;
 }
 
@@ -116,7 +117,7 @@ static void bind_unchecked(
 	if (!bucket->entries) {
 		// Initialize the bucket if it is empty.
 		bucket->cap = env->parent ? CHILD_BUCKET_SIZE : BASE_BUCKET_SIZE;
-		bucket->entries = malloc(bucket->cap * sizeof *bucket->entries);
+		bucket->entries = xmalloc(bucket->cap * sizeof *bucket->entries);
 	} else {
 		// Check if the variable is already bound.
 		for (size_t i = 0; i < bucket->len; i++) {
@@ -129,7 +130,7 @@ static void bind_unchecked(
 		// Grow the array if necessary.
 		if (bucket->len >= bucket->cap) {
 			bucket->cap *= 2;
-			bucket->entries = realloc(bucket->entries,
+			bucket->entries = xrealloc(bucket->entries,
 					bucket->cap * sizeof *bucket->entries);
 		}
 	}
@@ -148,7 +149,7 @@ void bind(struct Environment *env, InternId key, struct Expression expr) {
 		struct Bucket *old_table = env->table;
 		// Create a table with double the number of buckets.
 		env->size *= 2;
-		env->table = calloc(env->size, sizeof *env->table);
+		env->table = xcalloc(env->size, sizeof *env->table);
 		// Bind all the expressions into the new table.
 		for (size_t i = 0; i < old_size; i++) {
 			for (size_t j = 0; j < old_table[i].len; j++) {

@@ -2,6 +2,8 @@
 
 #include "error.h"
 
+#include "util.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -40,7 +42,7 @@ static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
 
 struct ParseError *new_parse_error(
 		enum ParseErrorType type, char *owned_text, size_t index) {
-	struct ParseError *err = malloc(sizeof *err);
+	struct ParseError *err = xmalloc(sizeof *err);
 	err->type = type;
 	err->owned_text = owned_text;
 	err->index = index;
@@ -48,7 +50,7 @@ struct ParseError *new_parse_error(
 }
 
 struct EvalError *new_eval_error(enum EvalErrorType type) {
-	struct EvalError *err = malloc(sizeof *err);
+	struct EvalError *err = xmalloc(sizeof *err);
 	err->type = type;
 	err->has_code = false;
 	return err;

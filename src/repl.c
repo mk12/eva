@@ -5,6 +5,7 @@
 #include "error.h"
 #include "eval.h"
 #include "parse.h"
+#include "util.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -61,7 +62,7 @@ struct ParseError *read_sexpr(struct Expression *out) {
 		add_history(line);
 		// Concatenate the line to the end of the buffer.
 		size_t line_length = strlen(line);
-		buf = realloc(buf, buf_length + line_length + 2);
+		buf = xrealloc(buf, buf_length + line_length + 2);
 		buf[buf_length] = '\n';
 		memcpy(buf + buf_length + 1, line, line_length);
 		free(line);
@@ -178,7 +179,7 @@ void repl(struct Environment *env, bool print) {
 					}
 					size_t line_length = strlen(line);
 					// Concatenate the line to the end of the buffer.
-					buf = realloc(buf, buf_length + line_length + 2);
+					buf = xrealloc(buf, buf_length + line_length + 2);
 					buf[buf_length] = '\n';
 					memcpy(buf + buf_length + 1, line, line_length);
 					free(line);

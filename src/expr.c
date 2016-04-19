@@ -3,6 +3,7 @@
 #include "expr.h"
 
 #include "env.h"
+#include "util.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -171,7 +172,7 @@ static void log_ref_count(const char *action, struct Expression expr) {
 #endif
 
 struct Expression new_pair(struct Expression car, struct Expression cdr) {
-	struct Box *box = malloc(sizeof *box);
+	struct Box *box = xmalloc(sizeof *box);
 	box->ref_count = 1;
 	box->car = car;
 	box->cdr = cdr;
@@ -193,7 +194,7 @@ struct Expression new_procedure(
 		InternId *params,
 		struct Expression body,
 		struct Environment *env) {
-	struct Box *box = malloc(sizeof *box);
+	struct Box *box = xmalloc(sizeof *box);
 	box->ref_count = 1;
 	box->arity = arity;
 	box->params = params;

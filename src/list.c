@@ -2,6 +2,8 @@
 
 #include "list.h"
 
+#include "util.h"
+
 #include <stdlib.h>
 
 bool well_formed_list(struct Expression expr) {
@@ -55,7 +57,7 @@ struct ArrayResult list_to_array(struct Expression list, bool improper) {
 	}
 
 	// Allocate the array.
-	result.exprs = malloc(result.size * sizeof *result.exprs);
+	result.exprs = xmalloc(result.size * sizeof *result.exprs);
 	// Return to the beginning and copy the expressions to the array.
 	expr = list;
 	for (size_t i = 0; i < result.size; i++) {

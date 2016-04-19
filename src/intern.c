@@ -2,6 +2,8 @@
 
 #include "intern.h"
 
+#include "util.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -44,7 +46,7 @@ InternId intern_string_n(const char *str, size_t n) {
 	if (!bucket->strings) {
 		bucket->cap = DEFAULT_BUCKET_CAP;
 		bucket->len = 0;
-		bucket->strings = malloc(DEFAULT_BUCKET_CAP * sizeof *bucket->strings);
+		bucket->strings = xmalloc(DEFAULT_BUCKET_CAP * sizeof *bucket->strings);
 	}
 
 	// Check if the same string has already been interned.
@@ -57,12 +59,12 @@ InternId intern_string_n(const char *str, size_t n) {
 	// Double the array's capacity if necessary.
 	if (bucket->len >= bucket->cap) {
 		bucket->cap *= 2;
-		bucket->strings = realloc(bucket->strings,
+		bucket->strings = xrealloc(bucket->strings,
 				bucket->cap * sizeof *bucket->strings);
 	}
 
 	// Copy the string and add a null terminator.
-	char *new_str = malloc(n + 1);
+	char *new_str = xmalloc(n + 1);
 	strncpy(new_str, str, n);
 	new_str[n] = '\0';
 	// Add the string to the bucket.
