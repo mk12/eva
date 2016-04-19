@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 // Prints the errno message to standard error and exits with exit status 2.
-static void die(void) {
+static void die(void) __attribute__((noreturn)) {
 	perror("FATAL");
 	exit(2);
 }
@@ -54,7 +54,7 @@ char *read_file(const char *filename) {
 		return NULL;
 	}
 	char *buf = xmalloc((size_t)bufsize + 1);
-	size_t length = fread(result.buf, 1, (size_t)bufsize, file);
+	size_t length = fread(buf, 1, (size_t)bufsize, file);
 	fclose(file);
 	if (length == 0) {
 		free(buf);

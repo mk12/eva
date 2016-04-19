@@ -3,6 +3,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <stddef.h>
+
 // Wrappers around standard memory allocation functions. If allocation fails,
 // they print an error message and exit with exit status 2.
 void *xmalloc(size_t size);
