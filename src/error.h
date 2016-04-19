@@ -6,6 +6,7 @@
 #include "expr.h"
 #include "intern.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
 // Filename to use when input is from standard input.

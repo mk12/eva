@@ -5,6 +5,8 @@
 
 #include "expr.h"
 
+#include <stdbool.h>
+
 // ArrayResult contains the result of converting an s-expression list to an
 // array of expressions. The 'exprs' field is NULL if the list was improper and
 // improper lists were not desired.

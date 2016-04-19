@@ -2,6 +2,7 @@
 
 #include "impl.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
 // An Implementation is a function that implements a standard procedure.
