@@ -4,9 +4,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Prints the errno message to standard error and exits with exit status 2.
-static void die(void) __attribute__((noreturn)) {
+static void die(void) __attribute__((noreturn));
+static void die(void) {
 	perror("FATAL");
 	exit(2);
 }
@@ -33,6 +35,13 @@ void *xrealloc(void *ptr, size_t size) {
 		die();
 	}
 	return ptr;
+}
+
+bool is_opt(const char *arg, char short_opt, const char *long_opt) {
+	size_t len = strlen(arg);
+	return len >= 2 && arg[0] == '-'
+		&& ((arg[1] == short_opt && arg[2] == '\0')
+				|| (arg[1] == '-' && strcmp(arg + 2, long_opt) == 0));
 }
 
 char *read_file(const char *filename) {
