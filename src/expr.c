@@ -370,7 +370,7 @@ void print_expression(struct Expression expr, FILE *stream) {
 		break;
 	case E_STDMACRO:
 		fprintf(stream, "#<macro %s>",
-				stdproc_name_arity[expr.stdproc].name);
+				stdmacro_name_arity[expr.stdproc].name);
 		break;
 	case E_STDPROCEDURE:
 		fprintf(stream, "#<procedure %s>",
