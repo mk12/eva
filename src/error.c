@@ -27,12 +27,12 @@ static const char *const parse_error_messages[N_PARSE_ERROR_TYPES] = {
 
 // Strings to use for evaluation error types.
 static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
-	[ERR_ARITY]          = "",
+	[ERR_ARITY]          = NULL,
 	[ERR_DEFINE]         = "invalid use of 'define'",
 	[ERR_DIV_ZERO]       = "division by zero",
 	[ERR_DUP_PARAM]      = "duplicate parameter '%s'",
 	[ERR_NON_EXHAUSTIVE] = "non-exhaustive 'cond'",
-	[ERR_READ]           = "",
+	[ERR_READ]           = NULL,
 	[ERR_SYNTAX]         = "invalid syntax",
 	[ERR_TYPE_OPERAND]   = "(argument %zu) expected %s, got %s",
 	[ERR_TYPE_OPERATOR]  = "(operator) expected %s or %s, got %s",
