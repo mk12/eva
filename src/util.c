@@ -38,9 +38,8 @@ void *xrealloc(void *ptr, size_t size) {
 }
 
 bool is_opt(const char *arg, char short_opt, const char *long_opt) {
-	size_t len = strlen(arg);
-	return len >= 2 && arg[0] == '-'
-		&& ((arg[1] == short_opt && arg[2] == '\0')
+	return strlen(arg) >= 2 && arg[0] == '-'
+			&& ((arg[1] == short_opt && arg[2] == '\0')
 				|| (arg[1] == '-' && strcmp(arg + 2, long_opt) == 0));
 }
 
