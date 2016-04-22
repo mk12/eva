@@ -16,6 +16,9 @@ const char *const stdin_filename = "<stdin>";
 // Prefix to use for all error messages.
 static const char *const prefix = "ERROR: ";
 
+// Identation used to align with text after "eva> " prompt.
+static const char *const indentation = "     ";
+
 // Strings to use for parse error types.
 static const char *const parse_error_messages[N_PARSE_ERROR_TYPES] = {
 	[ERR_EXPECTED_RPAREN]   = "expected character ')'",
@@ -151,9 +154,11 @@ void print_parse_error(const char *filename, const struct ParseError *err) {
 	}
 
 	// Print the file information, error message, and the line of code.
-	fprintf(stderr, "%s%s:%zu:%zu: %s\n%.*s\n%*s^\n",
+	fprintf(stderr, "%s%s:%zu:%zu: %s\n%s%.*s\n%s%*s^\n",
 			prefix, filename, row, col, parse_error_messages[err->type],
+			indentation,
 			(int)(end - start), err->text + start,
+			indentation,
 			(int)(err->index - start), "");
 }
 
@@ -215,12 +220,13 @@ void print_eval_error(const struct EvalError *err) {
 	case ERR_TYPE_OPERAND:
 	case ERR_TYPE_OPERATOR:
 	case ERR_TYPE_VAR:
-		fputs("    ", stderr);
+		fputs(indentation, stderr);
 		print_expression(err->expr, stderr);
 		putc('\n', stderr);
 		// fall through
 	default:
-		fputs("  in expression:\n    ", stderr);
+		fputs("  in expression:\n", stderr);
+		fputs(indentation, stderr);
 		print_expression(err->code, stderr);
 		putc('\n', stderr);
 		break;
