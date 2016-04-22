@@ -335,21 +335,21 @@ bool arity_allows(Arity arity, size_t n_args) {
 // printed. Uses standard Lisp s-expression notation.
 static void print_pair(struct Box *box, bool first, FILE *stream) {
 	if (!first) {
-		putchar(' ');
+		putc(' ', stream);
 	}
 	print_expression(box->car, stream);
 	switch (box->cdr.type) {
 	case E_NULL:
-		putchar(')');
+		putc(')', stream);
 		break;
 	case E_PAIR:
 		print_pair(box->cdr.box, false, stream);
 		break;
 	default:
 		// Print a dot before the last cdr if it is not null.
-		fputs(" . ", stdout);
+		fputs(" . ", stream);
 		print_expression(box->cdr, stream);
-		putchar(')');
+		putc(')', stream);
 		break;
 	}
 }
