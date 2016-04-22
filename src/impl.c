@@ -96,7 +96,7 @@ static struct Expression sub(struct Expression *args, size_t n) {
 }
 
 static struct Expression mul(struct Expression *args, size_t n) {
-	Number result = 0;
+	Number result = 1;
 	for (size_t i = 0; i < n; i++) {
 		result *= args[i].number;
 	}
