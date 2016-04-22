@@ -21,26 +21,26 @@ static const char *const indentation = "     ";
 
 // Strings to use for parse error types.
 static const char *const parse_error_messages[N_PARSE_ERROR_TYPES] = {
-	[ERR_EXPECTED_RPAREN]   = "expected character ')'",
-	[ERR_INVALID_DOT]       = "improperly placed dot",
-	[ERR_INVALID_LITERAL]   = "invalid hash literal",
-	[ERR_UNEXPECTED_EOI]    = "unexpected end of input",
-	[ERR_UNEXPECTED_RPAREN] = "unexpected character ')'"
+	[ERR_EXPECTED_RPAREN]   = "Expected character ')'",
+	[ERR_INVALID_DOT]       = "Improperly placed dot",
+	[ERR_INVALID_LITERAL]   = "Invalid hash literal",
+	[ERR_UNEXPECTED_EOI]    = "Unexpected end of input",
+	[ERR_UNEXPECTED_RPAREN] = "Unexpected character ')'"
 };
 
 // Strings to use for evaluation error types.
 static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
 	[ERR_ARITY]          = NULL,
-	[ERR_DEFINE]         = "invalid use of 'define'",
-	[ERR_DIV_ZERO]       = "division by zero",
-	[ERR_DUP_PARAM]      = "duplicate parameter '%s'",
-	[ERR_NON_EXHAUSTIVE] = "non-exhaustive 'cond'",
+	[ERR_DEFINE]         = "Invalid use of 'define'",
+	[ERR_DIV_ZERO]       = "Division by zero",
+	[ERR_DUP_PARAM]      = "Duplicate parameter '%s'",
+	[ERR_NON_EXHAUSTIVE] = "Non-exhaustive 'cond'",
 	[ERR_READ]           = NULL,
-	[ERR_SYNTAX]         = "invalid syntax",
-	[ERR_TYPE_OPERAND]   = "(argument %zu) expected %s, got %s",
-	[ERR_TYPE_OPERATOR]  = "(operator) expected %s or %s, got %s",
-	[ERR_TYPE_VAR]       = "(variable) expected %s, got %s",
-	[ERR_UNBOUND_VAR]    = "use of unbound variable '%s'"
+	[ERR_SYNTAX]         = "Invalid syntax",
+	[ERR_TYPE_OPERAND]   = "(Argument %zu) Expected %s, got %s",
+	[ERR_TYPE_OPERATOR]  = "(Operator) Expected %s or %s, got %s",
+	[ERR_TYPE_VAR]       = "(Variable) Expected %s, got %s",
+	[ERR_UNBOUND_VAR]    = "Use of unbound variable '%s'"
 };
 
 struct ParseError *new_parse_error(
@@ -201,12 +201,12 @@ void print_eval_error(const struct EvalError *err) {
 	case ERR_ARITY:
 		assert(err->arity != 0);
 		if (err->arity >= 0) {
-			fprintf(stderr, "expected %d argument%s, got %zu",
+			fprintf(stderr, "Expected %d argument%s, got %zu",
 					err->arity,
 					err->arity == 1 ? "" : "s",
 					err->n_args);
 		} else {
-			fprintf(stderr, "expected at least %d argument%s, got %zu",
+			fprintf(stderr, "Expected at least %d argument%s, got %zu",
 					ATLEAST(err->arity),
 					err->arity == -2 ? "" : "s",
 					err->n_args);
