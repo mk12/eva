@@ -37,9 +37,9 @@ static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
 	[ERR_NON_EXHAUSTIVE] = "Non-exhaustive 'cond'",
 	[ERR_READ]           = NULL,
 	[ERR_SYNTAX]         = "Invalid syntax",
-	[ERR_TYPE_OPERAND]   = "(Argument %zu) Expected %s, got %s",
-	[ERR_TYPE_OPERATOR]  = "(Operator) Expected %s or %s, got %s",
-	[ERR_TYPE_VAR]       = "(Variable) Expected %s, got %s",
+	[ERR_TYPE_OPERAND]   = "Argument %zu: Expected %s, got %s: ",
+	[ERR_TYPE_OPERATOR]  = "Operator: Expected %s or %s, got %s: ",
+	[ERR_TYPE_VAR]       = "Variable: Expected %s, got %s: ",
 	[ERR_UNBOUND_VAR]    = "Use of unbound variable '%s'"
 };
 
@@ -213,19 +213,16 @@ void print_eval_error(const struct EvalError *err) {
 		}
 		break;
 	}
-	putc('\n', stderr);
 
 	// Print the context of the error.
 	switch (err->type) {
 	case ERR_TYPE_OPERAND:
 	case ERR_TYPE_OPERATOR:
 	case ERR_TYPE_VAR:
-		fputs(indentation, stderr);
 		print_expression(err->expr, stderr);
-		putc('\n', stderr);
 		// fall through
 	default:
-		fputs("  in expression:\n", stderr);
+		putc('\n', stderr);
 		fputs(indentation, stderr);
 		print_expression(err->code, stderr);
 		putc('\n', stderr);
