@@ -144,7 +144,7 @@ void print_parse_error(const char *filename, const struct ParseError *err) {
 	// Find the row (line number) and column.
 	size_t row = 1;
 	size_t col = err->index - start + 1;
-	for (size_t i = 0; i < start - 1; i++) {
+	for (size_t i = start; i-- > 0;) {
 		if (err->text[i] == '\n') {
 			row++;
 		}
