@@ -116,7 +116,7 @@ static struct ParseResult parse_pair(const char *text) {
 	} else {
 		struct ParseResult rest = parse_pair(s);
 		s += rest.chars_read;
-		if (rest.err_type) {
+		if (rest.err_type != -1) {
 			result.err_type = rest.err_type;
 			release_expression(first.expr);
 			goto chars_read;
