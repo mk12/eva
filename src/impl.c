@@ -24,7 +24,7 @@ static struct Expression num_eq(struct Expression *args, size_t n) {
 	}
 	bool result = true;
 	for (size_t i = 1; i < n; i++) {
-		if (!(args[i].number == args[i-1].number)) {
+		if (!(args[i-1].number == args[i].number)) {
 			result = false;
 			break;
 		}
@@ -33,12 +33,9 @@ static struct Expression num_eq(struct Expression *args, size_t n) {
 }
 
 static struct Expression num_lt(struct Expression *args, size_t n) {
-	if (n <= 1) {
-		return new_boolean(true);
-	}
 	bool result = true;
 	for (size_t i = 1; i < n; i++) {
-		if (!(args[i].number < args[i-1].number)) {
+		if (!(args[i-1].number < args[i].number)) {
 			result = false;
 			break;
 		}
@@ -47,12 +44,9 @@ static struct Expression num_lt(struct Expression *args, size_t n) {
 }
 
 static struct Expression num_gt(struct Expression *args, size_t n) {
-	if (n <= 1) {
-		return new_boolean(true);
-	}
 	bool result = true;
 	for (size_t i = 1; i < n; i++) {
-		if (!(args[i].number > args[i-1].number)) {
+		if (!(args[i-1].number > args[i].number)) {
 			result = false;
 			break;
 		}
@@ -61,12 +55,9 @@ static struct Expression num_gt(struct Expression *args, size_t n) {
 }
 
 static struct Expression num_le(struct Expression *args, size_t n) {
-	if (n <= 1) {
-		return new_boolean(true);
-	}
 	bool result = true;
 	for (size_t i = 1; i < n; i++) {
-		if (!(args[i].number <= args[i-1].number)) {
+		if (!(args[i-1].number <= args[i].number)) {
 			result = false;
 			break;
 		}
@@ -75,12 +66,9 @@ static struct Expression num_le(struct Expression *args, size_t n) {
 }
 
 static struct Expression num_ge(struct Expression *args, size_t n) {
-	if (n <= 1) {
-		return new_boolean(true);
-	}
 	bool result = true;
 	for (size_t i = 1; i < n; i++) {
-		if (!(args[i].number >= args[i-1].number)) {
+		if (!(args[i-1].number >= args[i].number)) {
 			result = false;
 			break;
 		}
