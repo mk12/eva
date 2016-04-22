@@ -8,8 +8,9 @@
 #include <stdbool.h>
 
 // ArrayResult contains the result of converting an s-expression list to an
-// array of expressions. The 'exprs' field is NULL if the list was improper and
-// improper lists were not desired.
+// array of expressions. For zero-length lists, 'size' is 0 and 'exprs' is NULL.
+// The 'exprs' field does not have a meaninful value if 'improper' is true but
+// the second argument in 'list_to_array' was false.
 struct ArrayResult {
 	bool improper;            // whether the list was improper
 	size_t size;              // number of expressions in the array
@@ -26,7 +27,7 @@ bool count_list(size_t *out, struct Expression expr);
 // Converts an s-expression list to a flat array of expressions. Copies elements
 // of the list directly to the new array, but does not alter reference counts.
 // If 'improper' is true, then improper lists (including single non-pair values)
-// are accepted. Otherwise, stores NULL in the 'exprs' field for improper lists.
+// are accepted in addition to proper lists.
 struct ArrayResult list_to_array(struct Expression list, bool improper);
 
 #endif

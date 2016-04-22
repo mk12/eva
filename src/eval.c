@@ -228,7 +228,7 @@ static struct EvalResult eval(
 	case E_PAIR:;
 		// Get the arguments.
 		struct ArrayResult args = list_to_array(expr.box->cdr, false);
-		if (!args.exprs) {
+		if (args.improper) {
 			result.err = new_syntax_error(expr);
 			break;
 		}

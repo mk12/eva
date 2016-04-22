@@ -35,16 +35,20 @@ struct ArrayResult list_to_array(struct Expression list, bool improper) {
 	result.improper = false;
 	result.exprs = NULL;
 
+	// Check the type of the outermost expression.
+	if (!improper && list.type != E_NULL && list.type != E_PAIR) {
+		result.improper = true;
+		return result;
+	}
 	// Count the number of elements in the list.
 	struct Expression expr = list;
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
+			result.improper = true;
 			if (improper) {
-				result.improper = true;
 				result.size++;
 				break;
 			} else {
-				// Improper list. Return NULL 'exprs'.
 				return result;
 			}
 		}
