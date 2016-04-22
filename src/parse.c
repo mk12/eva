@@ -136,6 +136,7 @@ struct ParseResult parse(const char *text) {
 	const char *s = text;
 	s += skip_whitespace(s);
 
+	size_t len;
 	switch (*s) {
 	case '\0':
 		result.err_type = ERR_UNEXPECTED_EOI;
@@ -152,10 +153,11 @@ struct ParseResult parse(const char *text) {
 		result.err_type = ERR_INVALID_DOT;
 		break;
 	case '#':
-		if (*(s + 1) == 't') {
+		len = skip_symbol(s + 1);
+		if (len == 1 && s[1] == 't') {
 			s += 2;
 			result.expr = new_boolean(true);
-		} else if (*(s + 1) == 'f') {
+		} else if (len == 1 && s[1] == 'f') {
 			s += 2;
 			result.expr = new_boolean(false);
 		} else {
@@ -163,7 +165,7 @@ struct ParseResult parse(const char *text) {
 		}
 		break;
 	default:;
-		size_t len = skip_symbol(s);
+		len = skip_symbol(s);
 		assert(len > 0);
 		int number;
 		if (parse_int(s, len, &number)) {
