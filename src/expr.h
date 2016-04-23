@@ -159,6 +159,9 @@ struct Expression retain_expression(struct Expression expr);
 // immediates. Deallocates the expression if the reference count reaches zero.
 void release_expression(struct Expression expr);
 
+// Returns true if the expression is "truthy" (anything except #f).
+bool expression_truthy(struct Expression expr);
+
 // Returns true if expressions 'lhs' and 'rhs' are identical in the sense of the
 // Scheme predicate "eq?". Immediate expressions (of the same type) are
 // identical if they represent the same value. Boxed expressions (of the same

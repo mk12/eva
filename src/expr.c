@@ -296,6 +296,10 @@ void release_expression(struct Expression expr) {
 	}
 }
 
+bool expression_truthy(struct Expression expr) {
+	return expr.type != E_BOOLEAN || expr.boolean;
+}
+
 bool expression_eq(struct Expression lhs, struct Expression rhs) {
 	// Check if they have the same type.
 	if (lhs.type != rhs.type) {
