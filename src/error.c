@@ -124,8 +124,8 @@ void free_eval_error(struct EvalError *err) {
 	free(err);
 }
 
-void print_error(const char *err_msg) {
-	fprintf(stderr, "%s: %s\n", prefix, err_msg);
+void print_error(const char *context, const char *err_msg) {
+	fprintf(stderr, "%s: %s: %s\n", prefix, context, err_msg);
 }
 
 void print_file_error(const char *filename) {

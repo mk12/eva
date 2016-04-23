@@ -104,7 +104,7 @@ void free_parse_error(struct ParseError *err);
 void free_eval_error(struct EvalError *err);
 
 // Prints a generic error message to standard error.
-void print_error(const char *err_msg);
+void print_error(const char *context, const char *err_msg);
 
 // Prints a file error to standard error based on the value of global 'errno'.
 void print_file_error(const char *filename);

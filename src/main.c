@@ -22,63 +22,55 @@
 // The usage message for the program.
 static const char *const usage_message = "usage: eva [file ...] [-e code]\n";
 
-int main(int argc, char **argv) {
-	// Check for the help flag.
+// Error message used when an option argument is missing.
+static const char *const err_opt_argument = "Option requires an argument";
+
+// Processes the command line arguments. Returns true on success.
+static bool process_args(int argc, char **argv, struct Environment *env) {
 	if (argc == 2 && is_opt(argv[1], 'h', "help")) {
 		fputs(usage_message, stdout);
-		return 0;
+		return true;
 	}
 
-	setup_readline();
-	struct Environment *env = new_standard_environment();
-	bool interactive = false;
-	bool error = false;
+	bool tty = isatty(0);
+	if (argc == 1) {
+		repl(env, tty);
+		return true;
+	}
 	for (int i = 1; i < argc; i++) {
-		// Check for the interactive flag.
-		if (strcmp(argv[i], "-") == 0 || is_opt(argv[i], 'i', "interactive")) {
-			interactive = true;
-			continue;
-		}
-		// Check for inline expressions to evaluate.
-		if (is_opt(argv[i], 'e', "expression")) {
+		if (strcmp(argv[i], "-") == 0) {
+			repl(env, tty);
+		} else if (is_opt(argv[i], 'e', "expression")) {
+			// Execute the next argument.
 			i++;
 			if (i == argc) {
-				fputs(usage_message, stderr);
-				error = true;
-				break;
+				print_error(argv[i-1], err_opt_argument);
+				return false;
 			}
 			if (!execute(argv_filename, argv[i], env, true)) {
-				error = true;
-				break;
+				return false;
 			}
-			continue;
-		}
-		// Assume the argument is a filename.
-		char *text = read_file(argv[i]);
-		if (!text) {
-			print_file_error(argv[i]);
-			error = true;
-			break;
-		}
-		bool success = execute(argv[i], text, env, false);
-		free(text);
-		if (!success) {
-			error = true;
-			break;
+		} else {
+			// Assume the argument is a filename.
+			char *text = read_file(argv[i]);
+			if (!text) {
+				print_file_error(argv[i]);
+				return false;
+			}
+			bool success = execute(argv[i], text, env, false);
+			free(text);
+			if (!success) {
+				return false;
+			}
 		}
 	}
-	if (error) {
-		release_environment(env);
-		return 1;
-	}
+	return true;
+}
 
-	// Start the REPL if interactive mode was requested, or the program was
-	// called with no arguments, or input is coming from a pipe (not a tty).
-	bool tty = isatty(0);
-	if (interactive || argc == 1 || !tty) {
-		repl(env, tty);
-	}
-
+int main(int argc, char **argv) {
+	setup_readline();
+	struct Environment *env = new_standard_environment();
+	bool success = process_args(argc, argv, env);
 	release_environment(env);
-	return 0;
+	return success ? 0 : 1;
 }
