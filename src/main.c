@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 				error = true;
 				break;
 			}
-			if (!execute(stdin_filename, argv[i], env, true)) {
+			if (!execute(argv_filename, argv[i], env, true)) {
 				error = true;
 				break;
 			}

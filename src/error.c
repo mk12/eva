@@ -11,6 +11,7 @@
 #include <string.h>
 
 // Extern constants.
+const char *const argv_filename = "<argv>";
 const char *const stdin_filename = "<stdin>";
 
 // Prefix to use for all error messages.

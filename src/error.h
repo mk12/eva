@@ -9,6 +9,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// Filename to use when input is from a command-line argument.
+extern const char *const argv_filename;
+
 // Filename to use when input is from standard input.
 extern const char *const stdin_filename;
 
