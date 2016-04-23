@@ -113,8 +113,8 @@ void print_file_error(const char *filename);
 // column, error message, and the problematic line of code.
 void print_parse_error(const char *filename, const struct ParseError *err);
 
-// Prints an evaluation error to standard error. Prints the error message and,
-// for certain error types, other information relevant to the error.
-void print_eval_error(const struct EvalError *err);
+// Prints an evaluation error to standard error. Prints the filename, error
+// message, and other information stored in the evaluation error.
+void print_eval_error(const char *filename, const struct EvalError *err);
 
 #endif
