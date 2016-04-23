@@ -8,11 +8,13 @@
 #include "list.h"
 #include "repl.h"
 #include "type.h"
+#include "util.h"
 
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Function prototypes.
 static struct EvalResult eval(
@@ -59,10 +61,22 @@ static struct EvalResult apply_stdprocedure(
 		result = eval(args[0], env, false);
 		break;
 	case S_APPLY:;
-		struct ArrayResult more = list_to_array(args[n-1], false);
-		// TOOD: args[1], args[2] ... args[n-2] come before
-		assert(more.exprs != NULL);
-		result = apply(args[0], more.exprs, more.size, env);
+		struct ArrayResult list_args = list_to_array(args[n-1], false);
+		assert(!list_args.improper);
+		if (n == 2) {
+			result = apply(args[0], list_args.exprs, list_args.size, env);
+		} else {
+			size_t before = n - 2;
+			size_t total = before + list_args.size;
+			struct Expression *full_args = xmalloc(total * sizeof *full_args);
+			memcpy(full_args,
+					args + 1, before * sizeof *full_args);
+			memcpy(full_args + before,
+					list_args.exprs, list_args.size * sizeof *full_args);
+			result = apply(args[0], full_args, total, env);
+			free(full_args);
+		}
+		free(list_args.exprs);
 		break;
 	case S_READ:;
 		struct ParseError *parse_err = read_sexpr(&result.expr);
@@ -106,9 +120,11 @@ static struct EvalResult apply(
 		struct Environment *aug =
 				new_environment(expr.box->env, (size_t)abs(arity));
 		size_t limit = arity < 0 ? (size_t)ATLEAST(arity) : (size_t)arity;
+		// Bind the formal parameters.
 		for (size_t i = 0; i < limit; i++) {
 			bind(aug, expr.box->params[i], args[i]);
 		}
+		// Collect extra arguments in a list.
 		if (arity < 0) {
 			struct Expression list = new_null();
 			for (size_t i = n; i-- > limit;) {
@@ -117,6 +133,7 @@ static struct EvalResult apply(
 			bind(aug, expr.box->params[limit], list);
 			release_expression(list);
 		}
+		// Evaluate the body.
 		result = eval(expr.box->body, aug, false);
 		release_environment(aug);
 		break;
