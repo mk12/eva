@@ -32,6 +32,7 @@ static const char *const expr_type_names[N_EXPRESSION_TYPES] = {
 	[E_NUMBER]       = "NUMBER",
 	[E_BOOLEAN]      = "BOOLEAN",
 	[E_STDMACRO]     = "MACRO",
+	[E_STDPROCMACRO] = "PROCEDURE",
 	[E_STDPROCEDURE] = "PROCEDURE",
 	[E_PAIR]         = "PAIR",
 	[E_MACRO]        = "MACRO",
@@ -185,8 +186,21 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	return expr;
 }
 
-struct Expression new_macro(struct Expression procedure) {
-	return (struct Expression){ .type = E_MACRO, .box = procedure.box };
+struct Expression new_macro(struct Expression expr) {
+	switch (expr.type) {
+	case E_STDPROCEDURE:
+		return (struct Expression){
+			.type = E_STDPROCMACRO,
+			.stdproc = expr.stdproc
+		};
+	case E_PROCEDURE:
+		return (struct Expression){
+			.type = E_MACRO,
+			.box = expr.box
+		};
+	default:
+		assert(false);
+	}
 }
 
 struct Expression new_procedure(
@@ -298,6 +312,7 @@ bool expression_eq(struct Expression lhs, struct Expression rhs) {
 		return lhs.boolean == rhs.boolean;
 	case E_STDMACRO:
 		return lhs.stdmacro == rhs.stdmacro;
+	case E_STDPROCMACRO:
 	case E_STDPROCEDURE:
 		return lhs.stdproc == rhs.stdproc;
 	case E_PAIR:
@@ -312,6 +327,7 @@ bool expression_arity(Arity *out, struct Expression expr) {
 	case E_STDMACRO:
 		*out = stdmacro_name_arity[expr.stdmacro].arity;
 		return true;
+	case E_STDPROCMACRO:
 	case E_STDPROCEDURE:
 		*out = stdproc_name_arity[expr.stdproc].arity;
 		return true;
@@ -371,6 +387,10 @@ void print_expression(struct Expression expr, FILE *stream) {
 	case E_STDMACRO:
 		fprintf(stream, "#<macro %s>",
 				stdmacro_name_arity[expr.stdmacro].name);
+		break;
+	case E_STDPROCMACRO:
+		fprintf(stream, "#<macro %s>",
+				stdproc_name_arity[expr.stdproc].name);
 		break;
 	case E_STDPROCEDURE:
 		fprintf(stream, "#<procedure %s>",

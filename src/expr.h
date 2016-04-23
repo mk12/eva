@@ -11,7 +11,7 @@
 struct Environment;
 
 // Types of expressions.
-#define N_EXPRESSION_TYPES 9
+#define N_EXPRESSION_TYPES 10
 enum ExpressionType {
 	// Immediate expressions
 	E_NULL,         // empty list
@@ -19,6 +19,7 @@ enum ExpressionType {
 	E_NUMBER,       // signed integer
 	E_BOOLEAN,      // #t and #f
 	E_STDMACRO,     // standard macro (special form)
+	E_STDPROCMACRO, // macro of standard procedure
 	E_STDPROCEDURE, // standard procedure
 	// Boxed expressions
 	E_PAIR,         // cons cell
@@ -71,7 +72,7 @@ enum StandardProcedure {
 typedef long Number;
 
 // Expression is the algebraic data type used for all values in Eva. Code and
-// data are both represented as expressions. Six types of expressions fit in
+// data are both represented as expressions. Seven types of expressions fit in
 // immediate values; the other three are stored in boxes.
 struct Expression {
 	enum ExpressionType type;
@@ -118,9 +119,7 @@ struct Box {
 	};
 };
 
-// Returns the name of the expression type in uppercase letters. This does not
-// distinguish standard and non-standard types, so E_STDMACRO and E_STDPROCEDURE
-// will return the same names as E_MACRO and E_PROCDURE, respectively.
+// Returns the user-facing name of the expression type in uppercase letters.
 const char *expression_type_name(enum ExpressionType type);
 
 // Returns a base environment containing mappings for all standard macros, all
@@ -139,9 +138,9 @@ struct Expression new_stdprocedure(enum StandardProcedure stdproc);
 // of 'car' and 'cdr' without retaining them.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
 
-// Creates a new macro based on an existing procedure. Assumes its type is
-// E_PROCEDURE. Takes ownership of the procedure without retaining it.
-struct Expression new_macro(struct Expression procedure);
+// Creates a new macro based on 'expr', assumed to have type E_STDPROCEDURE or
+// E_PROCEDURE. Takes ownership of 'expr' without retaining it.
+struct Expression new_macro(struct Expression expr);
 
 // Creates a new procedure. Sets the reference count of the box to 1. Takes
 // ownership of 'params' and 'body' without copying or retaining them. Retains

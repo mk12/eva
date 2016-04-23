@@ -96,6 +96,7 @@ static struct EvalResult apply(
 	case E_STDMACRO:
 		result = apply_stdmacro(expr.stdmacro, args, n, env);
 		break;
+	case E_STDPROCMACRO:
 	case E_STDPROCEDURE:
 		result = apply_stdprocedure(expr.stdproc, args, n, env);
 		break;
@@ -183,6 +184,7 @@ static struct EvalResult eval_application(
 			break;
 		}
 		// fall through
+	case E_STDPROCMACRO:
 	case E_MACRO:
 		result = apply(operator.expr, args, n, env);
 		if (result.err) {
