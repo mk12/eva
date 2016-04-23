@@ -119,7 +119,7 @@ bool execute(
 			release_expression(code.expr);
 			return false;
 		}
-		// If print is true and this is the last expression, print it.
+		// If 'print' is true and this is the last expression, print it.
 		if (print && offset + code.chars_read >= length) {
 			print_expression(result.expr, stdout);
 			putchar('\n');
@@ -158,59 +158,68 @@ void repl(struct Environment *env, bool print) {
 		while (offset < buf_length) {
 			// Parse from the current offset.
 			struct ParseResult code = parse(buf + offset);
-			if (code.err_type != PARSE_SUCCESS) {
-				if (code.err_type == ERR_UNEXPECTED_EOI) {
-					// Read another line of input.
-					char *line = readline(print ? secondary_prompt : "");
-					if (!line) {
-						// EOF: stop the loop.
+			if (code.err_type == PARSE_SUCCESS) {
+				// Evaluate the expression.
+				struct EvalResult result = eval_top(code.expr, env);
+				if (result.err) {
+					print_eval_error(result.err);
+					free_eval_error(result.err);
+					release_expression(code.expr);
+					if (print) {
+						break;
+					} else {
 						free(buf);
-						putchar('\n');
 						return;
 					}
-					if (!*line) {
-						// Empty string: ignore it.
-						free(line);
-						continue;
-					}
-					if (print) {
-						// Add to the GNU Readline history.
-						add_history(line);
-					}
-					size_t line_length = strlen(line);
-					// Concatenate the line to the end of the buffer.
-					buf = xrealloc(buf, buf_length + line_length + 2);
-					buf[buf_length] = '\n';
-					memcpy(buf + buf_length + 1, line, line_length);
-					free(line);
-					buf[buf_length + line_length + 1] = '\0';
-					buf_length += line_length + 1;
-					continue;
-				} else {
+				}
+				if (print) {
+					print_expression(result.expr, stdout);
+					putchar('\n');
+				}
+				release_expression(result.expr);
+				release_expression(code.expr);
+				offset += code.chars_read;
+			} else {
+				if (code.err_type != ERR_UNEXPECTED_EOI) {
 					struct ParseError err = {
 						.type = (enum ParseErrorType)code.err_type,
 						.text = buf,
 						.index = offset + code.chars_read
 					};
 					print_parse_error(stdin_filename, &err);
-					break;
-				}
-			} else {
-				// Evaluate the expression.
-				struct EvalResult result = eval_top(code.expr, env);
-				if (result.err) {
-					print_eval_error(result.err);
-					free_eval_error(result.err);
-				} else {
 					if (print) {
-						print_expression(result.expr, stdout);
-						putchar('\n');
+						break;
+					} else {
+						free(buf);
+						return;
 					}
-					release_expression(result.expr);
 				}
-				release_expression(code.expr);
+				// Read another line of input.
+				char *line = readline(print ? secondary_prompt : "");
+				if (!line) {
+					// EOF: stop the loop.
+					free(buf);
+					putchar('\n');
+					return;
+				}
+				if (!*line) {
+					// Empty string: ignore it.
+					free(line);
+					continue;
+				}
+				if (print) {
+					// Add to the GNU Readline history.
+					add_history(line);
+				}
+				size_t line_length = strlen(line);
+				// Concatenate the line to the end of the buffer.
+				buf = xrealloc(buf, buf_length + line_length + 2);
+				buf[buf_length] = '\n';
+				memcpy(buf + buf_length + 1, line, line_length);
+				free(line);
+				buf[buf_length + line_length + 1] = '\0';
+				buf_length += line_length + 1;
 			}
-			offset += code.chars_read;
 		}
 
 		free(buf);
