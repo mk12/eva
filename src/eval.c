@@ -40,8 +40,42 @@ static struct EvalResult apply_stdmacro(
 	struct EvalResult result;
 	result.err = NULL;
 
-	// ...
-
+	switch (stdmacro) {
+	case F_DEFINE:
+		result = eval(args[1], env, false);
+		if (!result.err) {
+			bind(env, args[0].symbol_id, result.expr);
+		}
+		break;
+	case F_SET:;
+		InternId key = args[0].symbol_id;
+		struct Expression *ptr = lookup(env, key);
+		if (ptr) {
+			result = eval(args[1], env, false);
+			if (!result.err) {
+				*ptr = result.expr;
+			}
+		} else {
+			result.err = new_eval_error_symbol(ERR_UNBOUND_VAR, key);
+		}
+		break;
+	case F_LAMBDA:
+	case F_BEGIN:
+	case F_QUOTE:
+		result.expr = retain_expression(args[0]);
+		break;
+	case F_QUASIQUOTE:
+	case F_UNQUOTE:
+	case F_UNQUOTE_SPLICING:
+	case F_IF:
+	case F_COND:
+	case F_LET:
+	case F_LET_STAR:
+	case F_LET_REC:
+	case F_AND:
+	case F_OR:
+		break;
+	}
 	return result;
 }
 
@@ -200,7 +234,8 @@ static struct EvalResult eval_application(
 			result.err = new_eval_error(ERR_DEFINE);
 			break;
 		}
-		// fall through
+		result = apply(operator.expr, args, n, env);
+		break;
 	case E_STDPROCMACRO:
 	case E_MACRO:
 		result = apply(operator.expr, args, n, env);
@@ -237,9 +272,9 @@ static struct EvalResult eval(
 	switch (expr.type) {
 	case E_SYMBOL:;
 		// Look up the variable in the environment.
-		struct LookupResult look = lookup(env, expr.symbol_id);
-		if (look.found) {
-			result.expr = retain_expression(look.expr);
+		struct Expression *ptr = lookup(env, expr.symbol_id);
+		if (ptr) {
+			result.expr = retain_expression(*ptr);
 		} else {
 			result.err = new_eval_error_symbol(ERR_UNBOUND_VAR, expr.symbol_id);
 		}
