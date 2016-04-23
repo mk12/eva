@@ -90,7 +90,7 @@ static struct EvalError *check_stdproc(
 		}
 		break;
 	case S_MACRO:
-		if (args[0].type != E_STDPROCEDURE && args[0].type != E_PROCEDURE) {
+		if (args[0].type != E_PROCEDURE) {
 			return new_type_error(E_PROCEDURE, args, 0);
 		}
 		break;
