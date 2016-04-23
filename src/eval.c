@@ -61,6 +61,17 @@ static struct EvalResult apply_stdmacro(
 		break;
 	case F_LAMBDA:
 	case F_BEGIN:
+		result.expr = new_null();
+		struct Environment *aug = new_environment(env, 1);
+		for (size_t i = 0; i < n; i++) {
+			release_expression(result.expr);
+			result = eval(args[i], aug, i != n - 1);
+			if (result.err) {
+				break;
+			}
+		}
+		release_environment(aug);
+		break;
 	case F_QUOTE:
 		result.expr = retain_expression(args[0]);
 		break;
@@ -68,6 +79,12 @@ static struct EvalResult apply_stdmacro(
 	case F_UNQUOTE:
 	case F_UNQUOTE_SPLICING:
 	case F_IF:
+		result = eval(args[0], env, false);
+		if (!result.err) {
+			size_t index = expression_truthy(result.expr) ? 1 : 2;
+			result = eval(args[index], env, false);
+		}
+		break;
 	case F_COND:
 	case F_LET:
 	case F_LET_STAR:
