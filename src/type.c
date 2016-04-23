@@ -152,10 +152,9 @@ struct EvalError *type_check(
 		return check_stdproc(expr.stdproc, args, n);
 	case E_MACRO:
 	case E_PROCEDURE:
-		break;
+		return NULL;
 	default:
 		assert(false);
-		break;
+		return NULL;
 	}
-	return NULL;
 }

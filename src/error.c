@@ -162,14 +162,19 @@ void print_parse_error(const char *filename, const struct ParseError *err) {
 }
 
 void print_eval_error(const char *filename, const struct EvalError *err) {
-	fprintf(stderr, "%s: %s: ", prefix, filename);
-	const char *format = eval_error_messages[err->type];
-
-	// Print the error message.
-	switch (err->type) {
-	case ERR_READ:
+	// Read errors are really parse errors.
+	if (err->type == ERR_READ) {
 		print_parse_error(stdin_filename, err->parse_err);
 		return;
+	}
+
+	// Print the error message.
+	fprintf(stderr, "%s: %s: ", prefix, filename);
+	const char *format = eval_error_messages[err->type];
+	switch (err->type) {
+	case ERR_READ:
+		assert(false);
+		break;
 	case ERR_DEFINE:
 	case ERR_DIV_ZERO:
 	case ERR_NON_EXHAUSTIVE:

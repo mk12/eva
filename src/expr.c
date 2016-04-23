@@ -200,6 +200,7 @@ struct Expression new_macro(struct Expression expr) {
 		};
 	default:
 		assert(false);
+		return expr;
 	}
 }
 
