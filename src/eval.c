@@ -73,7 +73,27 @@ static struct EvalResult apply_stdmacro(
 	case F_LET_STAR:
 	case F_LET_REC:
 	case F_AND:
+		result.expr = new_boolean(true);
+		for (size_t i = 0; i < n; i++) {
+			release_expression(result.expr);
+			result = eval(args[i], env, false);
+			if (result.err ||
+					(result.expr.type == E_BOOLEAN && !result.expr.boolean)) {
+				break;
+			}
+		}
+		break;
 	case F_OR:
+		result.expr = new_boolean(false);
+		for (size_t i = 0; i < n; i++) {
+			struct EvalResult res = eval(args[i], env, false);
+			if (res.err || res.expr.type != E_BOOLEAN || res.expr.boolean) {
+				release_expression(result.expr);
+				result = res;
+				break;
+			}
+			release_expression(res.expr);
+		}
 		break;
 	}
 	return result;
