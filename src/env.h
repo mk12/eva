@@ -9,13 +9,6 @@
 
 struct Environment;
 
-// LookupResult is used to return two values from the lookup function. The
-// 'expr' field has a meaningful value if and only if 'found' is true.
-struct LookupResult {
-	bool found;
-	struct Expression expr;
-};
-
 // Creates a new base environment: an environment with no parent.
 struct Environment *new_base_environment(void);
 
@@ -34,9 +27,10 @@ struct Environment *retain_environment(struct Environment *env);
 // all its bound expressions, if the reference count reaches zero.
 void release_environment(struct Environment *env);
 
-// Looks up the expression bound to 'key' in the environment. If it can't be
-// found, searches in its parent environment, then in the parent's parent, etc.
-struct LookupResult lookup(const struct Environment *env, InternId key);
+// Looks up the expression bound to 'key' in the environment and returns a
+// pointer to it. If it can't be found, searches in the chain of parents all the
+// way to the base environment. If none contain the key, returns NULL.
+struct Expression *lookup(const struct Environment *env, InternId key);
 
 // Binds 'key' to 'expr' in the environment, retaining 'expr'. If 'key' has
 // previously been bound in the environment (not including its parents), this

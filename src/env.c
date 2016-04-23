@@ -89,7 +89,7 @@ void release_environment(struct Environment *env) {
 	}
 }
 
-struct LookupResult lookup(const struct Environment *env, InternId key) {
+struct Expression *lookup(const struct Environment *env, InternId key) {
 	while (env) {
 		// Look up the bucket corresponding to the key.
 		size_t index = key % env->size;
@@ -98,16 +98,13 @@ struct LookupResult lookup(const struct Environment *env, InternId key) {
 		struct Entry *ents = env->table[index].entries;
 		for (size_t i = 0; i < len; i++) {
 			if (ents[i].key == key) {
-				return (struct LookupResult){
-					.found = true,
-					.expr = ents[i].expr
-				};
+				return &ents[i].expr;
 			}
 		}
 		// Check the parent environment next.
 		env = env->parent;
 	}
-	return (struct LookupResult){ .found = false };
+	return NULL;
 }
 
 static void bind_unchecked(
