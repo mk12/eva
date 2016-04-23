@@ -41,9 +41,9 @@ bool execute(
 // Updates the environment with top-level defintions as they are encountered.
 // Returns upon EOF (Ctrl-D) or SIGINT (Ctrl-C).
 //
-// If 'print' is false, skips steps 1 and 5, and exits after the first
-// error. If 'print' is true, continues the loop after encountering an
-// error, but skips the rest of the current line.
-void repl(struct Environment *env, bool print);
+// If 'interactive' is false, skips steps 1, and exits after encountering the
+// first error. If 'interactive' is true, continues after encountering an error,
+// but discards the rest of the current line.
+void repl(struct Environment *env, bool interactive);
 
 #endif

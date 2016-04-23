@@ -131,19 +131,21 @@ bool execute(
 	return true;
 }
 
-void repl(struct Environment *env, bool print) {
+void repl(struct Environment *env, bool interactive) {
+	const char *prompt1 = interactive ? primary_prompt : "";
+	const char *prompt2 = interactive ? secondary_prompt : "";
 	for (;;) {
-		char *buf = readline(print ? primary_prompt : "");
+		char *buf = readline(prompt1);
 		if (!buf) {
 			// EOF: stop the loop.
-			if (print) {
+			if (interactive) {
 				putchar('\n');
 			}
 			return;
 		}
 		if (*buf) {
 			// Add to the GNU Readline history if necessary.
-			if (print) {
+			if (interactive) {
 				add_history(buf);
 			}
 		} else {
@@ -165,17 +167,15 @@ void repl(struct Environment *env, bool print) {
 					print_eval_error(stdin_filename, result.err);
 					free_eval_error(result.err);
 					release_expression(code.expr);
-					if (print) {
+					if (interactive) {
 						break;
 					} else {
 						free(buf);
 						return;
 					}
 				}
-				if (print) {
-					print_expression(result.expr, stdout);
-					putchar('\n');
-				}
+				print_expression(result.expr, stdout);
+				putchar('\n');
 				release_expression(result.expr);
 				release_expression(code.expr);
 				offset += code.chars_read;
@@ -187,7 +187,7 @@ void repl(struct Environment *env, bool print) {
 						.index = offset + code.chars_read
 					};
 					print_parse_error(stdin_filename, &err);
-					if (print) {
+					if (interactive) {
 						break;
 					} else {
 						free(buf);
@@ -195,11 +195,13 @@ void repl(struct Environment *env, bool print) {
 					}
 				}
 				// Read another line of input.
-				char *line = readline(print ? secondary_prompt : "");
+				char *line = readline(prompt2);
 				if (!line) {
 					// EOF: stop the loop.
 					free(buf);
-					putchar('\n');
+					if (interactive) {
+						putchar('\n');
+					}
 					return;
 				}
 				if (!*line) {
@@ -207,7 +209,7 @@ void repl(struct Environment *env, bool print) {
 					free(line);
 					continue;
 				}
-				if (print) {
+				if (interactive) {
 					// Add to the GNU Readline history.
 					add_history(line);
 				}
