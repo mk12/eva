@@ -314,6 +314,34 @@ static struct EvalResult eval_application(
 	return result;
 }
 
+// Applies rewrite rules on 'args' based on the operator. Specifically, if the
+// operator is F_LAMBDA or F_LET_* and its body contains more than one
+// expression, it wraps the expressions in a single F_BEGIN block.
+static void rewrite_arguments(
+		struct Expression code,
+		struct Expression operator,
+		struct Array *args) {
+	if (operator.type != E_STDMACRO) {
+		return;
+	}
+	switch (operator.stdmacro) {
+	case F_LAMBDA:
+	case F_LET:
+	case F_LET_STAR:
+	case F_LET_REC:
+		if (args->size > 2) {
+			struct Expression block = new_pair(
+					new_stdmacro(F_BEGIN),
+					code.box->cdr.box->cdr);
+			code.box->cdr.box->cdr = new_pair(block, new_null());
+			args->size = 2;
+			args->exprs[1] = block;
+		}
+	default:
+		break;
+	}
+}
+
 // Evaluates a single expression in the given environment. Top-level definitions
 // are only allowed if 'allow_define' is true; otherwise, they cause an error.
 static struct EvalResult eval(
