@@ -347,8 +347,11 @@ static struct EvalResult eval(
 		// Evaluate the application.
 		result = eval(expr.box->car, env, false);
 		if (!result.err) {
+			struct Expression operator = result.expr;
+			rewrite_arguments(expr, operator, &args);
 			result = eval_application(
 					result.expr, args.exprs, args.size, env, allow_define);
+			release_expression(operator);
 		}
 		free_array(args);
 		break;
