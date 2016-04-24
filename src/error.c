@@ -97,8 +97,10 @@ struct EvalError *new_type_error(
 }
 
 struct EvalError *attach_code(struct EvalError *err, struct Expression code) {
-	err->has_code = true;
-	err->code = retain_expression(code);
+	if (err->type != ERR_READ) {
+		err->has_code = true;
+		err->code = retain_expression(code);
+	}
 	return err;
 }
 
