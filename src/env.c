@@ -11,8 +11,8 @@
 
 // Constants for memory allocation.
 #define BASE_TABLE_SIZE 1024
-#define BASE_BUCKET_SIZE 8
-#define CHILD_BUCKET_SIZE 2
+#define BASE_BUCKET_CAP 8
+#define CHILD_BUCKET_CAP 2
 
 // An entry maps an intern identifier to an expression.
 struct Entry {
@@ -114,7 +114,7 @@ static void bind_unchecked(
 	struct Bucket *bucket = env->table + (key % env->size);
 	if (!bucket->entries) {
 		// Initialize the bucket if it is empty.
-		bucket->cap = env->parent ? CHILD_BUCKET_SIZE : BASE_BUCKET_SIZE;
+		bucket->cap = env->parent ? CHILD_BUCKET_CAP : BASE_BUCKET_CAP;
 		bucket->entries = xmalloc(bucket->cap * sizeof *bucket->entries);
 	} else {
 		// Check if the variable is already bound.
