@@ -159,9 +159,11 @@ static struct EvalResult apply_stdprocedure(
 	case S_READ:;
 		struct ParseError *parse_err = read_sexpr(&result.expr);
 		if (parse_err) {
-			result.err = new_eval_error(ERR_READ);
-			result.err->parse_err = parse_err;
+			result.err = new_read_error(parse_err);
 		}
+		break;
+	case S_ERROR:
+		result.err = new_eval_error_expr(ERR_CUSTOM, args[0]);
 		break;
 	default:
 		result.expr = invoke_implementation(stdproc, args, n);

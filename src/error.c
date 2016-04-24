@@ -32,6 +32,7 @@ static const char *const parse_error_messages[N_PARSE_ERROR_TYPES] = {
 // Strings to use for evaluation error types.
 static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
 	[ERR_ARITY]          = NULL,
+	[ERR_CUSTOM]         = NULL,
 	[ERR_DEFINE]         = "Invalid use of 'define'",
 	[ERR_DIV_ZERO]       = "Division by zero",
 	[ERR_DUP_PARAM]      = "Duplicate parameter '%s'",
@@ -60,13 +61,6 @@ struct EvalError *new_eval_error(enum EvalErrorType type) {
 	return err;
 }
 
-struct EvalError *new_eval_error_symbol(
-		enum EvalErrorType type, InternId symbol_id) {
-	struct EvalError *err = new_eval_error(type);
-	err->symbol_id = symbol_id;
-	return err;
-}
-
 struct EvalError *new_eval_error_expr(
 		enum EvalErrorType type, struct Expression expr) {
 	struct EvalError *err = new_eval_error(type);
@@ -74,10 +68,23 @@ struct EvalError *new_eval_error_expr(
 	return err;
 }
 
+struct EvalError *new_eval_error_symbol(
+		enum EvalErrorType type, InternId symbol_id) {
+	struct EvalError *err = new_eval_error(type);
+	err->symbol_id = symbol_id;
+	return err;
+}
+
 struct EvalError *new_arity_error(Arity arity, size_t n_args) {
 	struct EvalError *err = new_eval_error(ERR_ARITY);
 	err->arity = arity;
 	err->n_args = n_args;
+	return err;
+}
+
+struct EvalError *new_read_error(struct ParseError *parse_err) {
+	struct EvalError *err = new_eval_error(ERR_READ);
+	err->parse_err = parse_err;
 	return err;
 }
 
@@ -114,14 +121,17 @@ void free_eval_error(struct EvalError *err) {
 	case ERR_READ:
 		free_parse_error(err->parse_err);
 		break;
+	case ERR_CUSTOM:
 	case ERR_TYPE_OPERAND:
 	case ERR_TYPE_OPERATOR:
 	case ERR_TYPE_VAR:
 		release_expression(err->expr);
-		// fall through
-	default:
-		release_expression(err->code);
 		break;
+	default:
+		break;
+	}
+	if (err->has_code) {
+		release_expression(err->code);
 	}
 	free(err);
 }
@@ -177,6 +187,8 @@ void print_eval_error(const char *filename, const struct EvalError *err) {
 	case ERR_READ:
 		assert(false);
 		break;
+	case ERR_CUSTOM:
+		break;
 	case ERR_DEFINE:
 	case ERR_DIV_ZERO:
 	case ERR_NON_EXHAUSTIVE:
@@ -192,20 +204,17 @@ void print_eval_error(const char *filename, const struct EvalError *err) {
 				err->arg_pos + 1,
 				expression_type_name(err->expected_type),
 				expression_type_name(err->expr.type));
-		print_expression(err->expr, stderr);
 		break;
 	case ERR_TYPE_OPERATOR:
 		fprintf(stderr, format,
 				expression_type_name(E_MACRO),
 				expression_type_name(E_PROCEDURE),
 				expression_type_name(err->expr.type));
-		print_expression(err->expr, stderr);
 		break;
 	case ERR_TYPE_VAR:
 		fprintf(stderr, format,
 				expression_type_name(E_SYMBOL),
 				expression_type_name(err->expr.type));
-		print_expression(err->expr, stderr);
 		break;
 	case ERR_ARITY:
 		assert(err->arity != 0);
@@ -222,13 +231,24 @@ void print_eval_error(const char *filename, const struct EvalError *err) {
 		}
 		break;
 	}
-	putc('\n', stderr);
+
+	// Print the expression, if applicable.
+	switch (err->type) {
+	case ERR_CUSTOM:
+	case ERR_TYPE_OPERAND:
+	case ERR_TYPE_OPERATOR:
+	case ERR_TYPE_VAR:
+		print_expression(err->expr, stderr);
+		// fall through
+	default:
+		putc('\n', stderr);
+		break;
+	}
 
 	// Print the context of the error.
 	if (err->has_code) {
 		fputs(indentation, stderr);
 		print_expression(err->code, stderr);
 		putc('\n', stderr);
-		break;
 	}
 }

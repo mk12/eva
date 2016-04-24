@@ -217,7 +217,8 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_SET_CAR]    = set_car,
 	[S_SET_CDR]    = set_cdr,
 	[S_READ]       = NULL,
-	[S_WRITE]      = write
+	[S_WRITE]      = write,
+	[S_ERROR]      = NULL
 };
 
 // A mapping from expression types to the type predicates they satisfy.

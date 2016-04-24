@@ -26,10 +26,11 @@ enum ParseErrorType {
 };
 
 // Error types for evaluation errors.
-#define N_EVAL_ERROR_TYPES 11
+#define N_EVAL_ERROR_TYPES 12
 enum EvalErrorType {
 	                    // Fields of EvalErorr used:
 	ERR_ARITY,          // code, arity, n_args
+	ERR_CUSTOM,         // array
 	ERR_DEFINE,         // code
 	ERR_DIV_ZERO,       // code
 	ERR_DUP_PARAM,      // code, symbol_id
@@ -63,16 +64,16 @@ struct EvalError {
 	bool has_code;
 	struct Expression code;
 	union {
-		// Used by ERR_DUP_PARAM and ERR_UNBOUND_VAR:
-		InternId symbol_id;
-		// Used by ERR_READ:
-		struct ParseError *parse_err;
 		// Used by ERR_ARITY:
 		struct {
 			Arity arity;
 			size_t n_args;
 		};
-		// Used by ERR_TYPE_*:
+		// Used by ERR_DUP_PARAM and ERR_UNBOUND_VAR:
+		InternId symbol_id;
+		// Used by ERR_READ:
+		struct ParseError *parse_err;
+		// Used by ERR_CUSTOM and ERR_TYPE_*:
 		struct {
 			enum ExpressionType expected_type;
 			struct Expression expr;
@@ -85,11 +86,12 @@ struct EvalError {
 struct ParseError *new_parse_error(
 		enum ParseErrorType type, char *owned_text, size_t index);
 struct EvalError *new_eval_error(enum EvalErrorType type);
-struct EvalError *new_eval_error_symbol(
-		enum EvalErrorType type, InternId symbol_id);
 struct EvalError *new_eval_error_expr(
 		enum EvalErrorType type, struct Expression expr);
+struct EvalError *new_eval_error_symbol(
+		enum EvalErrorType type, InternId symbol_id);
 struct EvalError *new_arity_error(Arity arity, size_t n_args);
+struct EvalError *new_read_error(struct ParseError *parse_err);
 struct EvalError *new_syntax_error(struct Expression code);
 struct EvalError *new_type_error(
 		enum ExpressionType expected_type,

@@ -46,7 +46,7 @@ enum StandardMacro {
 };
 
 // Standard procedures are procedures implemented by the interpreter.
-#define N_STANDARD_PROCEDURES 31
+#define N_STANDARD_PROCEDURES 32
 enum StandardProcedure {
 	// Eval and apply
 	S_EVAL, S_APPLY,
@@ -64,8 +64,8 @@ enum StandardProcedure {
 	S_NOT,
 	// Pair constructor, accessors, and mutators
 	S_CONS, S_CAR, S_CDR, S_SET_CAR, S_SET_CDR,
-	// Reading and writing
-	S_READ, S_WRITE
+	// Input/output
+	S_READ, S_WRITE, S_ERROR
 };
 
 // Number expressions are internally represented with long integers.
