@@ -8,8 +8,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
 
 // Attempts to parse a string of 'n' characters as an integer. Does not require
 // a null terminator. On success, stores the integer in 'result' and returns

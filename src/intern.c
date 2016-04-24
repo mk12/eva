@@ -4,7 +4,6 @@
 
 #include "util.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 // Constants for the intern table.

@@ -4,6 +4,7 @@
 
 #include "error.h"
 #include "list.h"
+#include "set.h"
 
 #include <assert.h>
 #include <stddef.h>
