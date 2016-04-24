@@ -406,7 +406,7 @@ void print_expression(struct Expression expr, FILE *stream) {
 		print_pair(expr.box, true, stream);
 		break;
 	case E_MACRO:
-		fprintf(stream, "#<macro %s>", (void *)expr.box);
+		fprintf(stream, "#<macro %p>", (void *)expr.box);
 		break;
 	case E_PROCEDURE:
 		fprintf(stream, "#<procedure %p>", (void *)expr.box);
