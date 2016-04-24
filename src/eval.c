@@ -53,7 +53,8 @@ static struct EvalResult apply_stdmacro(
 		if (ptr) {
 			result = eval(args[1], env, false);
 			if (!result.err) {
-				*ptr = result.expr;
+				release_expression(*ptr);
+				*ptr = retain_expression(result.expr);
 			}
 		} else {
 			result.err = new_eval_error_symbol(ERR_UNBOUND_VAR, key);
