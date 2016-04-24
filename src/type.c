@@ -46,7 +46,9 @@ static struct EvalError *check_stdmacro(
 			}
 			if (!add_to_set(set, symbol_id)) {
 				free_set(set);
-				return new_eval_error_symbol(ERR_DUP_PARAM, symbol_id);
+				return attach_code(
+						new_eval_error_symbol(ERR_DUP_PARAM, symbol_id),
+						args[0]);
 			}
 			expr = expr.box->cdr;
 		}
@@ -82,7 +84,9 @@ static struct EvalError *check_stdmacro(
 			InternId symbol_id = expr.box->car.box->car.symbol_id;
 			if (!add_to_set(set, symbol_id)) {
 				free_set(set);
-				return new_eval_error_symbol(ERR_DUP_PARAM, symbol_id);
+				return attach_code(
+						new_eval_error_symbol(ERR_DUP_PARAM, symbol_id),
+						args[0]);
 			}
 			expr = expr.box->cdr;
 		}
