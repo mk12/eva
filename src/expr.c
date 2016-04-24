@@ -141,7 +141,7 @@ struct Expression new_stdprocedure(enum StandardProcedure stdproc) {
 // Logs information about reference counts to standard error.
 #if REF_COUNT_LOGGING
 static void log_ref_count(const char *action, struct Expression expr) {
-	fprintf(stderr, "[%d/%d] %7s %6s [%d] ",
+	fprintf(stderr, "[%02d/%02d] %-7s %-9s [%d] ",
 			total_ref_count,
 			total_box_count,
 			action,
