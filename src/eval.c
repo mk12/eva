@@ -61,12 +61,6 @@ static struct EvalResult apply_stdmacro(
 		break;
 	case F_LAMBDA:;
 		struct Array params = list_to_array(args[0], true);
-		InternId dup;
-		if (find_duplicate_symbol(&dup, params)) {
-			result.err = new_eval_error_symbol(ERR_DUP_PARAM, dup);
-			attach_code(result.err, args[0]);
-			break;
-		}
 		result.expr = new_procedure(
 			(Arity)(params.improper ? ATLEAST(params.size - 1) : params.size),
 			params.exprs,

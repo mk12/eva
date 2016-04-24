@@ -13,6 +13,7 @@ static struct EvalError *check_stdmacro(
 		enum StandardMacro stdmacro, struct Expression *args, size_t n) {
 	size_t length;
 	struct Expression expr;
+	struct Set *set;
 
 	switch (stdmacro) {
 	case F_DEFINE:
@@ -28,18 +29,28 @@ static struct EvalError *check_stdmacro(
 				&& expr.type != E_SYMBOL) {
 			return new_syntax_error(expr);
 		}
+		set = new_set();
 		while (expr.type != E_NULL) {
+			InternId symbol_id;
 			if (expr.type == E_PAIR) {
 				if (expr.box->car.type != E_SYMBOL) {
+					free_set(set);
 					return new_eval_error_expr(ERR_TYPE_VAR, expr.box->car);
 				}
+				symbol_id = expr.box->car.symbol_id;
 			} else if (expr.type == E_SYMBOL) {
-				break;
+				symbol_id = expr.symbol_id;
 			} else {
+				free_set(set);
 				return new_eval_error_expr(ERR_TYPE_VAR, expr);
+			}
+			if (!add_to_set(set, symbol_id)) {
+				free_set(set);
+				return new_eval_error_symbol(ERR_DUP_PARAM, symbol_id);
 			}
 			expr = expr.box->cdr;
 		}
+		free_set(set);
 		break;
 	case F_COND:
 		for (size_t i = 0; i < n; i++) {
@@ -52,20 +63,30 @@ static struct EvalError *check_stdmacro(
 	case F_LET_STAR:
 	case F_LET_REC:
 		expr = args[0];
+		set = new_set();
 		while (expr.type != E_NULL) {
 			if (expr.type == E_PAIR) {
 				if (!count_list(&length, expr.box->car) || length != 2) {
+					free_set(set);
 					return new_syntax_error(expr.box->car);
 				}
 				if (expr.box->car.box->car.type != E_SYMBOL) {
+					free_set(set);
 					return new_eval_error_expr(
 							ERR_TYPE_VAR, expr.box->car.box->car);
 				}
 			} else {
+				free_set(set);
 				return new_syntax_error(args[0]);
+			}
+			InternId symbol_id = expr.box->car.box->car.symbol_id;
+			if (!add_to_set(set, symbol_id)) {
+				free_set(set);
+				return new_eval_error_symbol(ERR_DUP_PARAM, symbol_id);
 			}
 			expr = expr.box->cdr;
 		}
+		free_set(set);
 		break;
 	default:
 		break;
