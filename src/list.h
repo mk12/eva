@@ -32,6 +32,11 @@ struct Array list_to_array(struct Expression list, bool allow_improper);
 // the sense of the Scheme predicate "equal?".
 struct Expression array_to_list(struct Array array);
 
+// Checks for duplicates in 'array'. If it finds a duplicate, returns true and
+// stores it in 'out'. Otherwise, returns false. Assumes all the expressions in
+// 'array.exprs' are of type E_SYMBOL.
+bool find_duplicate_symbol(InternId *out, struct Array array);
+
 // Frees the memory allocated by 'list_to_array'.
 void free_array(struct Array array);
 
