@@ -4,11 +4,12 @@
 
 #include "util.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 bool count_list(size_t *out, struct Expression list) {
 	if (list.type != E_NULL && list.type != E_PAIR) {
-		reurn false;
+		return false;
 	}
 
 	size_t count = 0;
@@ -40,35 +41,35 @@ struct Array list_to_array(struct Expression list, bool allow_improper) {
 	struct Expression expr = list;
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
-			result.improper = true;
+			array.improper = true;
 			if (allow_improper) {
-				result.size++;
+				array.size++;
 				break;
 			} else {
-				return result;
+				return array;
 			}
 		}
 		expr = expr.box->cdr;
-		result.size++;
+		array.size++;
 	}
 	// Skip allocating the array if the list is empty.
-	if (result.size == 0) {
-		return result;
+	if (array.size == 0) {
+		return array;
 	}
 
 	// Allocate the array and copy the expressions to it.
-	result.exprs = xmalloc(result.size * sizeof *result.exprs);
+	array.exprs = xmalloc(array.size * sizeof *array.exprs);
 	expr = list;
-	for (size_t i = 0; i < result.size; i++) {
-		if (result.improper && i == result.size - 1) {
-			result.exprs[i] = expr;
+	for (size_t i = 0; i < array.size; i++) {
+		if (array.improper && i == array.size - 1) {
+			array.exprs[i] = expr;
 			break;
 		} else {
-			result.exprs[i] = expr.box->car;
+			array.exprs[i] = expr.box->car;
 		}
 		expr = expr.box->cdr;
 	}
-	return result;
+	return array;
 }
 
 struct Expression array_to_list(struct Array array) {

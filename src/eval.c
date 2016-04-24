@@ -59,7 +59,26 @@ static struct EvalResult apply_stdmacro(
 			result.err = new_eval_error_symbol(ERR_UNBOUND_VAR, key);
 		}
 		break;
-	case F_LAMBDA:
+	case F_LAMBDA:;
+		// (lambda (x y) (+ x y))
+		struct Array params = list_to_array(args[0], true);
+		for (size_t i = 0; i < params.size; i++) {
+			for (size_t j = i + 1; j < params.size; j++) {
+				if (params.exprs[i].symbol_id == params.exprs[j].symbol_id) {
+					result.err = new_eval_error_symbol(
+							ERR_DUP_PARAM, params.exprs[i].symbol_id);
+					break;
+				}
+			}
+		}
+		if (!result.err) {
+			result.expr = new_procedure(
+				params.improper ? ATLEAST(params.size - 1) : params.size,
+				params.exprs,
+				retain_expression(args[1]),
+				retain_environment(env));
+		}
+		break;
 	case F_BEGIN:
 		result.expr = new_null();
 		struct Environment *aug = new_environment(env, 1);
@@ -78,6 +97,7 @@ static struct EvalResult apply_stdmacro(
 	case F_QUASIQUOTE:
 	case F_UNQUOTE:
 	case F_UNQUOTE_SPLICING:
+		break;
 	case F_IF:
 		result = eval(args[0], env, false);
 		if (!result.err) {
@@ -89,6 +109,7 @@ static struct EvalResult apply_stdmacro(
 	case F_LET:
 	case F_LET_STAR:
 	case F_LET_REC:
+		break;
 	case F_AND:
 		result.expr = new_boolean(true);
 		for (size_t i = 0; i < n; i++) {
@@ -131,22 +152,20 @@ static struct EvalResult apply_stdprocedure(
 		result = eval(args[0], env, false);
 		break;
 	case S_APPLY:;
-		struct ArrayResult list_args = list_to_array(args[n-1], false);
-		assert(!list_args.improper);
+		struct Array array = list_to_array(args[n-1], false);
+		assert(!array.improper);
 		if (n == 2) {
-			result = apply(args[0], list_args.exprs, list_args.size, env);
+			result = apply(args[0], array.exprs, array.size, env);
 		} else {
 			size_t before = n - 2;
-			size_t total = before + list_args.size;
-			struct Expression *full_args = xmalloc(total * sizeof *full_args);
-			memcpy(full_args,
-					args + 1, before * sizeof *full_args);
-			memcpy(full_args + before,
-					list_args.exprs, list_args.size * sizeof *full_args);
-			result = apply(args[0], full_args, total, env);
-			free(full_args);
+			size_t total = before + array.size;
+			struct Expression *all = xmalloc(total * sizeof *all);
+			memcpy(all, args + 1, before * sizeof *all);
+			memcpy(all + before, array.exprs, array.size * sizeof *all);
+			result = apply(args[0], all, total, env);
+			free(all);
 		}
-		free(list_args.exprs);
+		free_array(array);
 		break;
 	case S_READ:;
 		struct ParseError *parse_err = read_sexpr(&result.expr);
@@ -192,15 +211,18 @@ static struct EvalResult apply(
 		size_t limit = arity < 0 ? (size_t)ATLEAST(arity) : (size_t)arity;
 		// Bind the formal parameters.
 		for (size_t i = 0; i < limit; i++) {
-			bind(aug, expr.box->params[i], args[i]);
+			bind(aug, expr.box->params[i].symbol_id, args[i]);
 		}
 		// Collect extra arguments in a list.
-		if (arity < 0) {
-			struct Expression list = new_null();
-			for (size_t i = n; i-- > limit;) {
-				list = new_pair(retain_expression(args[i]), list);
-			}
-			bind(aug, expr.box->params[limit], list);
+		if (n > limit) {
+			assert(arity < 0);
+			struct Array array = {
+				.improper = false,
+				.size = n - limit,
+				.exprs = args + limit
+			};
+			struct Expression list = array_to_list(array);
+			bind(aug, expr.box->params[limit].symbol_id, list);
 			release_expression(list);
 		}
 		// Evaluate the body.
@@ -239,7 +261,7 @@ static void release_in_place(struct Expression *args, size_t n) {
 	}
 }
 
-// Evaluates the application of 'expr' to 'args' (both passed unevaluated).
+// Evaluates the application of 'expr' (evaluated) to 'args' (unevaluated).
 static struct EvalResult eval_application(
 		struct Expression expr,
 		struct Expression *args,
@@ -249,14 +271,9 @@ static struct EvalResult eval_application(
 	struct EvalResult result;
 	result.err = NULL;
 
-	struct EvalResult operator = eval(expr, env, false);
-	if (operator.err) {
-		result.err = operator.err;
-		return result;
-	}
 	Arity arity;
-	if (!expression_arity(&arity, operator.expr)) {
-		result.err = new_eval_error_expr(ERR_TYPE_OPERATOR, operator.expr);
+	if (!expression_arity(&arity, expr)) {
+		result.err = new_eval_error_expr(ERR_TYPE_OPERATOR, expr);
 		return result;
 	}
 	if (!arity_allows(arity, n)) {
@@ -264,17 +281,17 @@ static struct EvalResult eval_application(
 		return result;
 	}
 
-	switch (operator.expr.type) {
+	switch (expr.type) {
 	case E_STDMACRO:
-		if (!allow_define && operator.expr.stdmacro == F_DEFINE) {
+		if (!allow_define && expr.stdmacro == F_DEFINE) {
 			result.err = new_eval_error(ERR_DEFINE);
 			break;
 		}
-		result = apply(operator.expr, args, n, env);
+		result = apply(expr, args, n, env);
 		break;
 	case E_STDPROCMACRO:
 	case E_MACRO:
-		result = apply(operator.expr, args, n, env);
+		result = apply(expr, args, n, env);
 		if (result.err) {
 			break;
 		}
@@ -288,7 +305,7 @@ static struct EvalResult eval_application(
 		if (result.err) {
 			break;
 		}
-		result = apply(operator.expr, args, n, env);
+		result = apply(expr, args, n, env);
 		release_in_place(args, n);
 		break;
 	default:
@@ -317,15 +334,18 @@ static struct EvalResult eval(
 		break;
 	case E_PAIR:;
 		// Get the arguments.
-		struct ArrayResult args = list_to_array(expr.box->cdr, false);
+		struct Array args = list_to_array(expr.box->cdr, false);
 		if (args.improper) {
 			result.err = new_syntax_error(expr);
 			break;
 		}
 		// Evaluate the application.
-		result = eval_application(
-				expr.box->car, args.exprs, args.size, env, allow_define);
-		free(args.exprs);
+		result = eval(expr.box->car, env, false);
+		if (!result.err) {
+			result = eval_application(
+					result.expr, args.exprs, args.size, env, allow_define);
+		}
+		free_array(args);
 		break;
 	default:
 		// Everything else is self-evaluating.
