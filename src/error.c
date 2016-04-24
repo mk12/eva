@@ -192,17 +192,20 @@ void print_eval_error(const char *filename, const struct EvalError *err) {
 				err->arg_pos + 1,
 				expression_type_name(err->expected_type),
 				expression_type_name(err->expr.type));
+		print_expression(err->expr, stderr);
 		break;
 	case ERR_TYPE_OPERATOR:
 		fprintf(stderr, format,
 				expression_type_name(E_MACRO),
 				expression_type_name(E_PROCEDURE),
 				expression_type_name(err->expr.type));
+		print_expression(err->expr, stderr);
 		break;
 	case ERR_TYPE_VAR:
 		fprintf(stderr, format,
 				expression_type_name(E_SYMBOL),
 				expression_type_name(err->expr.type));
+		print_expression(err->expr, stderr);
 		break;
 	case ERR_ARITY:
 		assert(err->arity != 0);
@@ -219,16 +222,10 @@ void print_eval_error(const char *filename, const struct EvalError *err) {
 		}
 		break;
 	}
+	putc('\n', stderr);
 
 	// Print the context of the error.
-	switch (err->type) {
-	case ERR_TYPE_OPERAND:
-	case ERR_TYPE_OPERATOR:
-	case ERR_TYPE_VAR:
-		print_expression(err->expr, stderr);
-		// fall through
-	default:
-		putc('\n', stderr);
+	if (err->has_code) {
 		fputs(indentation, stderr);
 		print_expression(err->code, stderr);
 		putc('\n', stderr);
