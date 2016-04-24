@@ -239,7 +239,7 @@ static struct EvalError *eval_in_place(
 		struct EvalResult result = eval(args[i], env, false);
 		if (result.err) {
 			for (size_t j = 0; j < i; j++) {
-				release_expression(args[i]);
+				release_expression(args[j]);
 			}
 			return result.err;
 		}
