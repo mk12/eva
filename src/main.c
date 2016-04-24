@@ -42,12 +42,11 @@ static bool process_args(int argc, char **argv, struct Environment *env) {
 			repl(env, tty);
 		} else if (is_opt(argv[i], 'e', "expression")) {
 			// Execute the next argument.
-			i++;
-			if (i == argc) {
-				print_error(argv[i-1], err_opt_argument);
+			if (i == argc - 1) {
+				print_error(argv[i], err_opt_argument);
 				return false;
 			}
-			if (!execute(argv_filename, argv[i], env, true)) {
+			if (!execute(argv_filename, argv[++i], env, true)) {
 				return false;
 			}
 		} else {

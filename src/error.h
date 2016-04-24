@@ -57,11 +57,11 @@ struct ParseError {
 // A runtime error that occurs during code evaluation. These are usually created
 // with 'has_code' set to false, and later (further up the call stack) the
 // evaluator attaches the offending code using 'attach_code' before printing the
-// error. Syntax errors are the exception: they usually attach code immediately.
+// error. Syntax errors are an exception: they attach code immediately.
 struct EvalError {
 	enum EvalErrorType type;
 	bool has_code;
-	struct Expression code; // context of the error
+	struct Expression code;
 	union {
 		// Used by ERR_DUP_PARAM and ERR_UNBOUND_VAR:
 		InternId symbol_id;
