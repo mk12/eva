@@ -112,7 +112,7 @@ struct Box {
 		// Used by E_MACRO and E_PROCEDURE:
 		struct {
 			Arity arity;
-			InternId *params;
+			struct Expression *params;
 			struct Expression body;
 			struct Environment *env;
 		};
@@ -138,16 +138,17 @@ struct Expression new_stdprocedure(enum StandardProcedure stdproc);
 // of 'car' and 'cdr' without retaining them.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
 
-// Creates a new macro based on 'expr', assumed to have type E_STDPROCEDURE or
-// E_PROCEDURE. Takes ownership of 'expr' without retaining it.
+// Creates a new macro based on an expression of type E_STDPROCEDURE (resulting
+// in E_STDPROCMACRO) or E_PROCEDURE (resulting in E_MACRO). Takes ownership of
+// 'expr' without retaining it.
 struct Expression new_macro(struct Expression expr);
 
 // Creates a new procedure. Sets the reference count of the box to 1. Takes
-// ownership of 'params' and 'body' without copying or retaining them. Retains
-// the lexical environment 'env'.
+// ownership of 'params' without copying the array. Takes ownership of 'body'
+// and 'env' without retaining them.
 struct Expression new_procedure(
 		Arity arity,
-		InternId *params,
+		struct Expression *params,
 		struct Expression body,
 		struct Environment *env);
 

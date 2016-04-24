@@ -206,7 +206,7 @@ struct Expression new_macro(struct Expression expr) {
 
 struct Expression new_procedure(
 		Arity arity,
-		InternId *params,
+		struct Expression *params,
 		struct Expression body,
 		struct Environment *env) {
 	struct Box *box = xmalloc(sizeof *box);
