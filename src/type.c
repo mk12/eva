@@ -50,6 +50,9 @@ static struct EvalError *check_stdmacro(
 						new_eval_error_symbol(ERR_DUP_PARAM, symbol_id),
 						args[0]);
 			}
+			if (expr.type == E_SYMBOL) {
+				break;
+			}
 			expr = expr.box->cdr;
 		}
 		free_set(set);
