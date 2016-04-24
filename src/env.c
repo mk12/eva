@@ -49,6 +49,7 @@ struct Environment *new_base_environment(void) {
 
 struct Environment *new_environment(
 		struct Environment *parent, size_t size_estimate) {
+	assert(size_estimate > 0);
 	struct Environment *env = xmalloc(sizeof *env);
 	env->ref_count = 1;
 	env->parent = retain_environment(parent);

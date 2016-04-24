@@ -206,10 +206,15 @@ static struct EvalResult apply(
 	case E_MACRO:
 	case E_PROCEDURE:;
 		Arity arity = expr.box->arity;
+		// Don't create an environment if there are no parameters.
+		if (arity == 0) {
+			result = eval(expr.box->body, expr.box->env, false);
+			break;
+		}
+		// Bind the formal parameters in a new environment.
 		struct Environment *aug =
 				new_environment(expr.box->env, (size_t)abs(arity));
 		size_t limit = arity < 0 ? (size_t)ATLEAST(arity) : (size_t)arity;
-		// Bind the formal parameters.
 		for (size_t i = 0; i < limit; i++) {
 			bind(aug, expr.box->params[i].symbol_id, args[i]);
 		}
