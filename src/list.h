@@ -7,27 +7,32 @@
 
 #include <stdbool.h>
 
-// ArrayResult contains the result of converting an s-expression list to an
-// array of expressions. For zero-length lists, 'size' is 0 and 'exprs' is NULL.
-// The 'exprs' field does not have a meaninful value if 'improper' is true but
-// the second argument in 'list_to_array' was false.
-struct ArrayResult {
-	bool improper;            // whether the list was improper
-	size_t size;              // number of expressions in the array
-	struct Expression *exprs; // expression array or NULL
+// A flat array of expressions from a list. For empty lists, 'size' is 0 and
+// 'exprs' is NULL. For improper lists (including single non-list values),
+// 'improper' is true and the last element of 'exprs' is the final cdr.
+struct Array {
+	bool improper;
+	size_t size;
+	struct Expression *exprs;
 };
 
-// Returns true if 'expr' is a well-formed list.
-bool well_formed_list(struct Expression expr);
+// Counts the elements of a list. If it is a well-formed list, returns true and
+// stores its length in 'out'. Otherwise, returns false.
+bool count_list(size_t *out, struct Expression list);
 
-// Counts the elements of the list 'expr'. If it is a well-formed list, returns
-// true and stores its length in 'out'. Otherwise, returns false.
-bool count_list(size_t *out, struct Expression expr);
+// Converts a list to an array. Copies elements of the list directly into the
+// new array without altering reference counts. If 'allow_improper' is false,
+// skips allocation and stores NULL in the 'exprs' field for improper lists.
+// Note that empty lists also result in NULL, but they set 'improper' to false.
+struct Array list_to_array(struct Expression list, bool allow_improper);
 
-// Converts an s-expression list to a flat array of expressions. Copies elements
-// of the list directly to the new array, but does not alter reference counts.
-// If 'improper' is true, then improper lists (including single non-pair values)
-// are accepted in addition to proper lists.
-struct ArrayResult list_to_array(struct Expression list, bool improper);
+// Converts an array back to a list. Sets the reference count to 1. Retains all
+// expressions in the array. For any expression 'expr', the result of
+// 'array_to_list(list_to_array(expr, true))' is recursively equal to 'expr' in
+// the sense of the Scheme predicate "equal?".
+struct Expression array_to_list(struct Array array);
+
+// Frees the memory allocated by 'list_to_array'.
+void free_array(struct Array array);
 
 #endif

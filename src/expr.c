@@ -214,7 +214,7 @@ struct Expression new_procedure(
 	box->arity = arity;
 	box->params = params;
 	box->body = body;
-	box->env = retain_environment(env);
+	box->env = env;
 	struct Expression expr = { .type = E_PROCEDURE, .box = box };
 #if REF_COUNT_LOGGING
 	total_box_count++;

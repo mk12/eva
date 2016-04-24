@@ -6,46 +6,42 @@
 
 #include <stdlib.h>
 
-bool well_formed_list(struct Expression expr) {
-	while (expr.type != E_NULL) {
-		if (expr.type != E_PAIR) {
-			return false;
-		}
-		expr = expr.box->cdr;
+bool count_list(size_t *out, struct Expression list) {
+	if (list.type != E_NULL && list.type != E_PAIR) {
+		reurn false;
 	}
-	return true;
-}
 
-bool count_list(size_t *out, struct Expression expr) {
 	size_t count = 0;
-	while (expr.type != E_NULL) {
-		if (expr.type != E_PAIR) {
+	while (list.type != E_NULL) {
+		if (list.type != E_PAIR) {
 			return false;
 		}
-		expr = expr.box->cdr;
+		list = list.box->cdr;
 		count++;
 	}
 	*out = count;
 	return true;
 }
 
-struct ArrayResult list_to_array(struct Expression list, bool improper) {
-	struct ArrayResult result;
-	result.size = 0;
-	result.improper = false;
-	result.exprs = NULL;
+struct Array list_to_array(struct Expression list, bool allow_improper) {
+	struct Array array;
+	array.size = 0;
+	array.improper = false;
+	array.exprs = NULL;
 
-	// Check the type of the outermost expression.
-	if (!improper && list.type != E_NULL && list.type != E_PAIR) {
-		result.improper = true;
-		return result;
+	// Check if the expression is not a list.
+	if (list.type != E_NULL && list.type != E_PAIR) {
+		array.improper = true;
+		if (!allow_improper) {
+			return array;
+		}
 	}
 	// Count the number of elements in the list.
 	struct Expression expr = list;
 	while (expr.type != E_NULL) {
 		if (expr.type != E_PAIR) {
 			result.improper = true;
-			if (improper) {
+			if (allow_improper) {
 				result.size++;
 				break;
 			} else {
@@ -60,14 +56,11 @@ struct ArrayResult list_to_array(struct Expression list, bool improper) {
 		return result;
 	}
 
-	// Allocate the array.
+	// Allocate the array and copy the expressions to it.
 	result.exprs = xmalloc(result.size * sizeof *result.exprs);
-	// Return to the beginning and copy the expressions to the array.
 	expr = list;
 	for (size_t i = 0; i < result.size; i++) {
 		if (result.improper && i == result.size - 1) {
-			// Special case: in an improper list such as (1 2 . 3), the final
-			// element 3 is not a car but rather the final cdr itself.
 			result.exprs[i] = expr;
 			break;
 		} else {
@@ -76,4 +69,21 @@ struct ArrayResult list_to_array(struct Expression list, bool improper) {
 		expr = expr.box->cdr;
 	}
 	return result;
+}
+
+struct Expression array_to_list(struct Array array) {
+	assert(!array.improper || array.size > 0);
+	struct Expression list = new_null();
+	size_t i = array.size;
+	if (array.improper) {
+		list = retain_expression(array.exprs[--i]);
+	}
+	while (i-- > 0) {
+		list = new_pair(retain_expression(array.exprs[i]), list);
+	}
+	return list;
+}
+
+void free_array(struct Array array) {
+	free(array.exprs);
 }
