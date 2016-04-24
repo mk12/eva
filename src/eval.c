@@ -208,8 +208,7 @@ static struct EvalResult apply(
 			bind(aug, expr.box->params[i].symbol_id, args[i]);
 		}
 		// Collect extra arguments in a list.
-		if (n > limit) {
-			assert(arity < 0);
+		if (arity < 0) {
 			struct Array array = {
 				.improper = false,
 				.size = n - limit,
