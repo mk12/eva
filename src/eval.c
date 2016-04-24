@@ -60,24 +60,18 @@ static struct EvalResult apply_stdmacro(
 		}
 		break;
 	case F_LAMBDA:;
-		// (lambda (x y) (+ x y))
 		struct Array params = list_to_array(args[0], true);
-		for (size_t i = 0; i < params.size; i++) {
-			for (size_t j = i + 1; j < params.size; j++) {
-				if (params.exprs[i].symbol_id == params.exprs[j].symbol_id) {
-					result.err = new_eval_error_symbol(
-							ERR_DUP_PARAM, params.exprs[i].symbol_id);
-					break;
-				}
-			}
+		InternId dup;
+		if (find_duplicate_symbol(&dup, params)) {
+			result.err = new_eval_error_symbol(ERR_DUP_PARAM, dup);
+			attach_code(result.err, args[0]);
+			break;
 		}
-		if (!result.err) {
-			result.expr = new_procedure(
-				params.improper ? ATLEAST(params.size - 1) : params.size,
-				params.exprs,
-				retain_expression(args[1]),
-				retain_environment(env));
-		}
+		result.expr = new_procedure(
+			(Arity)(params.improper ? ATLEAST(params.size - 1) : params.size),
+			params.exprs,
+			retain_expression(args[1]),
+			retain_environment(env));
 		break;
 	case F_BEGIN:
 		result.expr = new_null();
