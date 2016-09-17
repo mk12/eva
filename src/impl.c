@@ -133,7 +133,7 @@ static struct Expression expt(struct Expression *args, size_t n) {
 	if (expt < 0) {
 		return new_number(0);
 	}
-	Number result = base;
+	Number result = 1;
 	while (expt != 0) {
 		if ((expt & 1) == 1) {
 			result *= base;
