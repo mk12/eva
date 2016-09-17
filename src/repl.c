@@ -90,13 +90,30 @@ struct ParseError *read_sexpr(struct Expression *out) {
 	return NULL;
 }
 
+// Returns the number of shebang characters at the beginning of 'text'. A
+// shebang consists of "#!" followed by any characters until the end of the
+// line, including the newline character.
+static size_t skip_shebang(const char *text) {
+	const char *s = text;
+	if (*s++ != '#' || *s++ != '!') {
+		return 0;
+	}
+	while (*s && *s != '\n') {
+		s++;
+	}
+	if (*s) {
+		s++;
+	}
+	return (size_t)(s - text);
+}
+
 bool execute(
 		const char *filename,
 		const char *text,
 		struct Environment *env,
 		bool print) {
 	size_t length = strlen(text);
-	size_t offset = 0;
+	size_t offset = skip_shebang(text);
 
 	// Parse and evaluate until there is no text left.
 	while (offset < length) {
@@ -134,6 +151,8 @@ bool execute(
 void repl(struct Environment *env, bool interactive) {
 	const char *prompt1 = interactive ? primary_prompt : "";
 	const char *prompt2 = interactive ? secondary_prompt : "";
+	bool shebang = !interactive;
+
 	for (;;) {
 		char *buf = readline(prompt1);
 		if (!buf) {
@@ -154,8 +173,11 @@ void repl(struct Environment *env, bool interactive) {
 			continue;
 		}
 
+		// Skip the shebang on the first line of non-interactive sessions.
 		size_t buf_length = strlen(buf);
-		size_t offset = 0;
+		size_t offset = shebang ? skip_shebang(buf) : 0;
+		shebang = false;
+
 		// Parse and evaluate until there is no text left.
 		while (offset < buf_length) {
 			// Parse from the current offset.
