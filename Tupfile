@@ -1,9 +1,15 @@
 CC = clang
-OPTIONS = -std=c11 -O3 -DNDEBUG
-WARNINGS = -Weverything -pedantic
-WARNINGS += -Wno-padded -Wno-switch-enum -Wno-format-nonliteral
-COMPILE = $(CC) $(OPTIONS) $(WARNINGS) -c
-LINK = $(CC) -lreadline
+CFLAGS = -std=c11 -O3 -DNDEBUG
+CFLAGS += -Weverything -pedantic
+CFLAGS += -Wno-padded -Wno-switch-enum -Wno-format-nonliteral
+LDFLAGS = -lreadline
 
-: foreach src/*.c |> ^ CC %f^ $(COMPILE) %f -o %o |> build/%B.o
-: build/*.o |> ^ Linking binary "eva"^ $(LINK) %f -o %o |> bin/eva
+COMPILE = $(CC) $(CFLAGS) -c
+TCOMPILE = $(CC) $(CFLAGS) -Isrc/main -c
+LINK = $(CC) $(LDFLAGS)
+
+: foreach src/main/*.c |> ^ CC %f^ $(COMPILE) %f -o %o |> build/main/%B.o
+: build/main/*.o |> ^ Linking binary "eva"^ $(LINK) %f -o %o |> bin/eva
+
+: foreach src/test/*.c |> ^ CC %f^ $(TCOMPILE) %f -o %o |> build/test/%B.o
+: build/test/*.o |> ^ Linking binary "test"^ $(LINK) %f -o %o |> bin/test
