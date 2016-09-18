@@ -1,3 +1,6 @@
 .tup/
 build/
 bin/
+test/out/
+test.log
+compare.sh
