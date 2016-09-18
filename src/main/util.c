@@ -61,13 +61,10 @@ char *read_file(const char *filename) {
 		fclose(file);
 		return NULL;
 	}
+
 	char *buf = xmalloc((size_t)bufsize + 1);
 	size_t length = fread(buf, 1, (size_t)bufsize, file);
 	fclose(file);
-	if (length == 0) {
-		free(buf);
-		return NULL;
-	}
 	buf[length+1] = '\0';
 	return buf;
 }
