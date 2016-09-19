@@ -84,7 +84,12 @@ static struct EvalResult apply_stdmacro(
 		result.expr = retain_expression(args[0]);
 		break;
 	case F_QUASIQUOTE:
+		/* result.expr = retain_expression(quasiquote(args[0])); */
+		result.expr = retain_expression(args[0]);
+		break;
 	case F_UNQUOTE:
+		result.expr = retain_expression(args[0]);
+		break;
 	case F_UNQUOTE_SPLICING:
 		break;
 	case F_IF:
@@ -310,9 +315,10 @@ static struct EvalResult eval_application(
 	return result;
 }
 
-// Applies rewrite rules on 'args' based on the operator. Specifically, if the
-// operator is F_LAMBDA or F_LET_* and its body contains more than one
-// expression, it wraps the expressions in a single F_BEGIN block.
+// Applies rewrite rules on 'args' based on the operator. If the operator is
+// F_LAMBDA of F_LET_* and its body contains more than one expression, wraps the
+// expresions in an F_BEGIN block. If the operator is F_DEFINE and is using the
+// function definition syntax, rewrites it to use F_LAMBDA.
 static void rewrite_arguments(
 		struct Expression code,
 		struct Expression operator,
@@ -321,6 +327,21 @@ static void rewrite_arguments(
 		return;
 	}
 	switch (operator.stdmacro) {
+	case F_DEFINE:
+		if (args->size >= 2 && args->exprs[0].type == E_PAIR) {
+			struct Expression cons = args->exprs[0];
+			struct Expression name = cons.box->car;
+			struct Expression list = cons.box->cdr;
+			struct Expression body = code.box->cdr.box->cdr;
+			code.box->cdr.box->car = name;
+			code.box->cdr.box->cdr = new_pair(cons, new_null());
+			cons.box->car = new_stdmacro(F_LAMBDA);
+			cons.box->cdr = new_pair(list, body);
+			args->size = 2;
+			args->exprs[0] = name;
+			args->exprs[1] = cons;
+		}
+		break;
 	case F_LAMBDA:
 	case F_LET:
 	case F_LET_STAR:
@@ -333,6 +354,7 @@ static void rewrite_arguments(
 			args->size = 2;
 			args->exprs[1] = block;
 		}
+		break;
 	default:
 		break;
 	}
