@@ -14,6 +14,9 @@ if [[ $1 == "clean" ]]; then
 	exit 0
 fi
 
+# Create directories
+mkdir -p test/{src,ref,out}
+
 # Clear the log file.
 LOG=test.log
 > $LOG
