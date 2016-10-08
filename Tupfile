@@ -1,12 +1,13 @@
 CC = clang
-CFLAGS = -std=c11 -O3 -DNDEBUG
+LEVEL = -O3
+CFLAGS = -std=c11 -DNDEBUG
 CFLAGS += -Weverything -pedantic
 CFLAGS += -Wno-padded -Wno-switch-enum -Wno-format-nonliteral
 LDFLAGS = -lreadline
 
-COMPILE = $(CC) $(CFLAGS) -c
-TCOMPILE = $(CC) $(CFLAGS) -Isrc/main -c
-LINK = $(CC) $(LDFLAGS)
+COMPILE = $(CC) $(LEVEL) $(CFLAGS) -c
+TCOMPILE = $(CC) $(LEVEL) $(CFLAGS) -Isrc/main -c
+LINK = $(CC) $(LEVEL) $(LDFLAGS)
 
 : foreach src/main/*.c |> ^ CC %f^ $(COMPILE) %f -o %o |> build/main/%B.o
 : build/main/*.o |> ^ Linking binary "eva"^ $(LINK) %f -o %o |> bin/eva
