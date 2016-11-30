@@ -81,13 +81,7 @@ static struct EvalResult quasiquote(
 		struct Expression list = new_null();
 		size_t i = array.size;
 		if (array.improper) {
-			result = quasiquote(array.exprs[--i], env);
-			if (result.err) {
-				// TODO: Do recursive stuff in type_check to avoid cleanup here.
-				free_array(array);
-				return result;
-			}
-			list = result.expr;
+			list = retain_expression(array.exprs[--i]);
 		}
 		while (i-- > 0) {
 			stdmacro = stdmacro_operator(array.exprs[i], env);
