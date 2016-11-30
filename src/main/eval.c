@@ -29,6 +29,95 @@ struct EvalResult eval_top(struct Expression expr, struct Environment *env) {
 	return eval(expr, env, true);
 }
 
+// If 'expr' (unevaluated) is the well-formed application of a standard macro to
+// one operand, returns the standard macro. Otherwise, returns the integer -1.
+static enum StandardMacro stdmacro_operator(
+		struct Expression expr,
+		struct Environment *env) {
+	if (expr.type == E_PAIR) {
+		struct Expression first = expr.box->car;
+		if (first.type == E_SYMBOL) {
+			struct Expression *ptr = lookup(env, first.symbol_id);
+			if (ptr && ptr->type == E_STDMACRO) {
+				first = *ptr;
+			}
+		}
+		if (first.type == E_STDMACRO
+				&& expr.box->cdr.type == E_PAIR
+				&& expr.box->cdr.box->cdr.type == E_NULL) {
+			return first.stdmacro;
+		}
+	}
+	return (enum StandardMacro)-1;
+}
+
+// Returns the single operand in 'expr', which is assumed to be a well-formed
+// application of a standard macro to one operand.
+static struct Expression stdmacro_operand(struct Expression expr) {
+	return expr.box->cdr.box->car;
+}
+
+// Applies the standard macro F_QUASIQUOTE to 'expr' (unevaluated), handling
+// nested occurrences of F_UNQUOTE and F_UNQUOTE_SPLICING. Assumes the
+// application has already been type-checked. On success, returns the resulting
+// expression. Otherwise, allocates and returns an evaluation error.
+static struct EvalResult quasiquote(
+		struct Expression expr,
+		struct Environment *env) {
+	struct EvalResult result;
+	result.err = NULL;
+	if (expr.type != E_PAIR) {
+		result.expr = retain_expression(expr);
+		return result;
+	}
+
+	enum StandardMacro stdmacro = stdmacro_operator(expr, env);
+	if (stdmacro == F_UNQUOTE) {
+		result = eval(stdmacro_operand(expr), env, false);
+	} else if (stdmacro == F_UNQUOTE_SPLICING) {
+		result.err = new_eval_error(ERR_UNQUOTE);
+	} else {
+		struct Array array = list_to_array(expr, true);
+		struct Expression list = new_null();
+		size_t i = array.size;
+		if (array.improper) {
+			result = quasiquote(array.exprs[--i], env);
+			if (result.err) {
+				// TODO: Do recursive stuff in type_check to avoid cleanup here.
+				free_array(array);
+				return result;
+			}
+			list = result.expr;
+		}
+		while (i-- > 0) {
+			stdmacro = stdmacro_operator(array.exprs[i], env);
+			if (stdmacro == F_UNQUOTE_SPLICING) {
+				result = eval(stdmacro_operand(array.exprs[i]), env, false);
+				if (result.err) {
+					break;
+				}
+				if (!concat_list(&list, result.expr, list)) {
+					result.err = new_syntax_error(expr);
+					break;
+				}
+			} else {
+				result = quasiquote(array.exprs[i], env);
+				if (result.err) {
+					break;
+				}
+				list = new_pair(result.expr, list);
+			}
+		}
+		if (result.err) {
+			release_expression(list);
+		} else {
+			result.expr = list;
+		}
+		free_array(array);
+	}
+	return result;
+}
+
 // Applies a standard macro to 'args' (an array of 'n' arguments). Assumes the
 // application has already been type-checked. On success, returns the resulting
 // expression. Otherwise, allocates and returns an evaluation error.
@@ -84,13 +173,12 @@ static struct EvalResult apply_stdmacro(
 		result.expr = retain_expression(args[0]);
 		break;
 	case F_QUASIQUOTE:
-		/* result.expr = retain_expression(quasiquote(args[0])); */
-		result.expr = retain_expression(args[0]);
+		result = quasiquote(args[0], env);
 		break;
 	case F_UNQUOTE:
-		result.expr = retain_expression(args[0]);
-		break;
 	case F_UNQUOTE_SPLICING:
+		// We produce an error for this in 'type_check'.
+		assert(false);
 		break;
 	case F_IF:
 		result = eval(args[0], env, false);

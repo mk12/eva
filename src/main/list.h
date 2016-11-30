@@ -16,9 +16,15 @@ struct Array {
 	struct Expression *exprs;
 };
 
-// Counts the elements of a list. If it is a well-formed list, returns true and
-// stores its length in 'out'. Otherwise, returns false.
+// Counts the elements of a list. If it is a well-formed list (not improper),
+// returns true and stores its length in 'out'. Otherwise, returns false.
 bool count_list(size_t *out, struct Expression list);
+
+// If 'lhs' is a well-formed nonempty list, creates a copy of it with 'rhs'
+// concatenated on the end ('rhs' is reused by retaining), stores it in 'out',
+// and returns true. Otherwise, returns false.
+bool concat_list(
+		struct Expression *out, struct Expression lhs, struct Expression rhs);
 
 // Converts a list to an array. Copies elements of the list directly into the
 // new array without altering reference counts. If 'allow_improper' is false,

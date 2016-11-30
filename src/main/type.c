@@ -57,6 +57,9 @@ static struct EvalError *check_stdmacro(
 		}
 		free_set(set);
 		break;
+	case F_UNQUOTE:
+	case F_UNQUOTE_SPLICING:
+		return new_eval_error(ERR_UNQUOTE);
 	case F_COND:
 		for (size_t i = 0; i < n; i++) {
 			if (!count_list(&length, args[i]) || length < 2) {

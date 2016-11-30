@@ -24,6 +24,28 @@ bool count_list(size_t *out, struct Expression list) {
 	return true;
 }
 
+bool concat_list(
+		struct Expression *out, struct Expression lhs, struct Expression rhs) {
+	if (lhs.type != E_PAIR) {
+		return false;
+	}
+
+	struct Expression list;
+	struct Expression *end = &list;
+	while (lhs.type != E_NULL) {
+		if (lhs.type != E_PAIR) {
+			release_expression(list);
+			return false;
+		}
+		*end = new_pair(retain_expression(lhs.box->car), new_null());
+		end = &end->box->cdr;
+		lhs = lhs.box->cdr;
+	}
+	*end = retain_expression(rhs);
+	*out = list;
+	return true;
+}
+
 struct Array list_to_array(struct Expression list, bool allow_improper) {
 	struct Array array;
 	array.size = 0;

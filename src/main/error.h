@@ -26,11 +26,11 @@ enum ParseErrorType {
 };
 
 // Error types for evaluation errors.
-#define N_EVAL_ERROR_TYPES 12
+#define N_EVAL_ERROR_TYPES 13
 enum EvalErrorType {
 	                    // Fields of EvalErorr used:
 	ERR_ARITY,          // code, arity, n_args
-	ERR_CUSTOM,         // array
+	ERR_CUSTOM,         // code, expr
 	ERR_DEFINE,         // code
 	ERR_DIV_ZERO,       // code
 	ERR_DUP_PARAM,      // code, symbol_id
@@ -40,7 +40,8 @@ enum EvalErrorType {
 	ERR_TYPE_OPERAND,   // code, expected_type, expr, arg_pos
 	ERR_TYPE_OPERATOR,  // code, expr
 	ERR_TYPE_VAR,       // code, expr
-	ERR_UNBOUND_VAR     // code, symbol_id
+	ERR_UNBOUND_VAR,    // code, symbol_id
+	ERR_UNQUOTE         // code
 };
 
 // An error that causes the parse to fail. Errors created on the stack usually

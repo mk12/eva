@@ -42,7 +42,8 @@ static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
 	[ERR_TYPE_OPERAND]   = "Argument %zu: Expected %s, got %s: ",
 	[ERR_TYPE_OPERATOR]  = "Operator: Expected %s or %s, got %s: ",
 	[ERR_TYPE_VAR]       = "Variable: Expected %s, got %s: ",
-	[ERR_UNBOUND_VAR]    = "Use of unbound variable '%s'"
+	[ERR_UNBOUND_VAR]    = "Use of unbound variable '%s'",
+	[ERR_UNQUOTE]        = "Invalid use of 'unquote' or 'unquote-splicing'"
 };
 
 struct ParseError *new_parse_error(
@@ -193,6 +194,7 @@ void print_eval_error(const char *filename, const struct EvalError *err) {
 	case ERR_DIV_ZERO:
 	case ERR_NON_EXHAUSTIVE:
 	case ERR_SYNTAX:
+	case ERR_UNQUOTE:
 		fputs(format, stderr);
 		break;
 	case ERR_DUP_PARAM:
