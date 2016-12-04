@@ -5,6 +5,7 @@
 
 #include "expr.h"
 #include "intern.h"
+#include "list.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -30,7 +31,7 @@ enum ParseErrorType {
 enum EvalErrorType {
 	                    // Fields of EvalErorr used:
 	ERR_ARITY,          // code, arity, n_args
-	ERR_CUSTOM,         // code, expr
+	ERR_CUSTOM,         // code, array
 	ERR_DEFINE,         // code
 	ERR_DIV_ZERO,       // code
 	ERR_DUP_PARAM,      // code, symbol_id
@@ -70,11 +71,13 @@ struct EvalError {
 			Arity arity;
 			size_t n_args;
 		};
+		// Used by ERR_CUSTOM:
+		struct Array array;
 		// Used by ERR_DUP_PARAM and ERR_UNBOUND_VAR:
 		InternId symbol_id;
 		// Used by ERR_READ:
 		struct ParseError *parse_err;
-		// Used by ERR_CUSTOM and ERR_TYPE_*:
+		// Used by ERR_TYPE_*:
 		struct {
 			enum ExpressionType expected_type;
 			struct Expression expr;

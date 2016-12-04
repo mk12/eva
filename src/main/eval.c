@@ -250,7 +250,12 @@ static struct EvalResult apply_stdprocedure(
 		}
 		break;
 	case S_ERROR:
-		result.err = new_eval_error_expr(ERR_CUSTOM, args[0]);
+		result.err = new_eval_error(ERR_CUSTOM);
+		result.err->array = (struct Array){
+			.improper = false,
+			.size = n,
+			.exprs = args
+		};
 		break;
 	default:
 		result.expr = invoke_implementation(stdproc, args, n);
@@ -475,7 +480,9 @@ static struct EvalResult eval(
 					result.expr, args.exprs, args.size, env, allow_define);
 			release_expression(operator);
 		}
-		free_array(args);
+		if (!(result.err && result.err->type == ERR_CUSTOM)) {
+			free_array(args);
+		}
 		break;
 	default:
 		// Everything else is self-evaluating.

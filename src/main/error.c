@@ -119,10 +119,12 @@ void free_parse_error(struct ParseError *err) {
 
 void free_eval_error(struct EvalError *err) {
 	switch (err->type) {
+	case ERR_CUSTOM:
+		free_array(err->array);
+		break;
 	case ERR_READ:
 		free_parse_error(err->parse_err);
 		break;
-	case ERR_CUSTOM:
 	case ERR_TYPE_OPERAND:
 	case ERR_TYPE_OPERATOR:
 	case ERR_TYPE_VAR:
@@ -237,15 +239,22 @@ void print_eval_error(const char *filename, const struct EvalError *err) {
 	// Print the expression, if applicable.
 	switch (err->type) {
 	case ERR_CUSTOM:
+		for (size_t i = 0; i < err->array.size; i++) {
+			if (i > 0) {
+				putc(' ', stderr);
+			}
+			print_expression(err->array.exprs[i], stderr);
+		}
+		break;
 	case ERR_TYPE_OPERAND:
 	case ERR_TYPE_OPERATOR:
 	case ERR_TYPE_VAR:
 		print_expression(err->expr, stderr);
-		// fall through
+		break;
 	default:
-		putc('\n', stderr);
 		break;
 	}
+	putc('\n', stderr);
 
 	// Print the context of the error.
 	if (err->has_code) {
