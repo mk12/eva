@@ -130,7 +130,7 @@ chars_read:
 // Parses any expression.
 struct ParseResult parse(const char *text) {
 	struct ParseResult result;
-	result.err_type = -1;
+	result.err_type = PARSE_SUCCESS;
 	const char *s = text;
 	s += skip_whitespace(s);
 
@@ -162,6 +162,41 @@ struct ParseResult parse(const char *text) {
 			result.err_type = ERR_INVALID_LITERAL;
 		}
 		break;
+	case '\'':
+		s++;
+		result = parse(s);
+		s += result.chars_read;
+		if (result.err_type == PARSE_SUCCESS) {
+			result.expr = new_pair(
+					new_stdmacro(F_QUOTE),
+					new_pair(result.expr, new_null()));
+		}
+		break;
+	case '`':
+		s++;
+		result = parse(s);
+		s += result.chars_read;
+		if (result.err_type == PARSE_SUCCESS) {
+			result.expr = new_pair(
+					new_stdmacro(F_QUASIQUOTE),
+					new_pair(result.expr, new_null()));
+		}
+		break;
+	case ',':
+		s++;
+		enum StandardMacro stdmacro = F_UNQUOTE;
+		if (*s == '@') {
+			s++;
+			stdmacro = F_UNQUOTE_SPLICING;
+		}
+		result = parse(s);
+		s += result.chars_read;
+		if (result.err_type == PARSE_SUCCESS) {
+			result.expr = new_pair(
+					new_stdmacro(stdmacro),
+					new_pair(result.expr, new_null()));
+		}
+		break;
 	default:;
 		len = skip_symbol(s);
 		assert(len > 0);
@@ -176,7 +211,7 @@ struct ParseResult parse(const char *text) {
 		break;
 	}
 
-	if (result.err_type == -1) {
+	if (result.err_type == PARSE_SUCCESS) {
 		s += skip_whitespace(s);
 		assert(s > text);
 	}
