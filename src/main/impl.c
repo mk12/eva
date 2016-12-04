@@ -146,7 +146,7 @@ static struct Expression expt(struct Expression *args, size_t n) {
 
 static struct Expression not(struct Expression *args, size_t n) {
 	(void)n;
-	return new_boolean(!args[0].boolean);
+	return new_boolean(!expression_truthy(args[0]));
 }
 
 static struct Expression cons(struct Expression *args, size_t n) {

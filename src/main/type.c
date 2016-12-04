@@ -155,11 +155,6 @@ static struct EvalError *check_stdproc(
 			}
 		}
 		break;
-	case S_NOT:
-		if (args[0].type != E_BOOLEAN) {
-			return new_type_error(E_BOOLEAN, args, 0);
-		}
-		break;
 	case S_CAR:
 	case S_CDR:
 	case S_SET_CAR:
