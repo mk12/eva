@@ -15,8 +15,7 @@ struct Environment *new_base_environment(void);
 
 // Creates a new evironment with the given parent environment. Retains the
 // parent and sets the reference count of the new environment to 1. The size
-// estimate refers to the total number of bindings the environment will hold,
-// and it must be greater than zero.
+// estimate refers to the total number of bindings the environment will hold.
 struct Environment *new_environment(
 		struct Environment *parent, size_t size_estimate);
 

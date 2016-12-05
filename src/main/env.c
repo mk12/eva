@@ -49,13 +49,12 @@ struct Environment *new_base_environment(void) {
 
 struct Environment *new_environment(
 		struct Environment *parent, size_t size_estimate) {
-	assert(size_estimate > 0);
 	struct Environment *env = xmalloc(sizeof *env);
 	env->ref_count = 1;
 	env->parent = retain_environment(parent);
-	env->size = size_estimate * 2;
+	env->size = size_estimate;
 	env->total_entries = 0;
-	env->table = xcalloc(env->size, sizeof *env->table);
+	env->table = env->size == 0 ? NULL : xcalloc(env->size, sizeof *env->table);
 	return env;
 }
 
@@ -92,14 +91,16 @@ void release_environment(struct Environment *env) {
 
 struct Expression *lookup(const struct Environment *env, InternId key) {
 	while (env) {
-		// Look up the bucket corresponding to the key.
-		size_t index = key % env->size;
-		size_t len = env->table[index].len;
-		// Check each entry in the bucket.
-		struct Entry *ents = env->table[index].entries;
-		for (size_t i = 0; i < len; i++) {
-			if (ents[i].key == key) {
-				return &ents[i].expr;
+		if (env->table) {
+			// Look up the bucket corresponding to the key.
+			size_t index = key % env->size;
+			size_t len = env->table[index].len;
+			// Check each entry in the bucket.
+			struct Entry *ents = env->table[index].entries;
+			for (size_t i = 0; i < len; i++) {
+				if (ents[i].key == key) {
+					return &ents[i].expr;
+				}
 			}
 		}
 		// Check the parent environment next.

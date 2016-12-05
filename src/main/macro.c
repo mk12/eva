@@ -63,7 +63,7 @@ static struct EvalResult f_begin(
 	struct EvalResult result;
 	result.err = NULL;
 	result.expr = new_null();
-	struct Environment *aug = new_environment(env, 1);
+	struct Environment *aug = new_environment(env, 0);
 	for (size_t i = 0; i < n; i++) {
 		release_expression(result.expr);
 		result = eval(args[i], aug, i != n - 1);
