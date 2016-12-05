@@ -4,8 +4,8 @@
 
 #include "env.h"
 #include "error.h"
-#include "impl.h"
 #include "list.h"
+#include "proc.h"
 #include "repl.h"
 #include "type.h"
 #include "util.h"
@@ -280,7 +280,7 @@ static struct EvalResult apply_stdprocedure(
 		};
 		break;
 	default:
-		result.expr = invoke_implementation(stdproc, args, n);
+		result.expr = invoke_stdprocedure(stdproc, args, n);
 		break;
 	}
 	return result;
