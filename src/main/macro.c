@@ -98,13 +98,18 @@ static struct EvalResult f_if(
 
 static struct EvalResult f_cond(
 		struct Expression *args, size_t n, struct Environment *env) {
-	(void)args;
-	(void)n;
-	(void)env;
-	return (struct EvalResult){
-		.expr = new_null(),
-		.err = NULL
-	};
+	for (size_t i = 0; i < n; i++) {
+		struct EvalResult result = eval(args[i].box->car, env, false);
+		if (result.err) {
+			return result;
+		}
+		bool truthy = expression_truthy(result.expr);
+		release_expression(result.expr);
+		if (truthy) {
+			return eval(args[i].box->cdr.box->car, env, false);
+		}
+	}
+	return (struct EvalResult){ .err = new_eval_error(ERR_NON_EXHAUSTIVE) };
 }
 
 static struct EvalResult f_let(
