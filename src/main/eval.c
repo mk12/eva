@@ -123,6 +123,8 @@ static struct EvalResult apply_stdmacro(
 	struct EvalResult result;
 	result.err = NULL;
 
+	struct Environment *augmented = NULL;
+
 	switch (stdmacro) {
 	case F_DEFINE:
 		result = eval(args[1], env, false);
@@ -153,15 +155,15 @@ static struct EvalResult apply_stdmacro(
 		break;
 	case F_BEGIN:
 		result.expr = new_null();
-		struct Environment *aug = new_environment(env, 1);
+		augmented = new_environment(env, 1);
 		for (size_t i = 0; i < n; i++) {
 			release_expression(result.expr);
-			result = eval(args[i], aug, i != n - 1);
+			result = eval(args[i], augmented, i != n - 1);
 			if (result.err) {
 				break;
 			}
 		}
-		release_environment(aug);
+		release_environment(augmented);
 		break;
 	case F_QUOTE:
 		result.expr = retain_expression(args[0]);
@@ -182,8 +184,28 @@ static struct EvalResult apply_stdmacro(
 		}
 		break;
 	case F_COND:
+		break;
 	case F_LET:
-	case F_LET_STAR:
+		break;
+	case F_LET_STAR:;
+		size_t n_bindings;
+		struct Expression list = args[0];
+		count_list(&n_bindings, list);
+		augmented = new_environment(env, n_bindings);
+		while (list.type != E_NULL) {
+			struct Expression binding = list.box->car;
+			result = eval(binding.box->cdr.box->car, augmented, false);
+			if (result.err) {
+				break;
+			}
+			bind(augmented, binding.box->car.symbol_id, result.expr);
+			list = list.box->cdr;
+		}
+		if (!result.err) {
+			result = eval(args[1], augmented, false);
+		}
+		release_environment(augmented);
+		break;
 	case F_LET_REC:
 		break;
 	case F_AND:
