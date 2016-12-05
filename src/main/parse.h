@@ -5,6 +5,8 @@
 
 #include "expr.h"
 
+#include <stddef.h>
+
 // Constant indicating that a parse was successful.
 #define PARSE_SUCCESS (-1)
 

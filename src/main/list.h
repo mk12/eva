@@ -6,6 +6,7 @@
 #include "expr.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 
 // A flat array of expressions from a list. For empty lists, 'size' is 0 and
 // 'exprs' is NULL. For improper lists (including single non-list values),

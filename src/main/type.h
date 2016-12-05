@@ -5,6 +5,8 @@
 
 #include "expr.h"
 
+#include <stddef.h>
+
 struct EvalError;
 
 // Type-checks the application of 'expr' to 'args' (an array of 'n' arguments).
