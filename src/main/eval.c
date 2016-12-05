@@ -317,9 +317,9 @@ static struct EvalResult eval_application(
 }
 
 // Applies rewrite rules on 'args' based on the operator. If the operator is
-// F_LAMBDA of F_LET_* and its body contains more than one expression, wraps the
-// expresions in an F_BEGIN block. If the operator is F_DEFINE and is using the
-// function definition syntax, rewrites it to use F_LAMBDA.
+// F_LAMBDA, F_LET_*, or F_COND and its body contains more than one expression,
+// wraps the expresions in an F_BEGIN block. If the operator is F_DEFINE and is
+// using the function definition syntax, rewrites it to use F_LAMBDA.
 static void rewrite_arguments(
 		struct Expression code,
 		struct Expression operator,
@@ -353,6 +353,18 @@ static void rewrite_arguments(
 			code.box->cdr.box->cdr = new_pair(block, new_null());
 			args->size = 2;
 			args->exprs[1] = block;
+		}
+		break;
+	case F_COND:
+		for (size_t i = 0; i < args->size; i++) {
+			if (args->exprs[i].type == E_PAIR
+					&& args->exprs[i].box->cdr.type == E_PAIR
+					&& args->exprs[i].box->cdr.box->cdr.type == E_PAIR) {
+				struct Expression block = new_pair(
+						new_stdmacro(F_BEGIN),
+						args->exprs[i].box->cdr);
+				args->exprs[i].box->cdr = new_pair(block, new_null());
+			}
 		}
 		break;
 	default:
