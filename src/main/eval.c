@@ -5,6 +5,7 @@
 #include "env.h"
 #include "error.h"
 #include "list.h"
+#include "macro.h"
 #include "proc.h"
 #include "repl.h"
 #include "type.h"
@@ -17,17 +18,11 @@
 #include <string.h>
 
 // Function prototypes.
-static struct EvalResult eval(
-		struct Expression expr, struct Environment *env, bool allow_define);
 static struct EvalResult apply(
 		struct Expression expr,
 		struct Expression *args,
 		size_t n,
 		struct Environment *env);
-
-struct EvalResult eval_top(struct Expression expr, struct Environment *env) {
-	return eval(expr, env, true);
-}
 
 // If 'expr' (unevaluated) is the well-formed application of a standard macro to
 // one operand, returns the standard macro. Otherwise, returns the integer -1.
@@ -120,118 +115,15 @@ static struct EvalResult apply_stdmacro(
 		struct Expression *args,
 		size_t n,
 		struct Environment *env) {
-	struct EvalResult result;
-	result.err = NULL;
-
-	struct Environment *augmented = NULL;
-
 	switch (stdmacro) {
-	case F_DEFINE:
-		result = eval(args[1], env, false);
-		if (!result.err) {
-			bind(env, args[0].symbol_id, result.expr);
-		}
-		break;
-	case F_SET:;
-		InternId key = args[0].symbol_id;
-		struct Expression *ptr = lookup(env, key);
-		if (ptr) {
-			result = eval(args[1], env, false);
-			if (!result.err) {
-				release_expression(*ptr);
-				*ptr = retain_expression(result.expr);
-			}
-		} else {
-			result.err = new_eval_error_symbol(ERR_UNBOUND_VAR, key);
-		}
-		break;
-	case F_LAMBDA:;
-		struct Array params = list_to_array(args[0], true);
-		result.expr = new_procedure(
-			(Arity)(params.improper ? ATLEAST(params.size - 1) : params.size),
-			params.exprs,
-			retain_expression(args[1]),
-			retain_environment(env));
-		break;
-	case F_BEGIN:
-		result.expr = new_null();
-		augmented = new_environment(env, 1);
-		for (size_t i = 0; i < n; i++) {
-			release_expression(result.expr);
-			result = eval(args[i], augmented, i != n - 1);
-			if (result.err) {
-				break;
-			}
-		}
-		release_environment(augmented);
-		break;
-	case F_QUOTE:
-		result.expr = retain_expression(args[0]);
-		break;
 	case F_QUASIQUOTE:
-		result = quasiquote(args[0], env);
-		break;
+		return quasiquote(args[0], env);
 	case F_UNQUOTE:
 	case F_UNQUOTE_SPLICING:
-		// We produce an error for this in 'type_check'.
-		assert(false);
-		break;
-	case F_IF:
-		result = eval(args[0], env, false);
-		if (!result.err) {
-			size_t index = expression_truthy(result.expr) ? 1 : 2;
-			result = eval(args[index], env, false);
-		}
-		break;
-	case F_COND:
-		break;
-	case F_LET:
-		break;
-	case F_LET_STAR:;
-		size_t n_bindings;
-		struct Expression list = args[0];
-		count_list(&n_bindings, list);
-		augmented = new_environment(env, n_bindings);
-		while (list.type != E_NULL) {
-			struct Expression binding = list.box->car;
-			result = eval(binding.box->cdr.box->car, augmented, false);
-			if (result.err) {
-				break;
-			}
-			bind(augmented, binding.box->car.symbol_id, result.expr);
-			list = list.box->cdr;
-		}
-		if (!result.err) {
-			result = eval(args[1], augmented, false);
-		}
-		release_environment(augmented);
-		break;
-	case F_LET_REC:
-		break;
-	case F_AND:
-		result.expr = new_boolean(true);
-		for (size_t i = 0; i < n; i++) {
-			release_expression(result.expr);
-			result = eval(args[i], env, false);
-			if (result.err || !expression_truthy(result.expr)) {
-				break;
-			}
-		}
-		break;
-	case F_OR:
-		result.expr = new_boolean(false);
-		for (size_t i = 0; i < n; i++) {
-			struct EvalResult res = eval(args[i], env, false);
-			if (res.err || expression_truthy(res.expr)) {
-				release_expression(result.expr);
-				result = res;
-				break;
-			}
-			release_expression(res.expr);
-		}
-		break;
+		return (struct EvalResult){ .err = new_eval_error(ERR_UNQUOTE) };
+	default:
+		return invoke_stdmacro(stdmacro, args, n, env);
 	}
-	return result;
 }
 
 // Applies a standard procedure to 'args' (an array of 'n' arguments). Assumes
@@ -469,9 +361,7 @@ static void rewrite_arguments(
 	}
 }
 
-// Evaluates a single expression in the given environment. Top-level definitions
-// are only allowed if 'allow_define' is true; otherwise, they cause an error.
-static struct EvalResult eval(
+struct EvalResult eval(
 		struct Expression expr, struct Environment *env, bool allow_define) {
 	struct EvalResult result;
 	result.err = NULL;

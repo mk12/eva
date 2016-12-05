@@ -14,8 +14,10 @@ struct EvalResult {
 	struct EvalError *err;
 };
 
-// Evaluates a top-level expression in the environment 'env'. On success,
-// returns a new expression. Otherwise, allocates and returns an error.
-struct EvalResult eval_top(struct Expression expr, struct Environment *env);
+// Evaluates an expression in the environment 'env'. Definitions (applications
+// of F_DEFINE) are only allowed if 'allow_define' is true. On success, returns
+// a new expression. Otherwise, allocates and returns an error.
+struct EvalResult eval(
+		struct Expression expr, struct Environment *env, bool allow_define);
 
 #endif

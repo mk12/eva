@@ -129,7 +129,7 @@ bool execute(
 			return false;
 		}
 		// Evaluate the expression.
-		struct EvalResult result = eval_top(code.expr, env);
+		struct EvalResult result = eval(code.expr, env, true);
 		if (result.err) {
 			print_eval_error(filename, result.err);
 			free_eval_error(result.err);
@@ -184,7 +184,7 @@ void repl(struct Environment *env, bool interactive) {
 			struct ParseResult code = parse(buf + offset);
 			if (code.err_type == PARSE_SUCCESS) {
 				// Evaluate the expression.
-				struct EvalResult result = eval_top(code.expr, env);
+				struct EvalResult result = eval(code.expr, env, true);
 				if (result.err) {
 					print_eval_error(stdin_filename, result.err);
 					free_eval_error(result.err);
