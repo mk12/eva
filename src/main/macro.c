@@ -109,13 +109,30 @@ static struct EvalResult f_cond(
 
 static struct EvalResult f_let(
 		struct Expression *args, size_t n, struct Environment *env) {
-	(void)args;
 	(void)n;
-	(void)env;
-	return (struct EvalResult){
-		.expr = new_null(),
-		.err = NULL
-	};
+	struct EvalResult result;
+	result.err = NULL;
+
+	size_t n_bindings;
+	struct Expression list = args[0];
+	count_list(&n_bindings, list);
+	struct Environment *aug = new_environment(env, n_bindings);
+	while (list.type != E_NULL) {
+		InternId id = list.box->car.box->car.symbol_id;
+		struct Expression expr = list.box->car.box->cdr.box->car;
+		result = eval(expr, env, false);
+		if (result.err) {
+			break;
+		}
+		bind(aug, id, result.expr);
+		release_expression(result.expr);
+		list = list.box->cdr;
+	}
+	if (!result.err) {
+		result = eval(args[1], aug, false);
+	}
+	release_environment(aug);
+	return result;
 }
 
 static struct EvalResult f_let_star(
