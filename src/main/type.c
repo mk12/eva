@@ -69,7 +69,6 @@ static struct EvalError *check_stdmacro(
 		break;
 	case F_LET:
 	case F_LET_STAR:
-	case F_LET_REC:
 		expr = args[0];
 		set = new_set();
 		while (expr.type != E_NULL) {

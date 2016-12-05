@@ -346,7 +346,6 @@ static void rewrite_arguments(
 	case F_LAMBDA:
 	case F_LET:
 	case F_LET_STAR:
-	case F_LET_REC:
 		if (args->size > 2) {
 			struct Expression block = new_pair(
 					new_stdmacro(F_BEGIN),

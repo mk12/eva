@@ -53,7 +53,6 @@ static const struct NameArity stdmacro_name_arity[N_STANDARD_MACROS] = {
 	[F_COND]             = {"cond", ATLEAST(1)},
 	[F_LET]              = {"let", ATLEAST(2)},
 	[F_LET_STAR]         = {"let*", ATLEAST(2)},
-	[F_LET_REC]          = {"letrec", ATLEAST(2)},
 	[F_AND]              = {"and", ATLEAST(0)},
 	[F_OR]               = {"or", ATLEAST(0)}
 };

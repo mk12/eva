@@ -163,17 +163,6 @@ static struct EvalResult f_let_star(
 	return result;
 }
 
-static struct EvalResult f_let_rec(
-		struct Expression *args, size_t n, struct Environment *env) {
-	(void)args;
-	(void)n;
-	(void)env;
-	return (struct EvalResult){
-		.expr = new_null(),
-		.err = NULL
-	};
-}
-
 static struct EvalResult f_and(
 		struct Expression *args, size_t n, struct Environment *env) {
 	(void)n;
@@ -223,7 +212,6 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[F_COND]             = f_cond,
 	[F_LET]              = f_let,
 	[F_LET_STAR]         = f_let_star,
-	[F_LET_REC]          = f_let_rec,
 	[F_AND]              = f_and,
 	[F_OR]               = f_or,
 };

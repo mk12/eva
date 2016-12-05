@@ -30,7 +30,7 @@ enum ExpressionType {
 
 // Standard macros, also called special forms, are syntactical forms built into
 // the language that require special evaluation rules.
-#define N_STANDARD_MACROS 15
+#define N_STANDARD_MACROS 14
 enum StandardMacro {
 	// Definition and mutation
 	F_DEFINE, F_SET,
@@ -41,7 +41,7 @@ enum StandardMacro {
 	// Conditionals
 	F_IF, F_COND,
 	// Let bindings
-	F_LET, F_LET_STAR, F_LET_REC,
+	F_LET, F_LET_STAR,
 	// Logical operators
 	F_AND, F_OR
 };
