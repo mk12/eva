@@ -2,8 +2,11 @@
 
 #include "proc.h"
 
+#include "util.h"
+
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 
 // An Implementation is a function that implements a standard procedure.
 typedef struct Expression (*Implementation)(struct Expression *args, size_t n);
@@ -178,6 +181,20 @@ static struct Expression s_set_cdr(struct Expression *args, size_t n) {
 	return retain_expression(args[0]);
 }
 
+static struct Expression s_string_length(struct Expression *args, size_t n) {
+	(void)n;
+	return new_number((Number)args[0].box->len);
+}
+
+static struct Expression s_string_eq(struct Expression *args, size_t n) {
+	(void)n;
+	size_t len0 = args[0].box->len;
+	size_t len1 = args[1].box->len;
+	bool result = args[0].box == args[1].box || (len0 == len1
+			&& memcmp(args[0].box->str, args[1].box->str, len0) == 0);
+	return new_boolean(result);
+}
+
 static struct Expression s_write(struct Expression *args, size_t n) {
 	(void)n;
 	print_expression(args[0], stdout);
@@ -187,39 +204,41 @@ static struct Expression s_write(struct Expression *args, size_t n) {
 
 // A mapping from standard procedures to their implementations.
 static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
-	[S_EVAL]       = NULL,
-	[S_APPLY]      = NULL,
-	[S_MACRO]      = s_macro,
-	[S_NULLP]      = NULL,
-	[S_SYMBOLP]    = NULL,
-	[S_NUMBERP]    = NULL,
-	[S_BOOLEANP]   = NULL,
-	[S_STRINGP]    = NULL,
-	[S_PAIRP]      = NULL,
-	[S_MACROP]     = NULL,
-	[S_PROCEDUREP] = NULL,
-	[S_EQ]         = s_eq,
-	[S_NUM_EQ]     = s_num_eq,
-	[S_NUM_LT]     = s_num_lt,
-	[S_NUM_GT]     = s_num_gt,
-	[S_NUM_LE]     = s_num_le,
-	[S_NUM_GE]     = s_num_ge,
-	[S_ADD]        = s_add,
-	[S_SUB]        = s_sub,
-	[S_MUL]        = s_mul,
-	[S_DIV]        = s_div,
-	[S_REM]        = s_rem,
-	[S_MOD]        = s_mod,
-	[S_EXPT]       = s_expt,
-	[S_NOT]        = s_not,
-	[S_CONS]       = s_cons,
-	[S_CAR]        = s_car,
-	[S_CDR]        = s_cdr,
-	[S_SET_CAR]    = s_set_car,
-	[S_SET_CDR]    = s_set_cdr,
-	[S_READ]       = NULL,
-	[S_WRITE]      = s_write,
-	[S_ERROR]      = NULL
+	[S_EVAL]          = NULL,
+	[S_APPLY]         = NULL,
+	[S_MACRO]         = s_macro,
+	[S_NULLP]         = NULL,
+	[S_SYMBOLP]       = NULL,
+	[S_NUMBERP]       = NULL,
+	[S_BOOLEANP]      = NULL,
+	[S_STRINGP]       = NULL,
+	[S_PAIRP]         = NULL,
+	[S_MACROP]        = NULL,
+	[S_PROCEDUREP]    = NULL,
+	[S_EQ]            = s_eq,
+	[S_NUM_EQ]        = s_num_eq,
+	[S_NUM_LT]        = s_num_lt,
+	[S_NUM_GT]        = s_num_gt,
+	[S_NUM_LE]        = s_num_le,
+	[S_NUM_GE]        = s_num_ge,
+	[S_ADD]           = s_add,
+	[S_SUB]           = s_sub,
+	[S_MUL]           = s_mul,
+	[S_DIV]           = s_div,
+	[S_REM]           = s_rem,
+	[S_MOD]           = s_mod,
+	[S_EXPT]          = s_expt,
+	[S_NOT]           = s_not,
+	[S_CONS]          = s_cons,
+	[S_CAR]           = s_car,
+	[S_CDR]           = s_cdr,
+	[S_SET_CAR]       = s_set_car,
+	[S_SET_CDR]       = s_set_cdr,
+	[S_STRING_LENGTH] = s_string_length,
+	[S_STRING_EQ]     = s_string_eq,
+	[S_READ]          = NULL,
+	[S_WRITE]         = s_write,
+	[S_ERROR]         = NULL
 };
 
 // A mapping from expression types to the type predicates they satisfy.

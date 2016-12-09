@@ -162,6 +162,14 @@ static struct EvalError *check_stdproc(
 			return new_type_error(E_PAIR, args, 0);
 		}
 		break;
+	case S_STRING_LENGTH:
+	case S_STRING_EQ:
+		for (size_t i = 0; i < n; i++) {
+			if (args[i].type != E_STRING) {
+				return new_type_error(E_STRING, args, i);
+			}
+		}
+		break;
 	default:
 		break;
 	}

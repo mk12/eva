@@ -48,7 +48,7 @@ enum StandardMacro {
 };
 
 // Standard procedures are procedures implemented by the interpreter.
-#define N_STANDARD_PROCEDURES 33
+#define N_STANDARD_PROCEDURES 35
 enum StandardProcedure {
 	// Eval and apply
 	S_EVAL, S_APPLY,
@@ -67,6 +67,8 @@ enum StandardProcedure {
 	S_NOT,
 	// Pair constructor, accessors, and mutators
 	S_CONS, S_CAR, S_CDR, S_SET_CAR, S_SET_CDR,
+	// String functions
+	S_STRING_LENGTH, S_STRING_EQ,
 	// Input/output
 	S_READ, S_WRITE, S_ERROR
 };
@@ -149,11 +151,6 @@ struct Expression new_pair(struct Expression car, struct Expression cdr);
 // Creates a new string. Sets the reference count of the box to 1. Takes
 // ownership of the string buffer and frees it on deallocation.
 struct Expression new_string(char *str, size_t len);
-
-// TODO: ALT:
-// Creates a new string. Sets the reference count of the box to 1. Takes
-// ownership of the string buffer and frees it on deallocation. Expects 'str' to
-// be terminated with a null character (not included in the length 'len').
 
 // Creates a new macro based on an expression of type E_STDPROCEDURE (resulting
 // in E_STDPROCMACRO) or E_PROCEDURE (resulting in E_MACRO). Takes ownership of

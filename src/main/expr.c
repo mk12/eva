@@ -6,6 +6,7 @@
 #include "util.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -60,39 +61,41 @@ static const struct NameArity stdmacro_name_arity[N_STANDARD_MACROS] = {
 
 // Names and arities of standard procedures.
 static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
-	[S_EVAL]       = {"eval", 1},
-	[S_APPLY]      = {"apply", ATLEAST(2)},
-	[S_MACRO]      = {"macro", 1},
-	[S_NULLP]      = {"null?", 1},
-	[S_SYMBOLP]    = {"symbol?", 1},
-	[S_NUMBERP]    = {"number?", 1},
-	[S_BOOLEANP]   = {"boolean?", 1},
-	[S_PAIRP]      = {"pair?", 1},
-	[S_STRINGP]    = {"string?", 1},
-	[S_MACROP]     = {"macro?", 1},
-	[S_PROCEDUREP] = {"procedure?", 1},
-	[S_EQ]         = {"eq?", 2},
-	[S_NUM_EQ]     = {"=", ATLEAST(0)},
-	[S_NUM_LT]     = {"<", ATLEAST(0)},
-	[S_NUM_GT]     = {">", ATLEAST(0)},
-	[S_NUM_LE]     = {"<=", ATLEAST(0)},
-	[S_NUM_GE]     = {">=", ATLEAST(0)},
-	[S_ADD]        = {"+", ATLEAST(0)},
-	[S_SUB]        = {"-", ATLEAST(1)},
-	[S_MUL]        = {"*", ATLEAST(0)},
-	[S_DIV]        = {"/", ATLEAST(1)},
-	[S_REM]        = {"remainder", 2},
-	[S_MOD]        = {"modulo", 2},
-	[S_EXPT]       = {"expt", 2},
-	[S_NOT]        = {"not", 1},
-	[S_CONS]       = {"cons", 2},
-	[S_CAR]        = {"car", 1},
-	[S_CDR]        = {"cdr", 1},
-	[S_SET_CAR]    = {"set-car!", 2},
-	[S_SET_CDR]    = {"set-cdr!", 2},
-	[S_READ]       = {"read", 0},
-	[S_WRITE]      = {"write", 1},
-	[S_ERROR]      = {"error", ATLEAST(1)}
+	[S_EVAL]          = {"eval", 1},
+	[S_APPLY]         = {"apply", ATLEAST(2)},
+	[S_MACRO]         = {"macro", 1},
+	[S_NULLP]         = {"null?", 1},
+	[S_SYMBOLP]       = {"symbol?", 1},
+	[S_NUMBERP]       = {"number?", 1},
+	[S_BOOLEANP]      = {"boolean?", 1},
+	[S_PAIRP]         = {"pair?", 1},
+	[S_STRINGP]       = {"string?", 1},
+	[S_MACROP]        = {"macro?", 1},
+	[S_PROCEDUREP]    = {"procedure?", 1},
+	[S_EQ]            = {"eq?", 2},
+	[S_NUM_EQ]        = {"=", ATLEAST(0)},
+	[S_NUM_LT]        = {"<", ATLEAST(0)},
+	[S_NUM_GT]        = {">", ATLEAST(0)},
+	[S_NUM_LE]        = {"<=", ATLEAST(0)},
+	[S_NUM_GE]        = {">=", ATLEAST(0)},
+	[S_ADD]           = {"+", ATLEAST(0)},
+	[S_SUB]           = {"-", ATLEAST(1)},
+	[S_MUL]           = {"*", ATLEAST(0)},
+	[S_DIV]           = {"/", ATLEAST(1)},
+	[S_REM]           = {"remainder", 2},
+	[S_MOD]           = {"modulo", 2},
+	[S_EXPT]          = {"expt", 2},
+	[S_NOT]           = {"not", 1},
+	[S_CONS]          = {"cons", 2},
+	[S_CAR]           = {"car", 1},
+	[S_CDR]           = {"cdr", 1},
+	[S_SET_CAR]       = {"set-car!", 2},
+	[S_SET_CDR]       = {"set-cdr!", 2},
+	[S_STRING_LENGTH] = {"string-length", 1},
+	[S_STRING_EQ]     = {"string=?", 2},
+	[S_READ]          = {"read", 0},
+	[S_WRITE]         = {"write", 1},
+	[S_ERROR]         = {"error", ATLEAST(1)}
 };
 
 const char *expression_type_name(enum ExpressionType type) {
@@ -157,7 +160,7 @@ static void log_ref_count(const char *action, struct Expression expr) {
 		print_expression(expr.box->cdr, stderr);
 		break;
 	case E_STRING:
-		fprintf(stderr, "\"%.*s\"", expr.box->len, expr.box->str);
+		print_expression(expr);
 		break;
 	case E_MACRO:
 		fputs("(macro ", stderr);
@@ -400,6 +403,42 @@ static void print_pair(struct Box *box, bool first, FILE *stream) {
 	}
 }
 
+// Prints a string to 'stream' enclosed in double quote characters, with
+// embedded double quotes, newlines, carriage returns, tabs, and backslashes
+// escaped with backslashes.
+static void print_string(struct Box* box, FILE* stream) {
+	putc('"', stream);
+	for (size_t i = 0; i < box->len; i++) {
+		char c = box->str[i];
+		switch (c) {
+		case '"':
+			putc('\\', stream);
+			putc('"', stream);
+			break;
+		case '\\':
+			putc('\\', stream);
+			putc('\\', stream);
+			break;
+		case '\n':
+			putc('\\', stream);
+			putc('n', stream);
+			break;
+		case '\r':
+			putc('\\', stream);
+			putc('r', stream);
+			break;
+		case '\t':
+			putc('\\', stream);
+			putc('t', stream);
+			break;
+		default:
+			putc(c, stream);
+			break;
+		}
+	}
+	putc('"', stream);
+}
+
 void print_expression(struct Expression expr, FILE *stream) {
 	switch (expr.type) {
 	case E_NULL:
@@ -431,7 +470,7 @@ void print_expression(struct Expression expr, FILE *stream) {
 		print_pair(expr.box, true, stream);
 		break;
 	case E_STRING:
-		fprintf(stream, "\"%.*s\"", expr.box->len, expr.box->str);
+		print_string(expr.box, stream);
 		break;
 	case E_MACRO:
 		fprintf(stream, "#<macro %p>", (void *)expr.box);

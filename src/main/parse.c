@@ -246,7 +246,8 @@ struct ParseResult parse(const char *text) {
 	case '"':
 		s++;
 		len = skip_string(s);
-		if (s[len-1] != '\\' && s[len] == '"') {
+		if (!(s[len-1] == '\\' && (len < 2 || s[len-2] == '\\'))
+				&& s[len] == '"') {
 			result.expr = parse_string(s, len);
 		} else {
 			result.err_type = ERR_UNEXPECTED_EOI;
