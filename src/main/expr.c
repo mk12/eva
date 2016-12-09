@@ -35,6 +35,7 @@ static const char *const expr_type_names[N_EXPRESSION_TYPES] = {
 	[E_STDPROCMACRO] = "PROCEDURE",
 	[E_STDPROCEDURE] = "PROCEDURE",
 	[E_PAIR]         = "PAIR",
+	[E_STRING]       = "STRING",
 	[E_MACRO]        = "MACRO",
 	[E_PROCEDURE]    = "PROCEDURE"
 };
@@ -67,6 +68,7 @@ static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_NUMBERP]    = {"number?", 1},
 	[S_BOOLEANP]   = {"boolean?", 1},
 	[S_PAIRP]      = {"pair?", 1},
+	[S_STRINGP]    = {"string?", 1},
 	[S_MACROP]     = {"macro?", 1},
 	[S_PROCEDUREP] = {"procedure?", 1},
 	[S_EQ]         = {"eq?", 2},
@@ -154,6 +156,9 @@ static void log_ref_count(const char *action, struct Expression expr) {
 		fputs(" . ", stderr);
 		print_expression(expr.box->cdr, stderr);
 		break;
+	case E_STRING:
+		fprintf(stderr, "\"%.*s\"", expr.box->len, expr.box->str);
+		break;
 	case E_MACRO:
 		fputs("(macro ", stderr);
 		// fall through
@@ -168,7 +173,9 @@ static void log_ref_count(const char *action, struct Expression expr) {
 	if (expr.type == E_MACRO) {
 		putc(')', stderr);
 	}
-	fputs(")\n", stderr);
+	if (expr.type != E_STRING) {
+		fputs(")\n", stderr);
+	}
 }
 #endif
 
@@ -178,6 +185,20 @@ struct Expression new_pair(struct Expression car, struct Expression cdr) {
 	box->car = car;
 	box->cdr = cdr;
 	struct Expression expr = { .type = E_PAIR, .box = box };
+#if REF_COUNT_LOGGING
+	total_box_count++;
+	total_ref_count++;
+	log_ref_count("create", expr);
+#endif
+	return expr;
+}
+
+struct Expression new_string(char *str, size_t len) {
+	struct Box *box = xmalloc(sizeof *box);
+	box->ref_count = 1;
+	box->str = str;
+	box->len = len;
+	struct Expression expr = { .type = E_STRING, .box = box };
 #if REF_COUNT_LOGGING
 	total_box_count++;
 	total_ref_count++;
@@ -228,6 +249,7 @@ static void dealloc_expression(struct Expression expr) {
 #if REF_COUNT_LOGGING
 	switch (expr.type) {
 	case E_PAIR:
+	case E_STRING:
 	case E_MACRO:
 	case E_PROCEDURE:
 		total_box_count--;
@@ -261,6 +283,7 @@ struct Expression retain_expression(struct Expression expr) {
 	// Increase the reference count of the box.
 	switch (expr.type) {
 	case E_PAIR:
+	case E_STRING:
 	case E_MACRO:
 	case E_PROCEDURE:
 		expr.box->ref_count++;
@@ -279,6 +302,7 @@ void release_expression(struct Expression expr) {
 	// Decrease the reference count of the box, and deallocate if it reaches 0.
 	switch (expr.type) {
 	case E_PAIR:
+	case E_STRING:
 	case E_MACRO:
 	case E_PROCEDURE:
 		assert(expr.box->ref_count > 0);
@@ -321,6 +345,7 @@ bool expression_eq(struct Expression lhs, struct Expression rhs) {
 	case E_STDPROCEDURE:
 		return lhs.stdproc == rhs.stdproc;
 	case E_PAIR:
+	case E_STRING:
 	case E_MACRO:
 	case E_PROCEDURE:
 		return lhs.box == rhs.box;
@@ -404,6 +429,9 @@ void print_expression(struct Expression expr, FILE *stream) {
 	case E_PAIR:
 		putc('(', stream);
 		print_pair(expr.box, true, stream);
+		break;
+	case E_STRING:
+		fprintf(stream, "\"%.*s\"", expr.box->len, expr.box->str);
 		break;
 	case E_MACRO:
 		fprintf(stream, "#<macro %p>", (void *)expr.box);

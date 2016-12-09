@@ -12,7 +12,7 @@
 struct Environment;
 
 // Types of expressions.
-#define N_EXPRESSION_TYPES 10
+#define N_EXPRESSION_TYPES 11
 enum ExpressionType {
 	// Immediate expressions
 	E_NULL,         // empty list
@@ -24,6 +24,7 @@ enum ExpressionType {
 	E_STDPROCEDURE, // standard procedure
 	// Boxed expressions
 	E_PAIR,         // cons cell
+	E_STRING,       // string of text
 	E_MACRO,        // user-defined macro
 	E_PROCEDURE     // user-defined procedure
 };
@@ -47,14 +48,15 @@ enum StandardMacro {
 };
 
 // Standard procedures are procedures implemented by the interpreter.
-#define N_STANDARD_PROCEDURES 32
+#define N_STANDARD_PROCEDURES 33
 enum StandardProcedure {
 	// Eval and apply
 	S_EVAL, S_APPLY,
 	// Macro creation
 	S_MACRO,
 	// Type predicates
-	S_NULLP, S_SYMBOLP, S_NUMBERP, S_BOOLEANP, S_PAIRP, S_MACROP, S_PROCEDUREP,
+	S_NULLP, S_SYMBOLP, S_NUMBERP, S_BOOLEANP,
+	S_PAIRP, S_STRINGP, S_MACROP, S_PROCEDUREP,
 	// Equality (identity)
 	S_EQ,
 	// Numeric comparisons
@@ -110,6 +112,11 @@ struct Box {
 			struct Expression car;
 			struct Expression cdr;
 		};
+		// Used by E_STRING:
+		struct {
+			char* str;
+			size_t len;
+		};
 		// Used by E_MACRO and E_PROCEDURE:
 		struct {
 			Arity arity;
@@ -138,6 +145,15 @@ struct Expression new_stdprocedure(enum StandardProcedure stdproc);
 // Creates a new pair. Sets the reference count of the box to 1. Takes owernship
 // of 'car' and 'cdr' without retaining them.
 struct Expression new_pair(struct Expression car, struct Expression cdr);
+
+// Creates a new string. Sets the reference count of the box to 1. Takes
+// ownership of the string buffer and frees it on deallocation.
+struct Expression new_string(char *str, size_t len);
+
+// TODO: ALT:
+// Creates a new string. Sets the reference count of the box to 1. Takes
+// ownership of the string buffer and frees it on deallocation. Expects 'str' to
+// be terminated with a null character (not included in the length 'len').
 
 // Creates a new macro based on an expression of type E_STDPROCEDURE (resulting
 // in E_STDPROCMACRO) or E_PROCEDURE (resulting in E_MACRO). Takes ownership of

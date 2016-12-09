@@ -4,6 +4,7 @@
 
 #include "error.h"
 #include "intern.h"
+#include "util.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -44,6 +45,40 @@ static bool parse_int(const char *s, size_t n, int *result) {
 	return true;
 }
 
+// Parses the text of 'n' characters beginning at at 's' as a string expression
+// (dynamically allocated) Handles backslash escapes.
+static struct Expression parse_string(const char *s, size_t n) {
+	if (n == 0) {
+		return new_string(NULL, 0);
+	}
+
+	char* buf = xmalloc(n);
+	char* ptr = buf;
+	for (size_t i = 0; i < n; i++) {
+		char c = s[i];
+		if (s[i-1] == '\\') {
+			switch (c) {
+			case 'n':
+				*ptr++ = '\n';
+				break;
+			case 'r':
+				*ptr++ = '\r';
+				break;
+			case 't':
+				*ptr++ = '\t';
+				break;
+			default:
+				*ptr++ = c;
+				break;
+			}
+		} else if (c != '\\') {
+			*ptr++ = c;
+		}
+	}
+
+	return new_string(buf, (size_t)(ptr - buf));
+}
+
 // Returns the number of leading whitespace characters in 'text'. Comments,
 // which go from a semicolon to the end of the line, are treated as whitespace.
 static size_t skip_whitespace(const char *text) {
@@ -70,6 +105,17 @@ static size_t skip_whitespace(const char *text) {
 static size_t skip_symbol(const char *text) {
 	const char *s = text;
 	while (*s && *s != ';' && *s != '(' && *s != ')' && !isspace(*s)) {
+		s++;
+	}
+	return (size_t)(s - text);
+}
+
+// Returns the number of string characters at the beginning of 'text'. Assumes
+// 'text[-1]' is a double quote. The string continues until (but not including)
+// the next double quote character that is not escaped by a backslash.
+static size_t skip_string(const char* text) {
+	const char *s = text;
+	while (*s && !(s[-1] != '\\' && *s == '"')) {
 		s++;
 	}
 	return (size_t)(s - text);
@@ -196,6 +242,17 @@ struct ParseResult parse(const char *text) {
 					new_stdmacro(stdmacro),
 					new_pair(result.expr, new_null()));
 		}
+		break;
+	case '"':
+		s++;
+		len = skip_string(s);
+		if (s[len-1] != '\\' && s[len] == '"') {
+			result.expr = parse_string(s, len);
+		} else {
+			result.err_type = ERR_UNEXPECTED_EOI;
+		}
+		s += len;
+		s++;
 		break;
 	default:;
 		len = skip_symbol(s);

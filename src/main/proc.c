@@ -194,6 +194,7 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_SYMBOLP]    = NULL,
 	[S_NUMBERP]    = NULL,
 	[S_BOOLEANP]   = NULL,
+	[S_STRINGP]    = NULL,
 	[S_PAIRP]      = NULL,
 	[S_MACROP]     = NULL,
 	[S_PROCEDUREP] = NULL,
@@ -230,6 +231,7 @@ static const enum StandardProcedure predicate_table[N_EXPRESSION_TYPES] = {
 	[E_STDMACRO]     = S_MACROP,
 	[E_STDPROCEDURE] = S_PROCEDUREP,
 	[E_PAIR]         = S_PAIRP,
+	[E_STRING]       = S_STRINGP,
 	[E_MACRO]        = S_MACROP,
 	[E_PROCEDURE]    = S_PROCEDUREP
 };
