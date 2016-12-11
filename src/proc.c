@@ -189,6 +189,17 @@ static struct Expression s_string_length(struct Expression *args, size_t n) {
 	return new_number((Number)args[0].box->len);
 }
 
+static struct Expression s_string_ref(struct Expression *args, size_t n) {
+	(void)n;
+	return new_character(args[0].box->str[(size_t)args[1].number]);
+}
+
+static struct Expression s_string_set(struct Expression *args, size_t n) {
+	(void)n;
+	args[0].box->str[(size_t)args[1].number] = args[2].character;
+	return new_void();
+}
+
 static struct Expression s_string_eq(struct Expression *args, size_t n) {
 	(void)n;
 	size_t len0 = args[0].box->len;
@@ -307,6 +318,8 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_SET_CAR]          = s_set_car,
 	[S_SET_CDR]          = s_set_cdr,
 	[S_STRING_LENGTH]    = s_string_length,
+	[S_STRING_REF]       = s_string_ref,
+	[S_STRING_SET]       = s_string_set,
 	[S_STRING_EQ]        = s_string_eq,
 	[S_SUBSTRING]        = s_substring,
 	[S_STRING_APPEND]    = s_string_append,

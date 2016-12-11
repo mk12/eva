@@ -13,6 +13,13 @@
 #define CHECK_TYPE(t, i) \
 	if (args[i].type != t) { return new_type_error(t, args, i); }
 
+// Checks that the expression number 'j' (a number) is within the range for
+// expression number 'i' (a string).
+#define CHECK_RANGE(i, j) \
+	if (args[j].number < 0 || args[j].number > (Number)args[i].box->len) { \
+		return new_eval_error_expr(ERR_RANGE, args[j]); \
+	}
+
 static struct EvalError *check_stdmacro(
 		enum StandardMacro stdmacro, struct Expression *args, size_t n) {
 	size_t length;
@@ -171,17 +178,23 @@ static struct EvalError *check_stdproc(
 			CHECK_TYPE(E_STRING, i);
 		}
 		break;
+	case S_STRING_REF:
+		CHECK_TYPE(E_STRING, 0);
+		CHECK_TYPE(E_NUMBER, 1);
+		CHECK_RANGE(0, 1);
+		break;
+	case S_STRING_SET:
+		CHECK_TYPE(E_STRING, 0);
+		CHECK_TYPE(E_NUMBER, 1);
+		CHECK_TYPE(E_CHARACTER, 2);
+		CHECK_RANGE(0, 1);
+		break;
 	case S_SUBSTRING:
 		CHECK_TYPE(E_STRING, 0);
 		CHECK_TYPE(E_NUMBER, 1);
 		CHECK_TYPE(E_NUMBER, 2);
-		if (args[1].number < 0 || args[1].number > (Number)args[0].box->len) {
-			return new_eval_error_expr(ERR_RANGE, args[1]);
-		}
-		if (args[2].number < 0 || args[2].number > (Number)args[0].box->len
-				|| args[2].number < args[1].number) {
-			return new_eval_error_expr(ERR_RANGE, args[2]);
-		}
+		CHECK_RANGE(0, 1);
+		CHECK_RANGE(0, 2);
 		break;
 	case S_CHAR_TO_INTEGER:
 		CHECK_TYPE(E_CHARACTER, 0);
