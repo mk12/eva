@@ -270,6 +270,10 @@ static void dealloc_expression(struct Expression expr) {
 		release_expression(expr.box->cdr);
 		free(expr.box);
 		break;
+	case E_STRING:
+		free(expr.box->str);
+		free(expr.box);
+		break;
 	case E_MACRO:
 	case E_PROCEDURE:
 		free(expr.box->params);
