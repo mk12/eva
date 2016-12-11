@@ -12,12 +12,9 @@
 #include <stddef.h>
 #include <strings.h>
 
-// Attempts to parse a string of 'n' characters as an integer. Does not require
-// a null terminator. On success, stores the integer in 'result' and returns
-// true. Otherwise, returns false.
-static bool parse_int(const char *s, size_t n, int *result) {
-	int val = 0;
-	int sign = 1;
+bool parse_number(const char *s, size_t n, Number *result) {
+	Number val = 0;
+	Number sign = 1;
 	bool leading_zero = true;
 	for (size_t i = 0; i < n; i++) {
 		char c = s[i];
@@ -299,8 +296,8 @@ struct ParseResult parse(const char *text) {
 	default:;
 		len = skip_symbol(s);
 		assert(len > 0);
-		int number;
-		if (parse_int(s, len, &number)) {
+		Number number;
+		if (parse_number(s, len, &number)) {
 			result.expr = new_number(number);
 		} else {
 			InternId symbol_id = intern_string_n(s, len);

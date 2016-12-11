@@ -23,4 +23,9 @@ struct ParseResult {
 // Otherwise, returns a ParseErrorType in the result.
 struct ParseResult parse(const char *text);
 
+// Attempts to parse a string of 'n' characters as a number. Does not require
+// a null terminator. On success, stores the integer in 'result' and returns
+// true. Otherwise, returns false.
+bool parse_number(const char *s, size_t n, Number *result);
+
 #endif

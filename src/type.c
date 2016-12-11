@@ -138,6 +138,7 @@ static struct EvalError *check_stdproc(
 	case S_SUB:
 	case S_MUL:
 	case S_EXPT:
+	case S_NUMBER_TO_STRING:
 		for (size_t i = 0; i < n; i++) {
 			CHECK_TYPE(E_NUMBER, i);
 		}
@@ -164,6 +165,7 @@ static struct EvalError *check_stdproc(
 	case S_STRING_EQ:
 	case S_STRING_APPEND:
 	case S_STRING_TO_SYMBOL:
+	case S_STRING_TO_NUMBER:
 		for (size_t i = 0; i < n; i++) {
 			CHECK_TYPE(E_STRING, i);
 		}

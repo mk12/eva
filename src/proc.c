@@ -2,7 +2,9 @@
 
 #include "proc.h"
 
+#include "expr.h"
 #include "intern.h"
+#include "parse.h"
 #include "util.h"
 
 #include <stdbool.h>
@@ -235,6 +237,23 @@ static struct Expression s_symbol_to_string(struct Expression *args, size_t n) {
 	return new_string(buf, len);
 }
 
+static struct Expression s_string_to_number(struct Expression *args, size_t n) {
+	(void)n;
+	Number number;
+	if (parse_number(args[0].box->str, args[0].box->len, &number)) {
+		return new_number(number);
+	}
+	return new_boolean(false);
+}
+
+static struct Expression s_number_to_string(struct Expression *args, size_t n) {
+	(void)n;
+	size_t len = (size_t)snprintf(NULL, 0, NUMBER_FMT, args[0].number);
+	char *buf = xmalloc(len);
+	snprintf(buf, len, NUMBER_FMT, args[0].number);
+	return new_string(buf, len);
+}
+
 static struct Expression s_write(struct Expression *args, size_t n) {
 	(void)n;
 	print_expression(args[0], stdout);
@@ -280,6 +299,8 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_STRING_APPEND]    = s_string_append,
 	[S_STRING_TO_SYMBOL] = s_string_to_symbol,
 	[S_SYMBOL_TO_STRING] = s_symbol_to_string,
+	[S_STRING_TO_NUMBER] = s_string_to_number,
+	[S_NUMBER_TO_STRING] = s_number_to_string,
 	[S_READ]             = NULL,
 	[S_WRITE]            = s_write,
 	[S_ERROR]            = NULL

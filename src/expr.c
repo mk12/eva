@@ -20,6 +20,8 @@ static int total_box_count = 0;
 static int total_ref_count = 0;
 #endif
 
+const char *const NUMBER_FMT = "%ld";
+
 // A pair containing the name and arity of a macro or procedure.
 struct NameArity {
 	const char *name;
@@ -100,6 +102,8 @@ static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_STRING_APPEND]    = {"string-append", ATLEAST(0)},
 	[S_STRING_TO_SYMBOL] = {"string->symbol", 1},
 	[S_SYMBOL_TO_STRING] = {"symbol->string", 1},
+	[S_STRING_TO_NUMBER] = {"string->number", 1},
+	[S_NUMBER_TO_STRING] = {"number->string", 1},
 	[S_READ]             = {"read", 0},
 	[S_WRITE]            = {"write", 1},
 	[S_ERROR]            = {"error", ATLEAST(1)}

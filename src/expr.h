@@ -50,7 +50,7 @@ enum StandardMacro {
 };
 
 // Standard procedures are procedures implemented by the interpreter.
-#define N_STANDARD_PROCEDURES 40
+#define N_STANDARD_PROCEDURES 42
 enum StandardProcedure {
 	// Eval and apply
 	S_EVAL, S_APPLY,
@@ -72,12 +72,16 @@ enum StandardProcedure {
 	// String functions
 	S_STRING_LENGTH, S_STRING_EQ, S_SUBSTRING, S_STRING_APPEND,
 	S_STRING_TO_SYMBOL, S_SYMBOL_TO_STRING,
+	S_STRING_TO_NUMBER, S_NUMBER_TO_STRING,
 	// Input/output
 	S_READ, S_WRITE, S_ERROR
 };
 
 // Number expressions are internally represented with long integers.
 typedef long Number;
+
+// Format string to use for Number in 'printf'.
+extern const char *const NUMBER_FMT;
 
 // Expression is the algebraic data type used for all values in Eva. Code and
 // data are both represented as expressions. Seven types of expressions fit in
