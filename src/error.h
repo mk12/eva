@@ -17,13 +17,14 @@ extern const char *const argv_filename;
 extern const char *const stdin_filename;
 
 // Error types for parse errors.
-#define N_PARSE_ERROR_TYPES 5
+#define N_PARSE_ERROR_TYPES 6
 enum ParseErrorType {
 	ERR_EXPECTED_RPAREN,
 	ERR_INVALID_DOT,
 	ERR_INVALID_LITERAL,
 	ERR_UNEXPECTED_EOI,
-	ERR_UNEXPECTED_RPAREN
+	ERR_UNEXPECTED_RPAREN,
+	ERR_UNKNOWN_CHARACTER
 };
 
 // Error types for evaluation errors.

@@ -26,7 +26,8 @@ static const char *const parse_error_messages[N_PARSE_ERROR_TYPES] = {
 	[ERR_INVALID_DOT]       = "Improperly placed dot",
 	[ERR_INVALID_LITERAL]   = "Invalid hash literal",
 	[ERR_UNEXPECTED_EOI]    = "Unexpected end of input",
-	[ERR_UNEXPECTED_RPAREN] = "Unexpected character ')'"
+	[ERR_UNEXPECTED_RPAREN] = "Unexpected character ')'",
+	[ERR_UNKNOWN_CHARACTER] = "Unknown special character"
 };
 
 // Strings to use for evaluation error types.

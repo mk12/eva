@@ -12,7 +12,7 @@
 struct Environment;
 
 // Types of expressions.
-#define N_EXPRESSION_TYPES 12
+#define N_EXPRESSION_TYPES 13
 enum ExpressionType {
 	// Immediate expressions
 	E_VOID,         // lack of a value
@@ -20,6 +20,7 @@ enum ExpressionType {
 	E_SYMBOL,       // interned string
 	E_NUMBER,       // signed integer
 	E_BOOLEAN,      // #t and #f
+	E_CHARACTER,    // single character
 	E_STDMACRO,     // standard macro (special form)
 	E_STDPROCMACRO, // macro of standard procedure
 	E_STDPROCEDURE, // standard procedure
@@ -49,14 +50,14 @@ enum StandardMacro {
 };
 
 // Standard procedures are procedures implemented by the interpreter.
-#define N_STANDARD_PROCEDURES 39
+#define N_STANDARD_PROCEDURES 40
 enum StandardProcedure {
 	// Eval and apply
 	S_EVAL, S_APPLY,
 	// Macro creation
 	S_MACRO,
 	// Type predicates
-	S_NULLP, S_SYMBOLP, S_NUMBERP, S_BOOLEANP,
+	S_NULLP, S_SYMBOLP, S_NUMBERP, S_BOOLEANP, S_CHARP,
 	S_PAIRP, S_STRINGP, S_MACROP, S_PROCEDUREP,
 	// Equality (identity)
 	S_EQ,
@@ -87,6 +88,7 @@ struct Expression {
 		InternId symbol_id;
 		Number number;
 		bool boolean;
+		char character;
 		enum StandardMacro stdmacro;
 		enum StandardProcedure stdproc;
 		struct Box *box;
@@ -144,6 +146,7 @@ struct Expression new_null(void);
 struct Expression new_symbol(InternId symbol_id);
 struct Expression new_number(Number number);
 struct Expression new_boolean(bool boolean);
+struct Expression new_character(char character);
 struct Expression new_stdmacro(enum StandardMacro stdmacro);
 struct Expression new_stdprocedure(enum StandardProcedure stdproc);
 

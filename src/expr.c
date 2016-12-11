@@ -33,6 +33,7 @@ static const char *const expr_type_names[N_EXPRESSION_TYPES] = {
 	[E_SYMBOL]       = "SYMBOL",
 	[E_NUMBER]       = "NUMBER",
 	[E_BOOLEAN]      = "BOOLEAN",
+	[E_CHARACTER]    = "CHARACTER",
 	[E_STDMACRO]     = "MACRO",
 	[E_STDPROCMACRO] = "PROCEDURE",
 	[E_STDPROCEDURE] = "PROCEDURE",
@@ -69,6 +70,7 @@ static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_SYMBOLP]          = {"symbol?", 1},
 	[S_NUMBERP]          = {"number?", 1},
 	[S_BOOLEANP]         = {"boolean?", 1},
+	[S_CHARP]            = {"char?", 1},
 	[S_PAIRP]            = {"pair?", 1},
 	[S_STRINGP]          = {"string?", 1},
 	[S_MACROP]           = {"macro?", 1},
@@ -142,6 +144,10 @@ struct Expression new_number(Number number) {
 
 struct Expression new_boolean(bool boolean) {
 	return (struct Expression){ .type = E_BOOLEAN, .boolean = boolean };
+}
+
+struct Expression new_character(char character) {
+	return (struct Expression){ .type = E_CHARACTER, .character = character };
 }
 
 struct Expression new_stdmacro(enum StandardMacro stdmacro) {
@@ -356,6 +362,8 @@ bool expression_eq(struct Expression lhs, struct Expression rhs) {
 		return lhs.number == rhs.number;
 	case E_BOOLEAN:
 		return lhs.boolean == rhs.boolean;
+	case E_CHARACTER:
+		return lhs.character == rhs.character;
 	case E_STDMACRO:
 		return lhs.stdmacro == rhs.stdmacro;
 	case E_STDPROCMACRO:
@@ -417,6 +425,29 @@ static void print_pair(struct Box *box, bool first, FILE *stream) {
 	}
 }
 
+// Prints a character expression, handling special characters appropriately.
+static void print_character(char character, FILE* stream) {
+	putc('#', stream);
+	putc('\\', stream);
+	switch (character) {
+	case ' ':
+		fputs("space", stream);
+		break;
+	case '\n':
+		fputs("newline", stream);
+		break;
+	case '\r':
+		fputs("return", stream);
+		break;
+	case '\t':
+		fputs("tab", stream);
+		break;
+	default:
+		putc(character, stream);
+		break;
+	}
+}
+
 // Prints a string to 'stream' enclosed in double quote characters, with
 // embedded double quotes, newlines, carriage returns, tabs, and backslashes
 // escaped with backslashes.
@@ -469,6 +500,9 @@ void print_expression(struct Expression expr, FILE *stream) {
 		break;
 	case E_BOOLEAN:
 		fprintf(stream, "#%c", expr.boolean ? 't' : 'f');
+		break;
+	case E_CHARACTER:
+		print_character(expr.character, stream);
 		break;
 	case E_STDMACRO:
 		fprintf(stream, "#<macro %s>",

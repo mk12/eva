@@ -291,6 +291,7 @@ static const enum StandardProcedure predicate_table[N_EXPRESSION_TYPES] = {
 	[E_SYMBOL]       = S_SYMBOLP,
 	[E_NUMBER]       = S_NUMBERP,
 	[E_BOOLEAN]      = S_BOOLEANP,
+	[E_CHARACTER]    = S_CHARP,
 	[E_STDMACRO]     = S_MACROP,
 	[E_STDPROCEDURE] = S_PROCEDUREP,
 	[E_PAIR]         = S_PAIRP,

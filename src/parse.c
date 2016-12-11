@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <strings.h>
 
 // Attempts to parse a string of 'n' characters as an integer. Does not require
 // a null terminator. On success, stores the integer in 'result' and returns
@@ -43,6 +44,34 @@ static bool parse_int(const char *s, size_t n, int *result) {
 
 	*result = sign * val;
 	return true;
+}
+
+// Parses a spelled-out special character, like the "space" in #\space. Returns
+// the null character if the name is invalid.
+static char parse_char_name(const char *s, size_t n) {
+	switch (n) {
+	case 3:
+		if (strncasecmp(s, "tab", n) == 0) {
+			return '\t';
+		}
+		break;
+	case 5:
+		if (strncasecmp(s, "space", n) == 0) {
+			return ' ';
+		}
+		break;
+	case 6:
+		if (strncasecmp(s, "return", n) == 0) {
+			return '\r';
+		}
+		break;
+	case 7:
+		if (strncasecmp(s, "newline", n) == 0) {
+			return '\n';
+		}
+		break;
+	}
+	return '\0';
 }
 
 // Parses the text of 'n' characters beginning at at 's' as a string expression
@@ -204,6 +233,18 @@ struct ParseResult parse(const char *text) {
 		} else if (len == 1 && s[1] == 'f') {
 			s += 2;
 			result.expr = new_boolean(false);
+		} else if (len > 2 && s[1] == '\\') {
+			char c = parse_char_name(s + 2, len - 1);
+			if (c == '\0') {
+				s += 2;
+				result.err_type = ERR_UNKNOWN_CHARACTER;
+			} else {
+				s += 1 + len;
+				result.expr = new_character(c);
+			}
+		} else if (s[1] == '\\' && s[2] && !isspace(s[2])) {
+			result.expr = new_character(s[2]);
+			s += 3;
 		} else {
 			result.err_type = ERR_INVALID_LITERAL;
 		}
