@@ -6,6 +6,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// Macros for min and max.
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+
 // Wrappers around standard memory allocation functions. If allocation fails,
 // they print an error message and exit with exit status 2.
 void *xmalloc(size_t size);

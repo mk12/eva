@@ -217,6 +217,38 @@ static struct Expression s_string_eq(struct Expression *args, size_t n) {
 	return new_boolean(result);
 }
 
+static struct Expression s_string_lt(struct Expression *args, size_t n) {
+	(void)n;
+	size_t len0 = args[0].box->len;
+	size_t len1 = args[1].box->len;
+	int cmp = memcmp(args[0].box->str, args[1].box->str, MIN(len0, len1));
+	return new_boolean(cmp < 0 || (cmp == 0 && len0 < len1));
+}
+
+static struct Expression s_string_gt(struct Expression *args, size_t n) {
+	(void)n;
+	size_t len0 = args[0].box->len;
+	size_t len1 = args[1].box->len;
+	int cmp = memcmp(args[0].box->str, args[1].box->str, MIN(len0, len1));
+	return new_boolean(cmp > 0 || (cmp == 0 && len0 > len1));
+}
+
+static struct Expression s_string_le(struct Expression *args, size_t n) {
+	(void)n;
+	size_t len0 = args[0].box->len;
+	size_t len1 = args[1].box->len;
+	int cmp = memcmp(args[0].box->str, args[1].box->str, MIN(len0, len1));
+	return new_boolean(cmp < 0 || (cmp == 0 && len0 <= len1));
+}
+
+static struct Expression s_string_ge(struct Expression *args, size_t n) {
+	(void)n;
+	size_t len0 = args[0].box->len;
+	size_t len1 = args[1].box->len;
+	int cmp = memcmp(args[0].box->str, args[1].box->str, MIN(len0, len1));
+	return new_boolean(cmp > 0 || (cmp == 0 && len0 >= len1));
+}
+
 static struct Expression s_substring(struct Expression *args, size_t n) {
 	(void)n;
 	size_t len = (size_t)(args[2].number - args[1].number);
@@ -330,6 +362,10 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_STRING_REF]       = s_string_ref,
 	[S_STRING_SET]       = s_string_set,
 	[S_STRING_EQ]        = s_string_eq,
+	[S_STRING_LT]        = s_string_lt,
+	[S_STRING_GT]        = s_string_gt,
+	[S_STRING_LE]        = s_string_le,
+	[S_STRING_GE]        = s_string_ge,
 	[S_SUBSTRING]        = s_substring,
 	[S_STRING_APPEND]    = s_string_append,
 	[S_CHAR_TO_INTEGER]  = s_char_to_integer,

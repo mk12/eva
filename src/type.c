@@ -171,6 +171,10 @@ static struct EvalError *check_stdproc(
 		break;
 	case S_STRING_LENGTH:
 	case S_STRING_EQ:
+	case S_STRING_LT:
+	case S_STRING_GT:
+	case S_STRING_LE:
+	case S_STRING_GE:
 	case S_STRING_APPEND:
 	case S_STRING_TO_SYMBOL:
 	case S_STRING_TO_NUMBER:
