@@ -184,6 +184,14 @@ static struct Expression s_set_cdr(struct Expression *args, size_t n) {
 	return retain_expression(args[0]);
 }
 
+static struct Expression s_make_string(struct Expression *args, size_t n) {
+	(void)n;
+	size_t len = (size_t)args[0].number;
+	char *buf = xmalloc(len);
+	memset(buf, args[1].character, len);
+	return new_string(buf, len);
+}
+
 static struct Expression s_string_length(struct Expression *args, size_t n) {
 	(void)n;
 	return new_number((Number)args[0].box->len);
@@ -317,6 +325,7 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_CDR]              = s_cdr,
 	[S_SET_CAR]          = s_set_car,
 	[S_SET_CDR]          = s_set_cdr,
+	[S_MAKE_STRING]      = s_make_string,
 	[S_STRING_LENGTH]    = s_string_length,
 	[S_STRING_REF]       = s_string_ref,
 	[S_STRING_SET]       = s_string_set,

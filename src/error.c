@@ -37,6 +37,7 @@ static const char *const eval_error_messages[N_EVAL_ERROR_TYPES] = {
 	[ERR_DEFINE]         = "Invalid use of 'define'",
 	[ERR_DIV_ZERO]       = "Division by zero",
 	[ERR_DUP_PARAM]      = "Duplicate parameter '%s'",
+	[ERR_NEGATIVE_SIZE]  = "Size is negative: ",
 	[ERR_NON_EXHAUSTIVE] = "Non-exhaustive 'cond'",
 	[ERR_RANGE]          = "Index out of range: ",
 	[ERR_READ]           = NULL,
@@ -127,6 +128,7 @@ void free_eval_error(struct EvalError *err) {
 	case ERR_READ:
 		free_parse_error(err->parse_err);
 		break;
+	case ERR_NEGATIVE_SIZE:
 	case ERR_RANGE:
 	case ERR_TYPE_OPERAND:
 	case ERR_TYPE_OPERATOR:
@@ -197,6 +199,7 @@ void print_eval_error(const char *filename, const struct EvalError *err) {
 		break;
 	case ERR_DEFINE:
 	case ERR_DIV_ZERO:
+	case ERR_NEGATIVE_SIZE:
 	case ERR_NON_EXHAUSTIVE:
 	case ERR_RANGE:
 	case ERR_SYNTAX:
@@ -250,6 +253,7 @@ void print_eval_error(const char *filename, const struct EvalError *err) {
 			print_expression(err->array.exprs[i], stderr);
 		}
 		break;
+	case ERR_NEGATIVE_SIZE:
 	case ERR_RANGE:
 	case ERR_TYPE_OPERAND:
 	case ERR_TYPE_OPERATOR:

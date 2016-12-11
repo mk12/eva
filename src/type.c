@@ -178,6 +178,13 @@ static struct EvalError *check_stdproc(
 			CHECK_TYPE(E_STRING, i);
 		}
 		break;
+	case S_MAKE_STRING:
+		CHECK_TYPE(E_NUMBER, 0);
+		CHECK_TYPE(E_CHARACTER, 1);
+		if (args[0].number < 0) {
+			return new_eval_error_expr(ERR_NEGATIVE_SIZE, args[0]);
+		}
+		break;
 	case S_STRING_REF:
 		CHECK_TYPE(E_STRING, 0);
 		CHECK_TYPE(E_NUMBER, 1);

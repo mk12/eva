@@ -96,6 +96,7 @@ static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_CDR]              = {"cdr", 1},
 	[S_SET_CAR]          = {"set-car!", 2},
 	[S_SET_CDR]          = {"set-cdr!", 2},
+	[S_MAKE_STRING]      = {"make-string", 2},
 	[S_STRING_LENGTH]    = {"string-length", 1},
 	[S_STRING_REF]       = {"string-ref", 2},
 	[S_STRING_SET]       = {"string-set!", 3},
