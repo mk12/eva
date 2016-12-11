@@ -100,6 +100,8 @@ static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_STRING_EQ]        = {"string=?", 2},
 	[S_SUBSTRING]        = {"substring", 3},
 	[S_STRING_APPEND]    = {"string-append", ATLEAST(0)},
+	[S_CHAR_TO_INTEGER]  = {"char->integer", 1},
+	[S_INTEGER_TO_CHAR]  = {"integer->char", 1},
 	[S_STRING_TO_SYMBOL] = {"string->symbol", 1},
 	[S_SYMBOL_TO_STRING] = {"symbol->string", 1},
 	[S_STRING_TO_NUMBER] = {"string->number", 1},

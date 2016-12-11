@@ -138,6 +138,7 @@ static struct EvalError *check_stdproc(
 	case S_SUB:
 	case S_MUL:
 	case S_EXPT:
+	case S_INTEGER_TO_CHAR:
 	case S_NUMBER_TO_STRING:
 		for (size_t i = 0; i < n; i++) {
 			CHECK_TYPE(E_NUMBER, i);
@@ -182,8 +183,12 @@ static struct EvalError *check_stdproc(
 			return new_eval_error_expr(ERR_RANGE, args[2]);
 		}
 		break;
+	case S_CHAR_TO_INTEGER:
+		CHECK_TYPE(E_CHARACTER, 0);
+		break;
 	case S_SYMBOL_TO_STRING:
 		CHECK_TYPE(E_SYMBOL, 0);
+		break;
 	default:
 		break;
 	}

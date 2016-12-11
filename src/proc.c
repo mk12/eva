@@ -223,6 +223,19 @@ static struct Expression s_string_append(struct Expression *args, size_t n) {
 	return new_string(buf, len);
 }
 
+static struct Expression s_char_to_integer(struct Expression *args, size_t n) {
+	(void)n;
+	return new_number((Number)args[0].character);
+}
+
+static struct Expression s_integer_to_char(struct Expression *args, size_t n) {
+	(void)n;
+	if ((Number)(char)args[0].number == args[0].number) {
+		return new_character((char)args[0].number);
+	}
+	return new_boolean(false);
+}
+
 static struct Expression s_string_to_symbol(struct Expression *args, size_t n) {
 	(void)n;
 	return new_symbol(intern_string_n(args[0].box->str, args[0].box->len));
@@ -297,6 +310,8 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_STRING_EQ]        = s_string_eq,
 	[S_SUBSTRING]        = s_substring,
 	[S_STRING_APPEND]    = s_string_append,
+	[S_CHAR_TO_INTEGER]  = s_char_to_integer,
+	[S_INTEGER_TO_CHAR]  = s_integer_to_char,
 	[S_STRING_TO_SYMBOL] = s_string_to_symbol,
 	[S_SYMBOL_TO_STRING] = s_symbol_to_string,
 	[S_STRING_TO_NUMBER] = s_string_to_number,
