@@ -257,6 +257,20 @@ static struct Expression s_substring(struct Expression *args, size_t n) {
 	return new_string(buf, len);
 }
 
+static struct Expression s_string_copy(struct Expression *args, size_t n) {
+	(void)n;
+	size_t len = args[0].box->len;
+	char *buf = xmalloc(len);
+	memcpy(buf, args[0].box->str, len);
+	return new_string(buf, len);
+}
+
+static struct Expression s_string_fill(struct Expression *args, size_t n) {
+	(void)n;
+	memset(args[0].box->str, args[1].character, args[0].box->len);
+	return new_void();
+}
+
 static struct Expression s_string_append(struct Expression *args, size_t n) {
 	size_t len = 0;
 	for (size_t i = 0; i < n; i++) {
@@ -367,6 +381,8 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_STRING_LE]        = s_string_le,
 	[S_STRING_GE]        = s_string_ge,
 	[S_SUBSTRING]        = s_substring,
+	[S_STRING_COPY]      = s_string_copy,
+	[S_STRING_FILL]      = s_string_fill,
 	[S_STRING_APPEND]    = s_string_append,
 	[S_CHAR_TO_INTEGER]  = s_char_to_integer,
 	[S_INTEGER_TO_CHAR]  = s_integer_to_char,

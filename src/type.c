@@ -175,6 +175,7 @@ static struct EvalError *check_stdproc(
 	case S_STRING_GT:
 	case S_STRING_LE:
 	case S_STRING_GE:
+	case S_STRING_COPY:
 	case S_STRING_APPEND:
 	case S_STRING_TO_SYMBOL:
 	case S_STRING_TO_NUMBER:
@@ -206,6 +207,10 @@ static struct EvalError *check_stdproc(
 		CHECK_TYPE(E_NUMBER, 2);
 		CHECK_RANGE(0, 1);
 		CHECK_RANGE(0, 2);
+		break;
+	case S_STRING_FILL:
+		CHECK_TYPE(E_STRING, 0);
+		CHECK_TYPE(E_CHARACTER, 1);
 		break;
 	case S_CHAR_TO_INTEGER:
 		CHECK_TYPE(E_CHARACTER, 0);
