@@ -431,6 +431,7 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 
 // A mapping from expression types to the type predicates they satisfy.
 static const enum StandardProcedure predicate_table[N_EXPRESSION_TYPES] = {
+	[E_VOID]         = S_VOIDP,
 	[E_NULL]         = S_NULLP,
 	[E_SYMBOL]       = S_SYMBOLP,
 	[E_NUMBER]       = S_NUMBERP,
@@ -447,7 +448,7 @@ static const enum StandardProcedure predicate_table[N_EXPRESSION_TYPES] = {
 struct Expression invoke_stdprocedure(
 		enum StandardProcedure stdproc, struct Expression *args, size_t n) {
 	// Handle predicates as a special case.
-	if (stdproc >= S_NULLP && stdproc <= S_PROCEDUREP) {
+	if (stdproc >= S_VOIDP && stdproc <= S_PROCEDUREP) {
 		return new_boolean(predicate_table[args[0].type] == stdproc);
 	}
 	// Look up the implementation in the table.

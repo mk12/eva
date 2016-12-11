@@ -68,6 +68,7 @@ static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_EVAL]             = {"eval", 1},
 	[S_APPLY]            = {"apply", ATLEAST(2)},
 	[S_MACRO]            = {"macro", 1},
+	[S_VOIDP]            = {"void?", 1},
 	[S_NULLP]            = {"null?", 1},
 	[S_SYMBOLP]          = {"symbol?", 1},
 	[S_NUMBERP]          = {"number?", 1},

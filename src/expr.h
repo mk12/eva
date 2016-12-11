@@ -50,14 +50,14 @@ enum StandardMacro {
 };
 
 // Standard procedures are procedures implemented by the interpreter.
-#define N_STANDARD_PROCEDURES 58
+#define N_STANDARD_PROCEDURES 59
 enum StandardProcedure {
 	// Eval and apply
 	S_EVAL, S_APPLY,
 	// Macro creation
 	S_MACRO,
 	// Type predicates
-	S_NULLP, S_SYMBOLP, S_NUMBERP, S_BOOLEANP, S_CHARP,
+	S_VOIDP, S_NULLP, S_SYMBOLP, S_NUMBERP, S_BOOLEANP, S_CHARP,
 	S_PAIRP, S_STRINGP, S_MACROP, S_PROCEDUREP,
 	// Equality (identity)
 	S_EQ,
