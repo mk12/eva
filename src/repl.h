@@ -21,9 +21,9 @@ void setup_readline(void);
 // Otherwise, allocates and returns a parse error.
 struct ParseError *read_sexpr(struct Expression *out);
 
-// Executes the given program. Optionally prints the last expression evaluated.
-// Upon encountering an error, prints an error messge and returns false.
-// Otherwise, returns true. The filename is only used for error messages.
+// Executes the given program. If 'print' is true, prints each expression after
+// evaluation. Upon encountering an error, prints an error message and returns
+// false. Otherwise, returns true. The filename is only used for error messages.
 bool execute(
 		const char *filename,
 		const char *text,

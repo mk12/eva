@@ -136,8 +136,8 @@ bool execute(
 			release_expression(code.expr);
 			return false;
 		}
-		// If 'print' is true and this is the last expression, print it.
-		if (print && offset + code.chars_read >= length) {
+		// Print the result if it is not void.
+		if (print && result.expr.type != E_VOID) {
 			print_expression(result.expr, stdout);
 			putchar('\n');
 		}
@@ -196,8 +196,10 @@ void repl(struct Environment *env, bool interactive) {
 						return;
 					}
 				}
-				print_expression(result.expr, stdout);
-				putchar('\n');
+				if (result.expr.type != E_VOID) {
+					print_expression(result.expr, stdout);
+					putchar('\n');
+				}
 				release_expression(result.expr);
 				release_expression(code.expr);
 				offset += code.chars_read;

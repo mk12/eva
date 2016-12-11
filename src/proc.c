@@ -199,7 +199,7 @@ static struct Expression s_write(struct Expression *args, size_t n) {
 	(void)n;
 	print_expression(args[0], stdout);
 	putchar('\n');
-	return new_boolean(true);
+	return new_void();
 }
 
 // A mapping from standard procedures to their implementations.

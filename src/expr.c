@@ -28,6 +28,7 @@ struct NameArity {
 
 // User-facing expression type names.
 static const char *const expr_type_names[N_EXPRESSION_TYPES] = {
+	[E_VOID]         = "VOID",
 	[E_NULL]         = "NULL",
 	[E_SYMBOL]       = "SYMBOL",
 	[E_NUMBER]       = "NUMBER",
@@ -117,6 +118,10 @@ struct Environment *new_standard_environment(void) {
 	// Bind "else" to true (used in 'cond').
 	bind(env, intern_string("else"), new_boolean(true));
 	return env;
+}
+
+struct Expression new_void(void) {
+	return (struct Expression){ .type = E_VOID };
 }
 
 struct Expression new_null(void) {
@@ -338,6 +343,7 @@ bool expression_eq(struct Expression lhs, struct Expression rhs) {
 	}
 	// Compare the contents of the expressions.
 	switch (lhs.type) {
+	case E_VOID:
 	case E_NULL:
 		return true;
 	case E_SYMBOL:
@@ -445,6 +451,9 @@ static void print_string(struct Box* box, FILE* stream) {
 
 void print_expression(struct Expression expr, FILE *stream) {
 	switch (expr.type) {
+	case E_VOID:
+		fputs("#<void>", stream);
+		break;
 	case E_NULL:
 		fputs("()", stream);
 		break;

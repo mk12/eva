@@ -12,9 +12,10 @@
 struct Environment;
 
 // Types of expressions.
-#define N_EXPRESSION_TYPES 11
+#define N_EXPRESSION_TYPES 12
 enum ExpressionType {
 	// Immediate expressions
+	E_VOID,         // lack of a value
 	E_NULL,         // empty list
 	E_SYMBOL,       // interned string
 	E_NUMBER,       // signed integer
@@ -137,6 +138,7 @@ const char *expression_type_name(enum ExpressionType type);
 struct Environment *new_standard_environment(void);
 
 // Constructors for immediate expressions.
+struct Expression new_void(void);
 struct Expression new_null(void);
 struct Expression new_symbol(InternId symbol_id);
 struct Expression new_number(Number number);

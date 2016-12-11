@@ -20,6 +20,7 @@ static struct EvalResult f_define(
 	if (!result.err) {
 		bind(env, args[0].symbol_id, result.expr);
 	}
+	result.expr = new_void();
 	return result;
 }
 
@@ -40,6 +41,7 @@ static struct EvalResult f_set(
 	} else {
 		result.err = new_eval_error_symbol(ERR_UNBOUND_VAR, key);
 	}
+	result.expr = new_void();
 	return result;
 }
 
