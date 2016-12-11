@@ -155,6 +155,35 @@ static struct Expression s_not(struct Expression *args, size_t n) {
 	return new_boolean(!expression_truthy(args[0]));
 }
 
+static struct Expression s_char_eq(struct Expression *args, size_t n) {
+	(void)n;
+	return new_boolean(args[0].character == args[1].character);
+}
+
+static struct Expression s_char_lt(struct Expression *args, size_t n) {
+	(void)n;
+	return new_boolean((unsigned char)args[0].character
+			< (unsigned char)args[1].character);
+}
+
+static struct Expression s_char_gt(struct Expression *args, size_t n) {
+	(void)n;
+	return new_boolean((unsigned char)args[0].character
+			> (unsigned char)args[1].character);
+}
+
+static struct Expression s_char_le(struct Expression *args, size_t n) {
+	(void)n;
+	return new_boolean((unsigned char)args[0].character
+			<= (unsigned char)args[1].character);
+}
+
+static struct Expression s_char_ge(struct Expression *args, size_t n) {
+	(void)n;
+	return new_boolean((unsigned char)args[0].character
+			>= (unsigned char)args[1].character);
+}
+
 static struct Expression s_cons(struct Expression *args, size_t n) {
 	(void)n;
 	return new_pair(retain_expression(args[0]), retain_expression(args[1]));
@@ -295,8 +324,8 @@ static struct Expression s_char_to_integer(struct Expression *args, size_t n) {
 
 static struct Expression s_integer_to_char(struct Expression *args, size_t n) {
 	(void)n;
-	if ((Number)(char)args[0].number == args[0].number) {
-		return new_character((char)args[0].number);
+	if ((Number)(unsigned char)args[0].number == args[0].number) {
+		return new_character((char)(unsigned char)args[0].number);
 	}
 	return new_boolean(false);
 }
@@ -366,6 +395,11 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_MODULO]           = s_modulo,
 	[S_EXPT]             = s_expt,
 	[S_NOT]              = s_not,
+	[S_CHAR_EQ]          = s_char_eq,
+	[S_CHAR_LT]          = s_char_lt,
+	[S_CHAR_GT]          = s_char_gt,
+	[S_CHAR_LE]          = s_char_le,
+	[S_CHAR_GE]          = s_char_ge,
 	[S_CONS]             = s_cons,
 	[S_CAR]              = s_car,
 	[S_CDR]              = s_cdr,

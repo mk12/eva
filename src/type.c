@@ -212,8 +212,15 @@ static struct EvalError *check_stdproc(
 		CHECK_TYPE(E_STRING, 0);
 		CHECK_TYPE(E_CHARACTER, 1);
 		break;
+	case S_CHAR_EQ:
+	case S_CHAR_LT:
+	case S_CHAR_GT:
+	case S_CHAR_LE:
+	case S_CHAR_GE:
 	case S_CHAR_TO_INTEGER:
-		CHECK_TYPE(E_CHARACTER, 0);
+		for (size_t i = 0; i < n; i++) {
+			CHECK_TYPE(E_CHARACTER, i);
+		}
 		break;
 	case S_SYMBOL_TO_STRING:
 		CHECK_TYPE(E_SYMBOL, 0);

@@ -50,7 +50,7 @@ enum StandardMacro {
 };
 
 // Standard procedures are procedures implemented by the interpreter.
-#define N_STANDARD_PROCEDURES 53
+#define N_STANDARD_PROCEDURES 58
 enum StandardProcedure {
 	// Eval and apply
 	S_EVAL, S_APPLY,
@@ -67,6 +67,8 @@ enum StandardProcedure {
 	S_ADD, S_SUB, S_MUL, S_DIV, S_REMAINDER, S_MODULO, S_EXPT,
 	// Boolean negation
 	S_NOT,
+	// Character comparisons
+	S_CHAR_EQ, S_CHAR_LT, S_CHAR_GT, S_CHAR_LE, S_CHAR_GE,
 	// Pair constructor, accessors, and mutators
 	S_CONS, S_CAR, S_CDR, S_SET_CAR, S_SET_CDR,
 	// String functions
