@@ -28,7 +28,7 @@ enum ParseErrorType {
 };
 
 // Error types for evaluation errors.
-#define N_EVAL_ERROR_TYPES 15
+#define N_EVAL_ERROR_TYPES 16
 enum EvalErrorType {
 	                    // Fields of EvalErorr used:
 	ERR_ARITY,          // code, arity, n_args
@@ -36,6 +36,7 @@ enum EvalErrorType {
 	ERR_DEFINE,         // code
 	ERR_DIV_ZERO,       // code
 	ERR_DUP_PARAM,      // code, symbol_id
+	ERR_LOAD,           // code, expr
 	ERR_NEGATIVE_SIZE,  // code, expr
 	ERR_NON_EXHAUSTIVE, // code
 	ERR_RANGE,          // code, expr

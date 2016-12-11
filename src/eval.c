@@ -171,6 +171,16 @@ static struct EvalResult apply_stdprocedure(
 			.exprs = args
 		};
 		break;
+	case S_LOAD:;
+		const char* filename = args[0].box->str;
+		char* contents = read_file(filename);
+		if (contents == NULL) {
+			result.err = new_eval_error_expr(ERR_LOAD, args[0]);
+		} else {
+			execute(filename, contents, env, false);
+			result.expr = new_void();
+		}
+		break;
 	default:
 		result.expr = invoke_stdprocedure(stdproc, args, n);
 		break;

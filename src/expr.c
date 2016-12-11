@@ -123,7 +123,8 @@ static const struct NameArity stdproc_name_arity[N_STANDARD_PROCEDURES] = {
 	[S_NUMBER_TO_STRING] = {"number->string", 1},
 	[S_READ]             = {"read", 0},
 	[S_WRITE]            = {"write", 1},
-	[S_ERROR]            = {"error", ATLEAST(1)}
+	[S_ERROR]            = {"error", ATLEAST(1)},
+	[S_LOAD]             = {"load", 1}
 };
 
 const char *expression_type_name(enum ExpressionType type) {

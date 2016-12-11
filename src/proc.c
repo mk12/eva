@@ -426,7 +426,8 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_NUMBER_TO_STRING] = s_number_to_string,
 	[S_READ]             = NULL,
 	[S_WRITE]            = s_write,
-	[S_ERROR]            = NULL
+	[S_ERROR]            = NULL,
+	[S_LOAD]             = NULL
 };
 
 // A mapping from expression types to the type predicates they satisfy.
