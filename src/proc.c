@@ -196,6 +196,31 @@ static struct Expression s_string_eq(struct Expression *args, size_t n) {
 	return new_boolean(result);
 }
 
+static struct Expression s_substring(struct Expression *args, size_t n) {
+	(void)n;
+	size_t len = (size_t)(args[2].number - args[1].number);
+	char *buf = xmalloc(len);
+	memcpy(buf, args[0].box->str + args[1].number, len);
+	return new_string(buf, len);
+}
+
+static struct Expression s_string_append(struct Expression *args, size_t n) {
+	size_t len = 0;
+	for (size_t i = 0; i < n; i++) {
+		len += args[i].box->len;
+	}
+	if (len == 0) {
+		return new_string(NULL, 0);
+	}
+	char *buf = xmalloc(len);
+	char *ptr = buf;
+	for (size_t i = 0; i < n; i++) {
+		memcpy(ptr, args[i].box->str, args[i].box->len);
+		ptr += args[i].box->len;
+	}
+	return new_string(buf, len);
+}
+
 static struct Expression s_string_to_symbol(struct Expression *args, size_t n) {
 	(void)n;
 	return new_symbol(intern_string_n(args[0].box->str, args[0].box->len));
@@ -205,7 +230,7 @@ static struct Expression s_symbol_to_string(struct Expression *args, size_t n) {
 	(void)n;
 	const char* str = find_string(args[0].symbol_id);
 	size_t len = strlen(str);
-	char* buf = xmalloc(len);
+	char *buf = xmalloc(len);
 	memcpy(buf, str, len);
 	return new_string(buf, len);
 }
@@ -251,6 +276,8 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_SET_CDR]          = s_set_cdr,
 	[S_STRING_LENGTH]    = s_string_length,
 	[S_STRING_EQ]        = s_string_eq,
+	[S_SUBSTRING]        = s_substring,
+	[S_STRING_APPEND]    = s_string_append,
 	[S_STRING_TO_SYMBOL] = s_string_to_symbol,
 	[S_SYMBOL_TO_STRING] = s_symbol_to_string,
 	[S_READ]             = NULL,

@@ -9,6 +9,10 @@
 #include <assert.h>
 #include <stddef.h>
 
+// Checks that expression number 'i' has type 't', and returns an error if not.
+#define CHECK_TYPE(t, i) \
+	if (args[i].type != t) { return new_type_error(t, args, i); }
+
 static struct EvalError *check_stdmacro(
 		enum StandardMacro stdmacro, struct Expression *args, size_t n) {
 	size_t length;
@@ -135,18 +139,14 @@ static struct EvalError *check_stdproc(
 	case S_MUL:
 	case S_EXPT:
 		for (size_t i = 0; i < n; i++) {
-			if (args[i].type != E_NUMBER) {
-				return new_type_error(E_NUMBER, args, i);
-			}
+			CHECK_TYPE(E_NUMBER, i);
 		}
 		break;
 	case S_DIV:
 	case S_REM:
 	case S_MOD:
 		for (size_t i = 0; i < n; i++) {
-			if (args[i].type != E_NUMBER) {
-				return new_type_error(E_NUMBER, args, i);
-			}
+			CHECK_TYPE(E_NUMBER, i);
 			if (i > 0 && args[i].number == 0) {
 				// This is not technically a type error, but this is the
 				// earliest and most convenient place to catch it.
@@ -158,23 +158,30 @@ static struct EvalError *check_stdproc(
 	case S_CDR:
 	case S_SET_CAR:
 	case S_SET_CDR:
-		if (args[0].type != E_PAIR) {
-			return new_type_error(E_PAIR, args, 0);
-		}
+		CHECK_TYPE(E_PAIR, 0);
 		break;
 	case S_STRING_LENGTH:
 	case S_STRING_EQ:
+	case S_STRING_APPEND:
 	case S_STRING_TO_SYMBOL:
 		for (size_t i = 0; i < n; i++) {
-			if (args[i].type != E_STRING) {
-				return new_type_error(E_STRING, args, i);
-			}
+			CHECK_TYPE(E_STRING, i);
+		}
+		break;
+	case S_SUBSTRING:
+		CHECK_TYPE(E_STRING, 0);
+		CHECK_TYPE(E_NUMBER, 1);
+		CHECK_TYPE(E_NUMBER, 2);
+		if (args[1].number < 0 || args[1].number > (Number)args[0].box->len) {
+			return new_eval_error_expr(ERR_RANGE, args[1]);
+		}
+		if (args[2].number < 0 || args[2].number > (Number)args[0].box->len
+				|| args[2].number < args[1].number) {
+			return new_eval_error_expr(ERR_RANGE, args[2]);
 		}
 		break;
 	case S_SYMBOL_TO_STRING:
-		if (args[0].type != E_SYMBOL) {
-			return new_type_error(E_SYMBOL, args, 0);
-		}
+		CHECK_TYPE(E_SYMBOL, 0);
 	default:
 		break;
 	}
