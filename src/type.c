@@ -164,12 +164,17 @@ static struct EvalError *check_stdproc(
 		break;
 	case S_STRING_LENGTH:
 	case S_STRING_EQ:
+	case S_STRING_TO_SYMBOL:
 		for (size_t i = 0; i < n; i++) {
 			if (args[i].type != E_STRING) {
 				return new_type_error(E_STRING, args, i);
 			}
 		}
 		break;
+	case S_SYMBOL_TO_STRING:
+		if (args[0].type != E_SYMBOL) {
+			return new_type_error(E_SYMBOL, args, 0);
+		}
 	default:
 		break;
 	}
