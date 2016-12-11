@@ -1,6 +1,6 @@
 # Compiler
 CC := clang
-OPTIMIZE := -O3
+OFLAGS := -O3
 CFLAGS := -std=c11 -Weverything -pedantic -Wno-padded -Wno-switch-enum \
 	-Wno-format-nonliteral
 LDFLAGS := -lreadline
@@ -25,8 +25,8 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(OBJ_DIR)/$*.d
 
 all: release
 
-release: CFLAGS += $(OPTIMIZE) -DNDEBUG
-release: LDFLAGS += $(OPTIMIZE)
+release: CFLAGS += $(OFLAGS) -DNDEBUG
+release: LDFLAGS += $(OFLAGS)
 release: prep $(EXEC)
 release:
 	@echo "Target release is up to date"
@@ -48,7 +48,7 @@ clean:
 
 $(EXEC): $(OBJS)
 	@echo "\033[0;31mLinking executable $(NAME)\033[0m"
-	@$(CC) $^ -o $@ $(LDFLAGS)
+	@$(CC) $(LDFLAGS) $^ -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@echo "\033[0;32mCC\033[0m $<"
