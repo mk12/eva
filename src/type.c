@@ -143,8 +143,8 @@ static struct EvalError *check_stdproc(
 		}
 		break;
 	case S_DIV:
-	case S_REM:
-	case S_MOD:
+	case S_REMAINDER:
+	case S_MODULO:
 		for (size_t i = 0; i < n; i++) {
 			CHECK_TYPE(E_NUMBER, i);
 			if (i > 0 && args[i].number == 0) {

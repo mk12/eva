@@ -64,7 +64,7 @@ enum StandardProcedure {
 	// Numeric comparisons
 	S_NUM_EQ, S_NUM_LT, S_NUM_GT, S_NUM_LE, S_NUM_GE,
 	// Numeric operations
-	S_ADD, S_SUB, S_MUL, S_DIV, S_REM, S_MOD, S_EXPT,
+	S_ADD, S_SUB, S_MUL, S_DIV, S_REMAINDER, S_MODULO, S_EXPT,
 	// Boolean negation
 	S_NOT,
 	// Pair constructor, accessors, and mutators

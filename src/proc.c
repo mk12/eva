@@ -118,12 +118,12 @@ static struct Expression s_div(struct Expression *args, size_t n) {
 	return new_number(result);
 }
 
-static struct Expression s_rem(struct Expression *args, size_t n) {
+static struct Expression s_remainder(struct Expression *args, size_t n) {
 	(void)n;
 	return new_number(args[0].number % args[1].number);
 }
 
-static struct Expression s_mod(struct Expression *args, size_t n) {
+static struct Expression s_modulo(struct Expression *args, size_t n) {
 	(void)n;
 	Number a = args[0].number;
 	Number m = args[1].number;
@@ -265,8 +265,8 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_SUB]              = s_sub,
 	[S_MUL]              = s_mul,
 	[S_DIV]              = s_div,
-	[S_REM]              = s_rem,
-	[S_MOD]              = s_mod,
+	[S_REMAINDER]        = s_remainder,
+	[S_MODULO]           = s_modulo,
 	[S_EXPT]             = s_expt,
 	[S_NOT]              = s_not,
 	[S_CONS]             = s_cons,
