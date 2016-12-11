@@ -42,26 +42,6 @@ echolog() {
 	log "$1"
 }
 
-# Start a new step in the test suite.
-step_counter=1
-step() {
-	echolog "[ $step_counter ] $1"
-	((step_counter++))
-
-	if [[ $# -eq 1 ]]; then
-		return
-	fi
-
-	${@:2} >> $LOG 2>&1
-
-	st=$?
-	if [[ $st -ne 0 ]]; then
-		echolog "Command failed with exit status $st"
-		echo "See output in $LOG"
-		exit 1
-	fi
-}
-
 # Compare the reference file against actual output.
 failures=
 compare() {
@@ -192,10 +172,7 @@ finish() {
 	exit $exitstatus
 }
 
-step "Initializing tup" tup init
-step "Building unit tests" tup
-step "Running unit tests" bin/test
-step "Running regression tests"
+echo "Running regression tests"
 trap finish SIGINT
 regression
 finish

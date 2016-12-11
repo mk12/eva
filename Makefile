@@ -28,17 +28,22 @@ all: release
 release: CFLAGS += $(OPTIMIZE) -DNDEBUG
 release: LDFLAGS += $(OPTIMIZE)
 release: prep $(EXEC)
+release:
+	@echo "Target release is up to date"
 
 debug: CFLAGS += -g
 debug: prep $(EXEC)
+debug:
+	@echo "Target debug is up to date"
 
-test:
-	@echo "Test"
+test: $(EXEC)
+	@bash test.sh
 
 prep:
 	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
 clean:
+	bash test.sh clean
 	rm -f $(OBJS) $(DEPS) $(EXEC)
 
 $(EXEC): $(OBJS)
