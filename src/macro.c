@@ -64,7 +64,7 @@ static struct EvalResult f_begin(
 	(void)n;
 	struct EvalResult result;
 	result.err = NULL;
-	result.expr = new_null();
+	result.expr = new_void();
 	struct Environment *aug = new_environment(env, 0);
 	for (size_t i = 0; i < n; i++) {
 		release_expression(result.expr);
