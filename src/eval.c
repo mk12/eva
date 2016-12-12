@@ -179,6 +179,7 @@ static struct EvalResult apply_stdprocedure(
 		} else {
 			execute(filename, contents, env, false);
 			result.expr = new_void();
+			free(contents);
 		}
 		break;
 	default:
