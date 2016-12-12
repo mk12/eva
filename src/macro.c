@@ -192,6 +192,7 @@ static struct EvalResult f_or(
 	(void)n;
 	(void)env;
 	struct EvalResult result;
+	result.err = NULL;
 	result.expr = new_boolean(false);
 	for (size_t i = 0; i < n; i++) {
 		struct EvalResult res = eval(args[i], env, false);
