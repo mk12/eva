@@ -11,6 +11,7 @@
 
 // Constants for memory allocation.
 #define BASE_TABLE_SIZE 1024
+#define CHILD_TABLE_SIZE 2
 #define BASE_BUCKET_CAP 8
 #define CHILD_BUCKET_CAP 2
 
@@ -143,11 +144,11 @@ static void bind_unchecked(
 
 void bind(struct Environment *env, InternId key, struct Expression expr) {
 	// Check if the load factor is greater than 0.75.
-	if (4 * env->total_entries >= 3 * env->size) {
+	if (env->size == 0 || 4 * env->total_entries >= 3 * env->size) {
 		size_t old_size = env->size;
 		struct Bucket *old_table = env->table;
 		// Create a table with double the number of buckets.
-		env->size *= 2;
+		env->size = old_size == 0 ? CHILD_TABLE_SIZE : old_size * 2;
 		env->table = xcalloc(env->size, sizeof *env->table);
 		// Bind all the expressions into the new table.
 		for (size_t i = 0; i < old_size; i++) {
