@@ -368,6 +368,29 @@ static struct Expression s_write(struct Expression *args, size_t n) {
 	return new_void();
 }
 
+static struct Expression s_display(struct Expression *args, size_t n) {
+	(void)n;
+	switch (args[0].type) {
+	case E_CHARACTER:
+		putchar(args[0].character);
+		break;
+	case E_STRING:
+		printf("%.*s", (int)args[0].box->len, args[0].box->str);
+		break;
+	default:
+		print_expression(args[0], stdout);
+		break;
+	}
+	return new_void();
+}
+
+static struct Expression s_newline(struct Expression *args, size_t n) {
+	(void)n;
+	(void)args;
+	putchar('\n');
+	return new_void();
+}
+
 // A mapping from standard procedures to their implementations.
 static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_EVAL]             = NULL,
@@ -426,6 +449,8 @@ static const Implementation implementation_table[N_STANDARD_PROCEDURES] = {
 	[S_NUMBER_TO_STRING] = s_number_to_string,
 	[S_READ]             = NULL,
 	[S_WRITE]            = s_write,
+	[S_DISPLAY]          = s_display,
+	[S_NEWLINE]          = s_newline,
 	[S_ERROR]            = NULL,
 	[S_LOAD]             = NULL
 };

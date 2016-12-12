@@ -1,5 +1,19 @@
 ;;; Copyright 2016 Mitchell Kember. Subject to the MIT License.
 
+;;;;; Macro definitions
+
+(define defmacro
+  (macro
+    (lambda (name-params . body)
+      `(,define ,(car name-params)
+                (,macro
+                  (,lambda ,(cdr name-params) ,@body))))))
+
+(defmacro (when condition . then)
+  (list if condition
+        (cons begin then)
+        (begin)))
+
 ;;;;; R5RS standard procedures
 
 ;;; Equivalence predicates
@@ -164,6 +178,9 @@
         (go (cdr chars) (+ i 1)))))
   (go chars 0))
 
+(define (string . chars)
+  (list->string chars))
+
 ;;; Control features
 
 (define (map f first . rest)
@@ -180,6 +197,12 @@
   (if (null? rest)
     (map1 f first)
     (go (cons first rest))))
+
+(define (for-each f xs)
+  (when (not (null? xs))
+    (begin
+      (f (car xs))
+      (for-each f (cdr xs)))))
 
 (define delay
   (macro
@@ -198,19 +221,15 @@
 
 ;;;;; Other procedures
 
-;;; Macros
+;;; Printing
 
-(define defmacro
-  (macro
-    (lambda (name-params . body)
-      `(,define ,(car name-params)
-                (,macro
-                  (,lambda ,(cdr name-params) ,@body))))))
-
-(defmacro (when condition . then)
-  (list if condition
-        (cons begin then)
-        (begin)))
+(define (print . xs)
+  (define (go x)
+    (cond ((null? x) (begin))
+          ((pair? x) (for-each go x))
+          (else (display x))))
+  (for-each go xs)
+  (newline))
 
 ;;; Functional
 
