@@ -50,7 +50,39 @@ When Eva sees `(f a b c)`, it evaluates as follows:
 		2. Evaluate the resulting body to get the code.
 		3. Evaluate the resulting code at the call site.
 
-These rules make it possible for macros to be first-class values in Eva. Although this may seem like a strange feature, it actually results in a simpler implementation. There are no special cases: if you really want to, you can `(define d define)` to save 5 characters. You could then `(d (define x y) (error "Use d"))` if you really wanted to.
+These rules make it possible for macros to be first-class values in Eva. Although this may seem like a strange feature, it actually results in a simpler implementation. There are no special cases: if you really want to, you can `(define d define)` to save 5 characters. You could then write `(d (define x y) (error "Use d"))`.
+
+### Macros
+
+In Eva, any function `f` can be turned into a macro simply by writing `(macro f)`. For this new object, `macro?` will return `#t` and `procedure?` will return false.
+
+For example, consider turning `cons` into a macro:
+
+```scheme
+(define mcons (macro cons))
+
+(mcons + (1 2 3)) ; => 6
+
+(define a 5)
+(define b 6)
+(mcons cons (a b)) ; => (5 . 6)
+```
+
+It's kind of like `apply`, except you don't need to quote the second argument.
+
+Another benefit of having first-class macros is that reducing a list with a macro like `and` or `or` works. First-class macros are very cool and powerful, but I'm sure they'd be a nightmare if anyone actually used them in a large project.
+
+## Input/output
+
+Eva has seven IO procedures worth mentioning:
+
+1. `(load str)`: Loads an Eva file. If `str` is "prelude," then it loads the prelude. Otherwise, it tries to open a file.
+2. `(error expr1 ...)`: Creates an error. This can be used anywhere. The arguments will be printed when the error is reported.
+3. `(read)`: Reads an expression using the same parser as for code.
+4. `(write expr)`: Writes an expression in a format that `read` would accept.
+5. `(display expr)`: Displays an expression to standard output without a trailing newline. Strings are displayed without double quotes or escaped characters.
+6. `(newline)`: Prints a newline to standard output.
+7. `(print expr)`: Like `display`, except it adds a trailing newline and it recursively enters lists to print each item individually.
 
 ### R5RS conformity
 
@@ -92,12 +124,32 @@ string? string make-string string-length string-ref string-set!
 string=? string<? string>? string<=? string>=?
 substring string-append string->list list->string
 string-copy string-fill!
-procedure? eval apply map force delay
+procedure? eval apply map for-each force delay
 read write load
 ```
 
 [1]: https://groups.csail.mit.edu/mac/ftpdir/scheme-reports/r5rs-html/r5rs_6.html
 [2]: https://groups.csail.mit.edu/mac/ftpdir/scheme-reports/r5rs-html/r5rs_8.html
+
+## Implementation
+
+Eva is implemented in 15 parts:
+
+1. `main.c`: Implements the main function. Handles command-line arguments.
+2. `util.c`: Utilities for reading files, allocating memory, etc.
+3. `repl.c`: Implements the REPL and a routine for executing files.
+4. `parse.c`: Parser for the language.
+5. `expr.c`: Defines the Expression struct and related functions.
+6. `type.c`: Typechecking for applications of standard procedures and macros.
+7. `eval.c`: Implements the core of the interpreter (eval and apply).
+8. `proc.c`: Implementation functions for standard procedures.
+9. `macro.c`: Implementation functions for standard macros.
+10. `env.c`: Data structure for environment frames.
+11. `intern.c`: Table for interning strings.
+12. `list.c`: Helper functions for dealing with linked lists.
+13. `set.c`: Set data structure for detecting duplicates.
+14. `error.c`: Creating and printing error messages.
+15. `prelude.c`: Auto-generated from `prelude.scm`, the prelude.
 
 ## License
 
