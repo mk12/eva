@@ -189,33 +189,8 @@ static void log_ref_count(const char *action, struct Expression expr) {
 			action,
 			expression_type_name(expr.type),
 			expr.box->ref_count);
-	switch (expr.type) {
-	case E_PAIR:
-		putc('(', stderr);
-		print_expression(expr.box->car, stderr);
-		fputs(" . ", stderr);
-		print_expression(expr.box->cdr, stderr);
-		break;
-	case E_STRING:
-		print_expression(expr);
-		break;
-	case E_MACRO:
-		fputs("(macro ", stderr);
-		// fall through
-	case E_PROCEDURE:
-		fputs("(lambda (?) ", stderr);
-		print_expression(expr.box->body, stderr);
-		break;
-	default:
-		assert(false);
-		break;
-	}
-	if (expr.type == E_MACRO) {
-		putc(')', stderr);
-	}
-	if (expr.type != E_STRING) {
-		fputs(")\n", stderr);
-	}
+	print_expression(expr, stderr);
+	putc('\n', stderr);
 }
 #endif
 
