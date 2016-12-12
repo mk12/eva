@@ -113,13 +113,13 @@ regression() {
 		skip=y
 		if [[ -f $ref ]]; then
 			skip=n
-			bin/eva $src > $out 2>&1
+			bin/eva -n $src > $out 2>&1
 			compare $ref $out
 			((reg_counter++))
 		fi
 		if [[ -f $repl_ref ]]; then
 			skip=n
-			bin/eva < $src > $repl_out 2>&1
+			bin/eva -n < $src > $repl_out 2>&1
 			compare $repl_ref $repl_out
 			((reg_counter++))
 		fi
