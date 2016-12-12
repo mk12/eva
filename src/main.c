@@ -40,6 +40,7 @@ static bool process_args(int argc, char **argv, struct Environment *env) {
 		if (is_opt(argv[i], 'n', "no-prelude")) {
 			prelude = false;
 			argv[i] = NULL;
+			break;
 		}
 	}
 	if (prelude) {
