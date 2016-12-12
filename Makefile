@@ -2,7 +2,7 @@
 CC := clang
 OFLAGS := -O3
 CFLAGS := -std=c11 -Weverything -pedantic -Wno-padded -Wno-switch-enum \
-	-Wno-format-nonliteral
+	-Wno-format-nonliteral -Wno-overlength-strings
 LDFLAGS := -lreadline
 
 # Project

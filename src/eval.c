@@ -337,8 +337,9 @@ static struct EvalResult eval_application(
 
 // Applies rewrite rules on 'args' based on the operator. If the operator is
 // F_LAMBDA, F_LET_*, or F_COND and its body contains more than one expression,
-// wraps the expresions in an F_BEGIN block. If the operator is F_DEFINE and is
-// using the function definition syntax, rewrites it to use F_LAMBDA.
+// wraps the expresions in an F_BEGIN block. If the operator is F_DEFINE and has
+// only one argument, rewrites it to assign a void value. If the operator is
+// F_DEFINE with the function definition syntax, rewrites it to use F_LAMBDA.
 static void rewrite_arguments(
 		struct Expression code,
 		struct Expression operator,
@@ -348,7 +349,11 @@ static void rewrite_arguments(
 	}
 	switch (operator.stdmacro) {
 	case F_DEFINE:
-		if (args->size >= 2 && args->exprs[0].type == E_PAIR) {
+		if (args->size == 1) {
+			args->exprs = realloc(args->exprs, 2 * sizeof *args->exprs);
+			args->exprs[1] = new_void();
+			args->size = 2;
+		} else if (args->size >= 2 && args->exprs[0].type == E_PAIR) {
 			struct Expression cons = args->exprs[0];
 			struct Expression name = cons.box->car;
 			struct Expression list = cons.box->cdr;
