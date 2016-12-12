@@ -107,19 +107,6 @@ struct Expression array_to_list(struct Array array) {
 	return list;
 }
 
-bool find_duplicate_symbol(InternId *out, struct Array array) {
-	for (size_t i = 0; i < array.size; i++) {
-		InternId id = array.exprs[i].symbol_id;
-		for (size_t j = i + 1; j < array.size; j++) {
-			if (array.exprs[j].symbol_id == id) {
-				*out = id;
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
 void free_array(struct Array array) {
 	free(array.exprs);
 }
