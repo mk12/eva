@@ -12,7 +12,7 @@ OBJ_DIR := build
 BIN_DIR := bin
 
 # Files
-SRCS := $(wildcard $(SRC_DIR)/*.c)
+SRCS := $(wildcard $(SRC_DIR)/*.c) src/prelude.c
 OBJS := $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 EXEC := $(BIN_DIR)/$(NAME)
@@ -44,7 +44,7 @@ prep:
 
 clean:
 	bash test.sh clean
-	rm -f $(OBJS) $(DEPS) $(EXEC)
+	rm -f src/prelude.c $(OBJS) $(DEPS) $(EXEC)
 
 $(EXEC): $(OBJS)
 	@echo "\033[0;31mLinking executable $(NAME)\033[0m"
@@ -53,5 +53,9 @@ $(EXEC): $(OBJS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@echo "\033[0;32mCC\033[0m $<"
 	@$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
+
+src/prelude.c: src/prelude.scm
+	@echo "\033[1;35mGenerating $^\033[0m"
+	@bash generate.sh
 
 -include $(DEPS)

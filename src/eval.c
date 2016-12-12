@@ -6,6 +6,7 @@
 #include "error.h"
 #include "list.h"
 #include "macro.h"
+#include "prelude.h"
 #include "proc.h"
 #include "repl.h"
 #include "type.h"
@@ -171,16 +172,23 @@ static struct EvalResult apply_stdprocedure(
 			.exprs = args
 		};
 		break;
-	case S_LOAD:;
-		const char* filename = args[0].box->str;
+	case S_LOAD:
+		result.expr = new_void();
+		const size_t len = strlen(PRELUDE_FILENAME);
+		if (args[0].box->len == len
+				&& strncmp(args[0].box->str, PRELUDE_FILENAME, len) == 0) {
+			execute(PRELUDE_FILENAME, prelude_source, env, false);
+			break;
+		}
+		char* filename = null_terminated_string(args[0]);
 		char* contents = read_file(filename);
 		if (contents == NULL) {
 			result.err = new_eval_error_expr(ERR_LOAD, args[0]);
 		} else {
 			execute(filename, contents, env, false);
-			result.expr = new_void();
 			free(contents);
 		}
+		free(filename);
 		break;
 	default:
 		result.expr = invoke_stdprocedure(stdproc, args, n);

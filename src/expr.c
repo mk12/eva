@@ -424,6 +424,15 @@ bool arity_allows(Arity arity, size_t n_args) {
 	return n_args == (size_t)arity;
 }
 
+char* null_terminated_string(struct Expression expr) {
+	assert(expr.type == E_STRING);
+	size_t len = expr.box->len;
+	char *buf = xmalloc(len + 1);
+	memcpy(buf, expr.box->str, len);
+	buf[len] = '\0';
+	return buf;
+}
+
 // Prints a pair to the 'stream', assuming the left parenthesis has already been
 // printed. Uses standard Lisp s-expression notation.
 static void print_pair(struct Box *box, bool first, FILE *stream) {

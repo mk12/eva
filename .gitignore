@@ -4,3 +4,4 @@ bin/
 test/out/
 test.log
 compare.sh
+src/prelude.c

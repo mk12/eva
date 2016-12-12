@@ -1,4 +1,4 @@
-;;; Copyright 2015 Mitchell Kember. Subject to the MIT License.
+;;; Copyright 2016 Mitchell Kember. Subject to the MIT License.
 
 ;;; Equivalence predicates
 
@@ -63,7 +63,7 @@
     (+ 1 (length (cdr xs)))))
 
 (define (append . lists)
-  ()
+  ())
 
 (define (reverse xs)
   (define (go fwd bwd)

@@ -208,6 +208,10 @@ bool expression_arity(Arity *out, struct Expression expr);
 // Returns true if the given arity accepts 'n_args' arguments.
 bool arity_allows(Arity arity, size_t n_args);
 
+// Creates a C-style null-terminated string from string expression. Assumes that
+// 'expr' has type E_STRING. The caller is responsible for freeing the result.
+char* null_terminated_string(struct Expression expr);
+
 // Prints the expression to 'stream' (not followed by a newline).
 void print_expression(struct Expression expr, FILE *stream);
 
