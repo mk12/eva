@@ -1,5 +1,7 @@
 ;;; Copyright 2016 Mitchell Kember. Subject to the MIT License.
 
+;;;;; R5RS standard procedures
+
 ;;; Equivalence predicates
 
 (define (eqv? x y)
@@ -47,7 +49,7 @@
 (define (lcm x y)
   (/ (* x y) (gcd x y)))
 
-;;; List functions
+;;; Lists and pairs
 
 (define (caar x) (car (car x)))
 (define (cadr x) (car (cdr x)))
@@ -112,7 +114,7 @@
         ((equal? (caar xs) obj) (car xs))
         (else (assoc obj (cdr xs)))))
 
-;;; Character functions
+;;; Characters
 
 (define (char-alphabetic? c)
   (or (and (char>=? c #\a) (char<=? c #\z))
@@ -143,7 +145,7 @@
     (integer->char (- 32 (char->integer c)))
     c))
 
-;;; String functions
+;;; Strings
 
 (define (string->list s)
   (define (go chars i)
@@ -178,6 +180,39 @@
   (if (null? rest)
     (map1 f first)
     (go (cons first rest))))
+
+(define delay
+  (macro
+    (lambda (x)
+      `(,let ((cache ())
+              (evaluated #f))
+             (,lambda ()
+                      (,if evaluated
+                           cache
+                           (,begin
+                             (,set! cache ,x)
+                             (,set! evaluated #t)
+                             cache)))))))
+
+(define (force promise) (promise))
+
+;;;;; Other procedures
+
+;;; Macros
+
+(define defmacro
+  (macro
+    (lambda (name-params . body)
+      `(,define ,(car name-params)
+                (,macro
+                  (,lambda ,(cdr name-params) ,@body))))))
+
+(defmacro (when condition . then)
+  (list if condition
+        (cons begin then)
+        (begin)))
+
+;;; Functional
 
 (define (compose f g)
   (lambda args
