@@ -162,17 +162,26 @@
         (go (cdr chars) (+ i 1)))))
   (go chars 0))
 
-;;; Functional constructs
+;;; Control features
+
+(define (map f first . rest)
+  (define (map1 g xs)
+    (if (null? xs)
+      ()
+      (cons (g (car xs))
+            (map1 g (cdr xs)))))
+  (define (go lists)
+    (if (apply or (map1 null? lists))
+      ()
+      (cons (apply f (map1 car lists))
+            (go (map1 cdr lists)))))
+  (if (null? rest)
+    (map1 f first)
+    (go (cons first rest))))
 
 (define (compose f g)
   (lambda args
     (f (apply g args))))
-
-(define (map f xs)
-  (if (null? xs)
-    ()
-    (cons (f (car xs))
-          (map f (cdr xs)))))
 
 (define (filter pred xs)
   (cond ((null? xs) ())

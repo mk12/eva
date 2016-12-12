@@ -4,6 +4,7 @@
 #include "error.h"
 #include "eval.h"
 #include "expr.h"
+#include "prelude.h"
 #include "repl.h"
 #include "util.h"
 
@@ -20,7 +21,8 @@
 #endif
 
 // The usage message for the program.
-static const char *const usage_message = "usage: eva [file ...] [-e code]\n";
+static const char *const usage_message =
+	"usage: eva [-n] [-e code] [file ...]\n";
 
 // Error message used when an option argument is missing.
 static const char *const err_opt_argument = "Option requires an argument";
@@ -33,11 +35,26 @@ static bool process_args(int argc, char **argv, struct Environment *env) {
 	}
 
 	bool tty = isatty(0);
-	if (argc == 1) {
+	bool prelude = true;
+	for (int i = 1; i < argc; i++) {
+		if (is_opt(argv[i], 'n', "no-prelude")) {
+			prelude = false;
+			argv[i] = NULL;
+		}
+	}
+	if (prelude) {
+		execute(PRELUDE_FILENAME, prelude_source, env, false);
+	}
+
+	if (argc == 1 || (argc == 2 && !prelude)) {
 		repl(env, tty);
 		return true;
 	}
 	for (int i = 1; i < argc; i++) {
+		if (argv[i] == NULL) {
+			continue;
+		}
+
 		if (strcmp(argv[i], "-") == 0) {
 			repl(env, tty);
 		} else if (is_opt(argv[i], 'e', "expression")) {
