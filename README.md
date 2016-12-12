@@ -24,19 +24,49 @@ All Schemes are different. The Eva dialect is fairly minimal. It supports some c
 
 Eva has 9 types:
 
-1. **Null**. There is only one null value, written `()`. Unlike in most Schemes, `()` is self-evaluating and does not need to be quoted.
+1. **Null**. There is only one null value, written `()`. Unlike in most Schemes, `()` does not need to be quoted.
 2. **Symbol**. Symbols are implemented as interned strings. The quoted expression `'foo` evaluates to the symbol `foo`. (Another round of evaluation would look up a variable called "foo.")
 3. **Number**. Numbers in Eva are signed integers. Their width is whatever Clang decides `long` is on your machine.
 4. **Boolean**. There are two boolean constants: `#t` and `#f`. Everything in Eva is truthy (considered true in a boolean context) except for `#f`. 
 5. **Character**. These are just single-byte ASCII characters. They are written like `#\A`, and then there are the special character `#\space`, `#\newline`, `#\return`, and `#\tab`.
 6. **String**. A string of characters. Unlike symbols, these are not interned, and they are mutable. They are written with double quotes, like `"Hello, World!"`.
-7. **Pair**. You can't have Lisp without pairs. These are your standard cons cells. For example, `(cons 1 2)` evaluates to the pair `(1 . 2)`.
+7. **Pair**. You can't have Lisp without pairs. These are your standard cons cells. For example, `(cons 1 2)` evaluates to the pair `(1 . 2)`, and `(cons 1 (cons 2 ()))` evaluates to `(1 2)`.
 8. **Procedure**. Procedures are created by lambda abstractions. A procedure `f` can be called like `(f a b c)`.
 9. **Macro**. Macros are just procedures that follow different evaluation rules. They allow the syntax of Eva to be extended.
 
+There is also a void type for the result of operations with side effects such as `define` and `set!`.
+
+### Evaluation
+
+When Eva sees `(f a b c)`, it evaluates as follows:
+
+1. Evaluate the operator, `f`.
+	1. If it evaluated to a procedure:
+		1. Evaluate the operands `a`, `b`, and `c`.
+		2. Substitute them into the function body.
+		3. Evaluate the resulting body.
+	2. If it evaluated to a macro:
+		1. Substitute the operands `a`, `b`, and `c` unevaluated into the macro body.
+		2. Evaluate the resulting body to get the code.
+		3. Evaluate the resulting code at the call site.
+
+These rules make it possible for macros to be first-class values in Eva. Although this may seem like a strange feature, it actually results in a simpler implementation. There are no special cases: if you really want to, you can `(define d define)` to save 5 characters. You could then `(d (define x y) (error "Use d"))` if you really wanted to.
+
 ### R5RS conformity
 
-Eva implements the following standard procedures from [R5RS][1]:
+Eva implements the following standard macros (also called special forms) from [R5RS][1]:
+
+```
+define set!
+lambda begin
+if cond and or
+let let*
+quote quasiquote unquote unquote-splicing
+```
+
+The quotation special forms can be used via the usual `'`, `` ` ``, and `,` syntax. Due to the way environments are implemented, there is no need for `letrec`. You can write mutually recursive definitions using `let` bindings.
+
+Eva implements the following standard procedures from [R5RS][2]:
 
 ```
 eq? eqv? equal?
@@ -58,15 +88,16 @@ char-alphabetic? char-numeric? char-whitespace?
 char-lower-case? char-upper-case?
 char->integer integer->char
 char-upcase char-downcase
-string? make-string string-length string-ref string-set!
+string? string make-string string-length string-ref string-set!
 string=? string<? string>? string<=? string>=?
 substring string-append string->list list->string
 string-copy string-fill!
-procedure? eval apply map delay force
+procedure? eval apply map force delay
 read write load
 ```
 
-[1]: https://groups.csail.mit.edu/mac/ftpdir/scheme-reports/r5rs-html/r5rs_8.html
+[1]: https://groups.csail.mit.edu/mac/ftpdir/scheme-reports/r5rs-html/r5rs_6.html
+[2]: https://groups.csail.mit.edu/mac/ftpdir/scheme-reports/r5rs-html/r5rs_8.html
 
 ## License
 
