@@ -4,6 +4,7 @@
 
 #include "util.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,11 +32,11 @@ struct Set *new_set(void) {
 }
 
 bool add_to_set(struct Set *set, InternId id) {
-	size_t h = id % BITMAP_SIZE;
-	size_t index = h / sizeof set->bitmap[0];
-	size_t mask = 1 << (h - index * sizeof set->bitmap[0]);
+	size_t h = id % (BITMAP_SIZE * CHAR_BIT);
+	size_t index = h / CHAR_BIT;
+	size_t mask = 1 << (h - index * CHAR_BIT);
 	// Check if the bit is already set.
-	if ((set->bitmap[index] & mask) == 1) {
+	if ((set->bitmap[index] & mask) != 0) {
 		// It might already be here; check the slow way.
 		for (size_t i = 0; i < set->len; i++) {
 			if (set->ids[i] == id) {
