@@ -56,19 +56,37 @@ These rules make it possible for macros to be first-class values in Eva. Althoug
 
 In Eva, any function `f` can be turned into a macro simply by writing `(macro f)`. For this new object, `macro?` will return `#t` and `procedure?` will return false.
 
-For example, consider turning `cons` into a macro:
+For example, consider the following function which converts infix arithmetic to prefix form:
 
 ```scheme
-(define mcons (macro cons))
-
-(mcons + (1 2 3)) ; => 6
-
-(define a 5)
-(define b 6)
-(mcons cons (a b)) ; => (5 . 6)
+(define (infix->prefix code)
+  (define operators
+    '(+ - * / = < > <= >=))
+  (if (not (pair? code))
+    code
+    (let ((c (map infix->prefix code)))
+      (if (and (= (length c) 3)
+               (memq (cadr c) operators))
+        (list (cadr c) (car c) (car (cddr c)))
+        c))))
+        
+(infix->prefix '(1 + ((4 * (5 - 1)) / 3)))
+;; => (+ 1 (/ (* 4 (- 5 1)) 3))
 ```
 
-It's kind of like `apply`, except you don't need to quote the second argument.
+Now, let's turn it into a macro:
+
+```scheme
+(define with-infix (macro infix->prefix))
+
+(macro? with-infix)
+;; => #t
+
+(with-infix
+  (let ((x (1 + ((4 * (5 - 1)) / 3))))
+    (x + x)))
+;; => 12
+```
 
 Another benefit of having first-class macros is that reducing a list with a macro like `and` or `or` works. First-class macros are very cool and powerful, but I'm sure they'd be a nightmare if anyone actually used them in a large project.
 
