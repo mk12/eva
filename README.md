@@ -28,7 +28,7 @@ Eva has 9 types:
 2. **Symbol**. Symbols are implemented as interned strings. The quoted expression `'foo` evaluates to the symbol `foo`. (Another round of evaluation would look up a variable called "foo.")
 3. **Number**. Numbers in Eva are signed integers. Their width is whatever Clang decides `long` is on your machine.
 4. **Boolean**. There are two boolean constants: `#t` and `#f`. Everything in Eva is truthy (considered true in a boolean context) except for `#f`. 
-5. **Character**. These are just single-byte ASCII characters. They are written like `#\A`, and then there are the special character `#\space`, `#\newline`, `#\return`, and `#\tab`.
+5. **Character**. These are just single-byte ASCII characters. They are written like `#\A`, and then there are the special characters `#\space`, `#\newline`, `#\return`, and `#\tab`.
 6. **String**. A string of characters. Unlike symbols, these are not interned, and they are mutable. They are written with double quotes, like `"Hello, World!"`.
 7. **Pair**. You can't have Lisp without pairs. These are your standard cons cells. For example, `(cons 1 2)` evaluates to the pair `(1 . 2)`, and `(cons 1 (cons 2 ()))` evaluates to `(1 2)`.
 8. **Procedure**. Procedures are created by lambda abstractions. A procedure `f` can be called like `(f a b c)`.
