@@ -36,7 +36,7 @@ debug: prep $(EXEC)
 debug:
 	@echo "Target debug is up to date"
 
-test: $(EXEC)
+test: debug
 	@bash test.sh
 
 prep:
