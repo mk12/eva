@@ -48,11 +48,11 @@ clean:
 
 $(EXEC): $(OBJS)
 	@echo "\033[0;31mLinking executable $(NAME)\033[0m"
-	@$(CC) $(LDFLAGS) $^ -o $@
+	@$(CC) $^ -o $@ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@echo "\033[0;32mCC\033[0m $<"
-	@$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
+	@$(CC) -c $< -o $@ $(CFLAGS) $(DEPFLAGS)
 
 src/prelude.c: src/prelude.scm
 	@echo "\033[1;35mGenerating $^\033[0m"
