@@ -1,0 +1,15 @@
+(define repl
+  (lambda (history)
+    ((lambda (input)
+       ((lambda (new-history)
+          ((lambda (target)
+             (write (eval target))
+             (repl new-history))
+           (cons begin
+                 (if (and (pair? input)
+                          (pair? (cdr input))
+                          (eq? (car input) (quote define)))
+                   (append new-history (car (cdr input)))
+                   new-history))))
+        (append history input)))
+     (read))))
