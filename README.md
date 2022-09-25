@@ -8,7 +8,7 @@ Just run `make`.
 
 ## Usage
 
-There are three ways to use the program `out/eva`:
+There are three ways to use the program `bin/eva`:
 
 - `eva`: Start a new REPL session.
 - `eva -e expression`: Evaluate expressions and print their results.

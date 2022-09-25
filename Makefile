@@ -23,9 +23,9 @@ src_existing := $(wildcard src/*.c)
 src_gen := src/prelude.c
 src := $(src_existing) $(src_gen)
 
-obj := $(src:src/%.c=out/obj/%.o)
+obj := $(src:src/%.c=obj/%.o)
 dep := $(obj:.o=.d)
-bin := out/eva
+bin := bin/eva
 
 .SUFFIXES:
 
@@ -42,19 +42,19 @@ test: $(bin)
 
 clean:
 	rm -f $(src_gen)
-	rm -rf out
+	rm -rf obj bin
 	./test.sh clean
 
 src/prelude.c: gen-prelude.sh src/prelude.scm
 	./$^ $@
 
-out out/obj:
-	mkdir -p $@
+obj bin:
+	mkdir $@
 
-out/obj/%.o: src/%.c | out/obj
+obj/%.o: src/%.c | obj
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
-$(bin): $(obj) | out
+$(bin): $(obj) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 -include $(dep)

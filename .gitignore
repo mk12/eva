@@ -1,4 +1,5 @@
-/out
+/obj
+/bin
 /test/out/
 /test.log
 /compare.sh
