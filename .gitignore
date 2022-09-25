@@ -1,6 +1,5 @@
-build/
-bin/
-test/out/
-test.log
-compare.sh
-src/prelude.c
+/out
+/test/out/
+/test.log
+/compare.sh
+/src/prelude.c

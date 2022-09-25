@@ -1,42 +1,60 @@
-# Compiler
-CFLAGS := -std=c11 -W -Wall $(if $(DEBUG),-O0 -g,-O3 -DNDEBUG)
+# Copyright 2022 Mitchell Kember. Subject to the MIT License.
+
+define usage
+Targets:
+	all    Build eva
+	help   Show this help message
+	check  Run before committing
+	test   Run tests
+	clean  Remove build output
+
+Variables:
+	DEBUG  If nonempty, build in debug mode
+endef
+
+.PHONY: all help check test clean
+
+CFLAGS := $(shell cat compile_flags.txt) $(if $(DEBUG),-O0 -g,-O3 -DNDEBUG)
+DEPFLAGS = -MMD -MP -MF $(@:.o=.d)
 LDFLAGS := $(if $(DEBUG),,-O3)
 LDLIBS := -lreadline
-DEPFLAGS = -MT $@ -MMD -MP -MF $(obj_dir)/$*.d
 
-# Project
-name := eva
-src_dir := src
-obj_dir := build
-bin_dir := bin
+src_existing := $(wildcard src/*.c)
+src_gen := src/prelude.c
+src := $(src_existing) $(src_gen)
 
-# Files
-srcs := $(wildcard $(src_dir)/*.c) src/prelude.c
-objs := $(srcs:$(src_dir)/%.c=$(obj_dir)/%.o)
-deps := $(objs:.o=.d)
-exec := $(bin_dir)/$(name)
+obj := $(src:src/%.c=out/obj/%.o)
+dep := $(obj:.o=.d)
+bin := out/eva
 
-.PHONY: all test clean
+.SUFFIXES:
 
-all: $(exec)
+all: $(bin)
 
-test: $(exec)
-	@./test.sh
+help:
+	$(info $(usage))
+	@:
+
+check: all test
+
+test: $(bin)
+	./test.sh
 
 clean:
+	rm -f $(src_gen)
+	rm -rf out
 	./test.sh clean
-	rm -f src/prelude.c $(objs) $(deps) $(exec)
 
-src/prelude.c: src/prelude.scm
-	./generate.sh
+src/prelude.c: gen-prelude.sh src/prelude.scm
+	./$^ $@
 
-$(exec): $(objs) | $(bin_dir)
-	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+out out/obj:
+	mkdir -p $@
 
-$(obj_dir)/%.o: $(src_dir)/%.c | $(obj_dir)
+out/obj/%.o: src/%.c | out/obj
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
-$(obj_dir) $(bin_dir):
-	mkdir $@
+$(bin): $(obj) | out
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
--include $(deps)
+-include $(dep)
